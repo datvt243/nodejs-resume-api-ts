@@ -1,0 +1,11 @@
+/node_modules
+/dist
+/dist-ssr
+
+
+.env
+.vscode
+yarn.lock
+package-lock.json
+
+/build

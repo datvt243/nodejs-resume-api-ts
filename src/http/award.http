@@ -1,0 +1,13 @@
+POST http://localhost:3001/api/v1/award/create
+content-type: application/json
+
+{
+    "_id": null,
+    "name": "Brenda Neal",
+    "organization": "Joseph Drake LLC",
+    "issueDate": 1148688000000,
+    "link": "https://www.corekyma.cc",
+    "images": [],
+    "description": "At ut proident non"
+} 
+
