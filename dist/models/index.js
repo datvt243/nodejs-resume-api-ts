@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Reference = exports.Project = exports.generalInformation = exports.Experience = exports.Education = exports.Certificate = exports.Candidate = exports.Award = void 0;
+const award_model_1 = __importDefault(require("./award.model"));
+exports.Award = award_model_1.default;
+const candidate_model_1 = __importDefault(require("./candidate.model"));
+exports.Candidate = candidate_model_1.default;
+const certificate_model_1 = __importDefault(require("./certificate.model"));
+exports.Certificate = certificate_model_1.default;
+const education_model_1 = __importDefault(require("./education.model"));
+exports.Education = education_model_1.default;
+const experience_model_1 = __importDefault(require("./experience.model"));
+exports.Experience = experience_model_1.default;
+const generalInformation_model_1 = __importDefault(require("./generalInformation.model"));
+exports.generalInformation = generalInformation_model_1.default;
+const project_model_1 = __importDefault(require("./project.model"));
+exports.Project = project_model_1.default;
+const reference_modal_1 = __importDefault(require("./reference.modal"));
+exports.Reference = reference_modal_1.default;

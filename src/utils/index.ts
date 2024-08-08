@@ -5,13 +5,13 @@
  */
 import { Request } from 'express';
 
-export * from './bcrypt.ts';
-export * from './helper.ts';
-export * from './jwt.ts';
-export * from './valid.ts';
+export * from './bcrypt';
+export * from './helper';
+export * from './jwt';
+export * from './valid';
 
-import { jwtVerify } from './jwt.ts';
-import { TOKEN_SECRET } from '../config/process.config.ts';
+import { jwtVerify } from './jwt';
+import { TOKEN_SECRET } from '@/config/process.config';
 
 export const _log = (props: null | '' | string | string[] | { text: string; type: 'warn' | 'error' | 'table' }) => {
     /* 

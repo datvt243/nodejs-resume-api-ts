@@ -7,7 +7,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Collections } from '@/types/base.type';
 import { baseDelete, baseGetAll } from '@/candidate_profile/BaseController';
-import { fnCreate, fnUpdate } from '@/candidate_profile/education/education.controller.ts';
+import { fnCreate, fnUpdate } from '@/candidate_profile/education/education.controller';
 
 const router = express.Router();
 
