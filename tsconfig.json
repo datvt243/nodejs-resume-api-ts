@@ -15,5 +15,5 @@
         }
     },
     "include": ["src/**/*.ts"],
-    "exclude": ["node_modules", "dist"] // Các thư mục hoặc file bị loại trừ khỏi biên dịch
+    "exclude": ["node_modules"] // Các thư mục hoặc file bị loại trừ khỏi biên dịch
 }

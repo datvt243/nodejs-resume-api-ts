@@ -34,6 +34,9 @@ router.get('/api/*', (req, res) => {
 /**
  * get page home
  */
+/* router.get('/', (req: Request, res: Response) => {
+    res.render('render', { data: null });
+}); */
 router.get('/*', (req, res) => {
     res.send(`<div style="text-align: center; padding: 50px">
             <h1 style="font-size: 8vw; text-transform: uppercase; letter-spacing: .1em;">Hello World!</h1> 

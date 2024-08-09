@@ -36,6 +36,9 @@ router.get('/api/*', (req: Request, res: Response) => {
 /**
  * get page home
  */
+/* router.get('/', (req: Request, res: Response) => {
+    res.render('render', { data: null });
+}); */
 router.get('/*', (req: Request, res: Response) => {
     res.send(
         `<div style="text-align: center; padding: 50px">

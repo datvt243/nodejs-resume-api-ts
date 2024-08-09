@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Description: Learning nodejs basic
  */
 require('module-alias/register');
+require('./alias');
 const dotenv_1 = __importDefault(require("dotenv"));
 /* import path, { dirname } from 'path'; */
 const express_1 = __importDefault(require("express"));
@@ -51,14 +52,16 @@ const runServer = () => {
     /**
      * use template-engine
      */
-    /* app.set('view engine', 'pug');
-    app.set('views', path.join(__dirname, 'views')); */
+    app.set('view engine', 'pug');
+    app.set('views', './views'); /* app.set('views', './views'); */
     /**
      * listen app
      */
-    app.listen(LOCAL_PORT, () => {
-        const str = NODE_ENV === 'development' ? `http://localhost:${LOCAL_PORT}` : LOCAL_PORT;
-        console.log(`App listening on port: ${str}`);
+    const _env = process.env.NODE_ENV || 'development';
+    const _port = _env !== 'production' ? LOCAL_PORT : 3008;
+    app.listen(_port, () => {
+        const str = _port === 'development' ? `http://localhost:${_port}` : _port;
+        console.log(`App listening on port: ${str} - ${_env}`);
     });
     /* exitHook(() => {
         // TODO: close connect mongo (coming soon...)
@@ -67,7 +70,7 @@ const runServer = () => {
 /**
  * connect to mongoDB
  */
-const { LOCAL_PORT = 3001, NODE_ENV = 'development' } = process.env;
+const { LOCAL_PORT = 3001 } = process.env;
 const mongo_db_1 = __importDefault(require("@/database/mongo.db"));
 (0, mongo_db_1.default)(() => {
     runServer?.();

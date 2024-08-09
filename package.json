@@ -6,13 +6,14 @@
     "description": "",
     "scripts": {
         "dev-node": "ts-node -r tsconfig-paths/register src/server.ts",
-        "dev": "nodemon -r tsconfig-paths/register --exec ts-node src/server.ts",
+        "dev": "nodemon -r tsconfig-paths/register --exec ts-node ./src/server.ts",
         "babel-dev": "nodemon --exec babel-node src/server.js",
         "nodemon": "nodemon --exec babel-node ./src/server.js",
         "babel-start": "npm run remove-build && npm run build-babel && node ./build/server.js",
         "babel-build": "babel ./src -d ./build",
         "remove-build": "rm -rf build",
-        "start": "node dist/server.js",
+        "start": "NODE_ENV=production node dist/server.js",
+        "nodemon-start": "nodemon dist/server.js",
         "build-tsc": "tsc"
     },
     "author": "DatVT",
@@ -57,7 +58,5 @@
         "tsconfig-paths": "^4.2.0",
         "typescript": "^5.5.4"
     },
-    "_moduleAliases": {
-        "@": "dist"
-    }
+    "_moduleAliases": {}
 }
