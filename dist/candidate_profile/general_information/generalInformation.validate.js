@@ -13,10 +13,12 @@ const joi_1 = __importDefault(require("joi"));
 const joi_config_1 = require("@/config/joi.config");
 const _sub = {
     candidateId: joi_config_1.candidateId,
+    professionalSkillsGroup: joi_config_1._arrayString,
     professionalSkills: joi_1.default.array()
         .items(joi_1.default.object({
         name: joi_1.default.string().required().messages({ 'any.required': 'Tên kỹ năng không được rỗng' }),
         exp: joi_1.default.number().required().messages({ 'any.required': 'Số năm kinh nghiệm không được rỗng' }),
+        group: joi_1.default.string(),
     }).messages({
         'object.base': 'Kỹ năng chuyên môn cần nhập vào là object',
     }))
