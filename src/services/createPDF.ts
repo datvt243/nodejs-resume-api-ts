@@ -19,10 +19,8 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
             process.exit(1);
         }
 
-        console.log({ platform, executablePath });
-
         const otp = {
-            executablePath,
+            /* executablePath, */
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         };

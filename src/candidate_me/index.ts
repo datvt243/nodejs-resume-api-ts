@@ -11,7 +11,6 @@ import { formatReturn, _throwError } from '@/utils';
 import { formatReturnFailed } from '@/services';
 import { createCV } from '@/services/createPDF';
 import * as MODEL from '@/models';
-import { array } from 'joi';
 
 export const fnGetAboutMe = async (req: Request, res: Response) => {
     const { email } = req.params;

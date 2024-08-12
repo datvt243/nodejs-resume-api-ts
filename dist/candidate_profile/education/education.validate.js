@@ -26,6 +26,11 @@ exports.schemaEducation = joi_1.default.object({
     startDate: joi_config_1.startDate,
     endDate: joi_config_1.endDate,
     isCurrent: joi_config_1._boolean,
-    description: joi_config_1.description,
+    description: joi_1.default.string().min(0).trim().strict().label('Mô tả').messages({
+        'any.required': `{#label} là bắt buộc`,
+        'string.min': `{#label} có ít nhất {#limit} ký tự`,
+        'string.max': `{#label} có ít nhất {#limit} ký tự`,
+        'string.empty': `{#label} không được trống`,
+    }),
     candidateId: joi_config_1.candidateId,
 });
