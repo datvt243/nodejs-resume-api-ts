@@ -10,11 +10,13 @@ import { getObject, _id, position, candidateId, foreignLanguages, _arrayString, 
 
 const _sub = {
     candidateId,
+    professionalSkillsGroup: _arrayString,
     professionalSkills: Joi.array()
         .items(
             Joi.object({
                 name: Joi.string().required().messages({ 'any.required': 'Tên kỹ năng không được rỗng' }),
                 exp: Joi.number().required().messages({ 'any.required': 'Số năm kinh nghiệm không được rỗng' }),
+                group: Joi.string(),
             }).messages({
                 'object.base': 'Kỹ năng chuyên môn cần nhập vào là object',
             }),

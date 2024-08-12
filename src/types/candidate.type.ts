@@ -26,6 +26,7 @@ export interface Item {
 export interface Skill {
     name: string;
     exp?: number;
+    group?: string;
 }
 
 export interface Language {

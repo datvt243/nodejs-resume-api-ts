@@ -65,6 +65,7 @@ export const fnUpdate = async (req: Request, res: Response) => {
     /**
      * update data
      */
+
     try {
         const _result = await handlerUpdate(value);
         return formatReturn(res, { ..._result });
@@ -87,6 +88,7 @@ export const fnUpdateFields = async (req: Request, res: Response) => {
     /**
      * update data
      */
+
     try {
         const _result = await handlerUpdate(value);
         return formatReturn(res, { ..._result });
