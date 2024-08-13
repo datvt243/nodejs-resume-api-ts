@@ -260,9 +260,9 @@ const _baseHelper = () => {
         getDocumentUpdated: async (_id: string, props: { model: any; select: string }) => {
             const { model: MODEL, select = '' } = props;
             const find = MODEL.findById(_id);
-            if (select) {
+            /* if (select) {
                 find.select(select);
-            }
+            } */
             return await find.exec();
         },
         modelValidate: async (model: any, value: any) => {
