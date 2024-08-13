@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import os from 'os';
 import { Response } from 'express';
+import { _log } from '@/utils';
 import { informationPersonal, Skill, Item, Language } from '@/types/candidate.type';
 
 export const createCV = async (data: Record<string, any>, res: Response) => {
@@ -15,11 +16,9 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         } else if (platform === 'linux') {
             executablePath = '/usr/bin/chromium-browser';
         } else {
-            console.error('Hệ điều hành không được hỗ trợ.');
+            _log('Hệ điều hành không được hỗ trợ.');
             process.exit(1);
         }
-
-        console.log({ platform, executablePath });
 
         const otp = {
             executablePath,
@@ -51,7 +50,7 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         res.contentType('application/pdf');
         res.send(pdfBuffer);
     } catch (error) {
-        console.error('Error generating PDF:', error);
+        _log('Error generating PDF:');
         res.status(500).send('Error generating PDF');
     }
 };
