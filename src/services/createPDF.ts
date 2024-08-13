@@ -29,14 +29,14 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         const browser = await puppeteer.launch(otp);
         const page = await browser.newPage();
 
-        const contentHTML = pageRender(data);
+        const { email, html: contentHTML } = pageRender(data);
         await page.setContent(contentHTML, {
             waitUntil: 'domcontentloaded',
         });
 
         const mm = '5mm';
         const pdfBuffer = await page.pdf({
-            path: 'resume.pdf',
+            path: `${email}.pdf`,
             format: 'A4',
             margin: {
                 top: mm,
@@ -76,7 +76,10 @@ export const pageRender = (RECORD: Record<string, any>) => {
     _content += _.renderForeignLanguages(generalInformation?.foreignLanguages || []);
 
     const html = getHTMLLayout(_content);
-    return html;
+    return {
+        email: candidate?.email || 'resume',
+        html,
+    };
     /* res.send(html); */
 };
 
