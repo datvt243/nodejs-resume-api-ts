@@ -134,6 +134,7 @@ export const baseUpdateDocument = async (props: {
         _errors = {};
 
     try {
+        console.log({ _valueUpdate });
         await MODEL.updateOne({ _id }, _valueUpdate).exec();
         _data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: Object.keys(_valueUpdate).join(', ') });
     } catch (err) {
@@ -263,7 +264,8 @@ const _baseHelper = () => {
             /* if (select) {
                 find.select(select);
             } */
-            return await find.exec();
+            const record = await find.exec();
+            return record;
         },
         modelValidate: async (model: any, value: any) => {
             let message = '',

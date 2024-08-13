@@ -25,6 +25,7 @@ exports.foreignLanguageSchema = new Schema({
 exports.professionalSkillsSchema = new Schema({
     name: { type: String, required: true },
     exp: { type: Number, required: true },
+    group: { type: String, required: false },
 }, { _id: false });
 exports.personalSkills = new Schema({
     name: { type: String, required: true },

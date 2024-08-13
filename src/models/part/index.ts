@@ -27,9 +27,11 @@ export const professionalSkillsSchema = new Schema(
     {
         name: { type: String, required: true },
         exp: { type: Number, required: true },
+        group: { type: String, required: false },
     },
     { _id: false },
 );
+
 export const personalSkills = new Schema(
     {
         name: { type: String, required: true },

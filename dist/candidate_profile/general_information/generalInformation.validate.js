@@ -13,10 +13,12 @@ const joi_1 = __importDefault(require("joi"));
 const joi_config_1 = require("@/config/joi.config");
 const _sub = {
     candidateId: joi_config_1.candidateId,
+    professionalSkillsGroup: joi_config_1._arrayString,
     professionalSkills: joi_1.default.array()
         .items(joi_1.default.object({
         name: joi_1.default.string().required().messages({ 'any.required': 'Tên kỹ năng không được rỗng' }),
         exp: joi_1.default.number().required().messages({ 'any.required': 'Số năm kinh nghiệm không được rỗng' }),
+        group: joi_1.default.string(),
     }).messages({
         'object.base': 'Kỹ năng chuyên môn cần nhập vào là object',
     }))
@@ -52,7 +54,7 @@ exports.schemaGeneralInformation = (0, joi_config_1.getObject)({
     education: (0, joi_config_1._stringDefault)({ min: 3, max: 100, title: 'Học vấn' }),
     workLocation: (0, joi_config_1._stringDefault)({ min: 3, max: 100, title: 'Địa điểm làm việc' }),
     workForm: (0, joi_config_1._stringDefault)({ min: 0, max: 100, title: 'Hình thức làm việc' }),
-    careerGoal: (0, joi_config_1._stringDefault)({ min: 0, max: 100, title: 'Mục tiêu nghề nghiệp' }),
+    careerGoal: (0, joi_config_1._stringDefault)({ min: 0, max: 1000, title: 'Mục tiêu nghề nghiệp' }),
     yearsOfExperience: joi_1.default.number().min(0).required().messages({
         'any.required': 'Số năm kinh nghiệm không được rỗng',
         'number.min': `Số năm kinh nghiệm không được nhỏ hơn {#limit}`,

@@ -6,7 +6,7 @@ import { informationPersonal, Skill, Item, Language } from '@/types/candidate.ty
 
 export const createCV = async (data: Record<string, any>, res: Response) => {
     try {
-        const platform = os.platform();
+        /* const platform = os.platform();
         let executablePath = '';
 
         if (platform === 'win32') {
@@ -18,10 +18,10 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         } else {
             _log('Hệ điều hành không được hỗ trợ.');
             process.exit(1);
-        }
+        } */
 
         const otp = {
-            executablePath,
+            /* executablePath, */
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         };
@@ -50,8 +50,8 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         res.contentType('application/pdf');
         res.send(pdfBuffer);
     } catch (error) {
-        _log('Error generating PDF:');
-        res.status(500).send('Error generating PDF');
+        _log('Xảy ra lỗi, không thể đọc browser');
+        res.status(500).send('Xảy ra lỗi, không thể đọc browser');
     }
 };
 
@@ -198,21 +198,46 @@ const _helper = () => {
                     <div class="description">${introduction}</div>
                 </div>`;
         },
-        renderSkills: function (generalInformation: { personalSkills: Skill[]; professionalSkills: Skill[] }) {
+        renderSkills: function (generalInformation: {
+            personalSkills: Skill[];
+            professionalSkills: Skill[];
+            professionalSkillsGroup: string[];
+        }) {
             function getContent(title = '', skills: Skill[] = []) {
                 if (!skills.length) return '';
-
                 return `<li>${title}: ${skills.map((e) => e.name).join(', ')}</li>`;
             }
-            const { personalSkills = [], professionalSkills = [] } = generalInformation;
+            function getProfessionalSkills(skills: Skill[], groups: string[]) {
+                if (!groups.length) return getContent('Kỹ năng chuyên môn', skills);
+
+                if (skills.filter((i) => i.group).length) {
+                    const _groups: { name: string; skills: Skill[] | [] }[] = [];
+                    for (const gr of groups) {
+                        _groups.push({ name: gr, skills: skills.filter((i) => i.group === gr) });
+                    }
+
+                    _groups.push({ name: 'other', skills: skills.filter((i) => !i.group) });
+
+                    let str = '';
+                    for (const { name, skills } of _groups) {
+                        skills.length && (str += `<li>${name}: ${skills.map((i) => i.name).join(', ')}</li>`);
+                    }
+
+                    return str;
+                }
+                return getContent('Kỹ năng chuyên môn', skills);
+            }
+            const { personalSkills = [], professionalSkills = [], professionalSkillsGroup = [] } = generalInformation;
 
             if (!personalSkills.length && !professionalSkills.length) return '';
 
             return _boxContent(
                 'Kỹ năng',
-                `<ul class="list">
+                `<ul class="list" style="padding-left: 2.5rem">
+                    ${getProfessionalSkills(professionalSkills, professionalSkillsGroup)}
+                </ul>
+                <ul class="list">
                     ${getContent('Kỹ năng cá nhân', personalSkills)}
-                    ${getContent('Kỹ năng chuyên môn', professionalSkills)}
                 </ul>`,
             );
         },
@@ -379,9 +404,9 @@ const getHTMLLayout = (content = '') => {
                     padding-left: 1.2em;
                 }
                 ul > li, ol > li {
-                    margin: 0;
+                    margin: 0 0 5px 0;
                 }
-                ul { list-style: disc; s}
+                ul { list-style: disc; }
                 ol { list-style: circle; }
             </style>
         `;

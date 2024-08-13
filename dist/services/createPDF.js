@@ -5,33 +5,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pageRender = exports.createCV = void 0;
 const puppeteer_1 = __importDefault(require("puppeteer"));
-const os_1 = __importDefault(require("os"));
 const createCV = async (data, res) => {
     try {
-        const platform = os_1.default.platform();
+        /* const platform = os.platform();
         let executablePath = '';
+
         if (platform === 'win32') {
             executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-        }
-        else if (platform === 'darwin') {
+        } else if (platform === 'darwin') {
             executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-        }
-        else if (platform === 'linux') {
+        } else if (platform === 'linux') {
             executablePath = '/usr/bin/chromium-browser';
-        }
-        else {
+        } else {
             console.error('Hệ điều hành không được hỗ trợ.');
             process.exit(1);
-        }
-        console.log({ platform, executablePath });
+        } */
         const otp = {
-            executablePath,
+            /* executablePath, */
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         };
         const browser = await puppeteer_1.default.launch(otp);
         const page = await browser.newPage();
         const contentHTML = (0, exports.pageRender)(data);
+        /* res.send(contentHTML);
+        return; */
         await page.setContent(contentHTML, {
             waitUntil: 'domcontentloaded',
         });
@@ -51,8 +49,8 @@ const createCV = async (data, res) => {
         res.send(pdfBuffer);
     }
     catch (error) {
-        console.error('Error generating PDF:', error);
-        res.status(500).send('Error generating PDF');
+        console.error('Xảy ra lỗi, Không thể khởi động trình duyệt (server free không hỗ trợ)', error);
+        res.status(500).send('Xảy ra lỗi, Không thể khởi động trình duyệt (server free không hỗ trợ');
     }
 };
 exports.createCV = createCV;
@@ -190,12 +188,31 @@ const _helper = () => {
                     return '';
                 return `<li>${title}: ${skills.map((e) => e.name).join(', ')}</li>`;
             }
-            const { personalSkills = [], professionalSkills = [] } = generalInformation;
+            function getProfessionalSkills(skills, groups) {
+                if (!groups.length)
+                    return getContent('Kỹ năng chuyên môn', skills);
+                if (skills.filter((i) => i.group).length) {
+                    const _groups = [];
+                    for (const gr of groups) {
+                        _groups.push({ name: gr, skills: skills.filter((i) => i.group === gr) });
+                    }
+                    _groups.push({ name: 'other', skills: skills.filter((i) => !i.group) });
+                    let str = '';
+                    for (const { name, skills } of _groups) {
+                        skills.length && (str += `<li>${name}: ${skills.map((i) => i.name).join(', ')}</li>`);
+                    }
+                    return str;
+                }
+                return getContent('Kỹ năng chuyên môn', skills);
+            }
+            const { personalSkills = [], professionalSkills = [], professionalSkillsGroup = [] } = generalInformation;
             if (!personalSkills.length && !professionalSkills.length)
                 return '';
-            return _boxContent('Kỹ năng', `<ul class="list">
+            return _boxContent('Kỹ năng', `<ul class="list" style="padding-left: 2.5rem">
+                    ${getProfessionalSkills(professionalSkills, professionalSkillsGroup)}
+                </ul>
+                <ul class="list">
                     ${getContent('Kỹ năng cá nhân', personalSkills)}
-                    ${getContent('Kỹ năng chuyên môn', professionalSkills)}
                 </ul>`);
         },
         renderEducation: function (list = []) {
@@ -347,9 +364,9 @@ const getHTMLLayout = (content = '') => {
                     padding-left: 1.2em;
                 }
                 ul > li, ol > li {
-                    margin: 0;
+                    margin: 0 0 5px 0;
                 }
-                ul { list-style: disc; s}
+                ul { list-style: disc; }
                 ol { list-style: circle; }
             </style>
         `;

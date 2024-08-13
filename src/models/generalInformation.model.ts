@@ -26,6 +26,7 @@ const schema = new Schema(
         careerGoal: { type: String, default: '', required: [false, 'Vui lòng nhập mục tiêu công việc'] },
         personalSkills: { type: [personalSkills], default: [] },
         professionalSkills: { type: [professionalSkillsSchema], default: [] },
+        professionalSkillsGroup: { type: Array, of: String, default: [], required: [false, 'Vui lòng nhập nhóm'] },
         foreignLanguages: {
             type: [foreignLanguageSchema],
             default: [],

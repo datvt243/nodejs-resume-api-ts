@@ -10,11 +10,13 @@ import { getObject, _id, position, candidateId, foreignLanguages, _arrayString, 
 
 const _sub = {
     candidateId,
+    professionalSkillsGroup: _arrayString,
     professionalSkills: Joi.array()
         .items(
             Joi.object({
                 name: Joi.string().required().messages({ 'any.required': 'Tên kỹ năng không được rỗng' }),
                 exp: Joi.number().required().messages({ 'any.required': 'Số năm kinh nghiệm không được rỗng' }),
+                group: Joi.string(),
             }).messages({
                 'object.base': 'Kỹ năng chuyên môn cần nhập vào là object',
             }),
@@ -53,7 +55,7 @@ export const schemaGeneralInformation = getObject({
     education: _stringDefault({ min: 3, max: 100, title: 'Học vấn' }),
     workLocation: _stringDefault({ min: 3, max: 100, title: 'Địa điểm làm việc' }),
     workForm: _stringDefault({ min: 0, max: 100, title: 'Hình thức làm việc' }),
-    careerGoal: _stringDefault({ min: 0, max: 100, title: 'Mục tiêu nghề nghiệp' }),
+    careerGoal: _stringDefault({ min: 0, max: 1000, title: 'Mục tiêu nghề nghiệp' }),
     yearsOfExperience: Joi.number().min(0).required().messages({
         'any.required': 'Số năm kinh nghiệm không được rỗng',
         'number.min': `Số năm kinh nghiệm không được nhỏ hơn {#limit}`,
