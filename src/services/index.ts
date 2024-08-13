@@ -134,7 +134,6 @@ export const baseUpdateDocument = async (props: {
         _errors = {};
 
     try {
-        console.log({ _valueUpdate });
         await MODEL.updateOne({ _id }, _valueUpdate).exec();
         _data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: Object.keys(_valueUpdate).join(', ') });
     } catch (err) {
