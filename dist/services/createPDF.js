@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pageRender = exports.createCV = void 0;
 const puppeteer_1 = __importDefault(require("puppeteer"));
+const utils_1 = require("@/utils");
 const createCV = async (data, res) => {
     try {
         /* const platform = os.platform();
@@ -17,7 +18,7 @@ const createCV = async (data, res) => {
         } else if (platform === 'linux') {
             executablePath = '/usr/bin/chromium-browser';
         } else {
-            console.error('Hệ điều hành không được hỗ trợ.');
+            _log('Hệ điều hành không được hỗ trợ.');
             process.exit(1);
         } */
         const otp = {
@@ -27,15 +28,13 @@ const createCV = async (data, res) => {
         };
         const browser = await puppeteer_1.default.launch(otp);
         const page = await browser.newPage();
-        const contentHTML = (0, exports.pageRender)(data);
-        /* res.send(contentHTML);
-        return; */
+        const { email, html: contentHTML } = (0, exports.pageRender)(data);
         await page.setContent(contentHTML, {
             waitUntil: 'domcontentloaded',
         });
         const mm = '5mm';
         const pdfBuffer = await page.pdf({
-            path: 'resume.pdf',
+            path: `${email}.pdf`,
             format: 'A4',
             margin: {
                 top: mm,
@@ -49,8 +48,8 @@ const createCV = async (data, res) => {
         res.send(pdfBuffer);
     }
     catch (error) {
-        console.error('Xảy ra lỗi, Không thể khởi động trình duyệt (server free không hỗ trợ)', error);
-        res.status(500).send('Xảy ra lỗi, Không thể khởi động trình duyệt (server free không hỗ trợ');
+        (0, utils_1._log)('Xảy ra lỗi, không thể đọc browser');
+        res.status(500).send('Xảy ra lỗi, không thể đọc browser');
     }
 };
 exports.createCV = createCV;
@@ -71,7 +70,10 @@ const pageRender = (RECORD) => {
     _content += _.renderEducation(educations);
     _content += _.renderForeignLanguages(generalInformation?.foreignLanguages || []);
     const html = getHTMLLayout(_content);
-    return html;
+    return {
+        email: candidate?.email || 'resume',
+        html,
+    };
     /* res.send(html); */
 };
 exports.pageRender = pageRender;

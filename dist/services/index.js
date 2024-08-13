@@ -117,7 +117,6 @@ const baseUpdateDocument = async (props) => {
      */
     let _success = true, _message = 'Cập nhật thành công', _data = null, _errors = {};
     try {
-        console.log({ _valueUpdate });
         await MODEL.updateOne({ _id }, _valueUpdate).exec();
         _data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: Object.keys(_valueUpdate).join(', ') });
     }

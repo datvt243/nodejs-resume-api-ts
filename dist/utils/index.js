@@ -23,10 +23,10 @@ const jwt_1 = require("./jwt");
 const process_config_1 = require("@/config/process.config");
 const _log = (props) => {
     /*
-    console.warn(): In ra cảnh báo.
-    console.error(): In ra lỗi.
-    console.table(): In ra bảng dữ liệu.
-    console.time() và console.timeEnd(): Đo thời gian thực hiện của một đoạn mã.
+        .warn(): In ra cảnh báo.
+        .error(): In ra lỗi.
+        .table(): In ra bảng dữ liệu.
+        .time() và .timeEnd(): Đo thời gian thực hiện của một đoạn mã.
     */
     if (!props)
         return;
