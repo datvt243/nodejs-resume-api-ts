@@ -15,11 +15,16 @@ exports.schemaCertificate = joi_1.default.object({
     _id: joi_config_1._id,
     name: (0, joi_config_1._stringDefault)({ min: 0, max: 50, title: 'Chứng chỉ' }),
     organization: (0, joi_config_1._stringDefault)({ min: 0, max: 50, title: 'Tổ chức' }),
-    description: joi_config_1.description,
+    description: joi_1.default.string().min(0).trim().strict().label('Mô tả').messages({
+        'any.required': `{#label} là bắt buộc`,
+        'string.min': `{#label} có ít nhất {#limit} ký tự`,
+        'string.max': `{#label} có ít nhất {#limit} ký tự`,
+        'string.empty': `{#label} không được trống`,
+    }),
     startDate: joi_config_1.startDate,
     endDate: joi_config_1.endDate,
     isNoExpiration: joi_config_1._boolean,
-    link: (0, joi_config_1._stringDefault)({ min: 0, max: 100, title: 'Liên kết' }),
+    /* link: _stringDefault({ min: 0, max: 100, title: 'Liên kết' }), */
     images: joi_config_1._arrayString,
     candidateId: joi_config_1.candidateId,
 });

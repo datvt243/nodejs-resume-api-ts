@@ -99,13 +99,13 @@ exports.fullName = joi_1.default.string().min(3).max(50).trim().strict().require
     'string.max': 'Họ tên có ít nhất {#limit} ký tự',
     'string.empty': 'Họ tên không được trống',
 });
-exports.company = joi_1.default.string().min(3).max(100).trim().strict().required().messages({
+exports.company = joi_1.default.string().min(0).max(100).trim().strict().required().messages({
     'any.required': 'Tên công ty là bắt buộc',
     'string.min': 'Tên công ty có ít nhất {#limit} ký tự',
     'string.max': 'Tên công ty có ít nhất {#limit} ký tự',
     'string.empty': 'Tên công ty tên không được trống',
 });
-exports.position = joi_1.default.string().min(3).max(100).trim().strict().required().messages({
+exports.position = joi_1.default.string().min(0).max(100).trim().strict().required().messages({
     'any.required': 'Vị trí là bắt buộc',
     'string.min': 'Vị trí ty có ít nhất {#limit} ký tự',
     'string.max': 'Vị trí ty có ít nhất {#limit} ký tự',
