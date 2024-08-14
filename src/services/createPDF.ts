@@ -2,7 +2,9 @@ import puppeteer from 'puppeteer';
 import os from 'os';
 import { Response } from 'express';
 import { _log } from '@/utils';
-import { informationPersonal, Skill, Item, Language } from '@/types/candidate.type';
+import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
+/* import { company } from '@/config'; */
+/* import { Award } from '@/models'; */
 
 export const createCV = async (data: Record<string, any>, res: Response) => {
     try {
@@ -29,6 +31,9 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         const page = await browser.newPage();
 
         const { email, html: contentHTML } = pageRender(data);
+
+        /* res.send(contentHTML); */
+
         await page.setContent(contentHTML, {
             waitUntil: 'domcontentloaded',
         });
@@ -59,7 +64,16 @@ export const pageRender = (RECORD: Record<string, any>) => {
     /**
      * get data format
      */
-    const { candidate, generalInformation, educations, experiences, projects } = getDataCandidate(RECORD);
+    const {
+        candidate,
+        generalInformation,
+        educations,
+        experiences,
+        projects,
+        references = [],
+        certificates = [],
+        awards = [],
+    } = getDataCandidate(RECORD);
 
     /**
      * render HTML
@@ -72,7 +86,10 @@ export const pageRender = (RECORD: Record<string, any>) => {
     _content += _.renderExperience(experiences);
     _content += _.renderProject(projects);
     _content += _.renderEducation(educations);
+    _content += _.renderAwards(awards);
+    _content += _.renderCertificates(certificates);
     _content += _.renderForeignLanguages(generalInformation?.foreignLanguages || []);
+    _content += _.renderReferences(references);
 
     const html = getHTMLLayout(_content);
     return {
@@ -112,7 +129,7 @@ const getDataCandidate = (RECORD: Record<string, any>) => {
     })(RECORD?.generalInformation || null);
 
     // ---
-    const { educations, experiences, projects } = RECORD;
+    const { educations, experiences, projects, references = [], certificates = [], awards = [] } = RECORD;
 
     return {
         candidate,
@@ -120,6 +137,9 @@ const getDataCandidate = (RECORD: Record<string, any>) => {
         educations,
         experiences,
         projects,
+        references,
+        certificates,
+        awards,
     };
 };
 
@@ -127,7 +147,8 @@ const _helper = () => {
     const _layoutItem = (props: Item) => {
         const { title, subTitle, startDate, endDate, isCurrent, description, skills = [] } = props;
 
-        const formatDate = (val: number) => {
+        const formatDate = (val: number | null) => {
+            if (!val) return '';
             const date = new Date(val);
             let m = date.getMonth() + 1,
                 y = date.getFullYear();
@@ -136,6 +157,10 @@ const _helper = () => {
 
         const getTime = ((startDate, endDate, isCurrent) => {
             const _start = formatDate(startDate);
+            if (!endDate) {
+                return _start;
+            }
+
             const _end = isCurrent ? 'Hiện tại' : formatDate(endDate);
             return `${_start} - ${_end}`;
         })(startDate, endDate, isCurrent);
@@ -165,7 +190,9 @@ const _helper = () => {
         return `
             <div class="box">
                 <div class="heading">${title.toUpperCase()}</div>
-                ${content}
+                <div class="clear" style="padding-left: 1rem">
+                    ${content}
+                </div>
             </div>
         `;
     };
@@ -305,10 +332,75 @@ const _helper = () => {
             if (!list.length) return '';
             return _boxContent(
                 'Ngoại ngữ',
-                `<ul style="display: flex-inline-block">${list
-                    .map((el) => `<li style="padding-right: 20px; text-transform: capitalize">${el.language} (${el.level})</li>`)
-                    .join('')}</ul>`,
+                `<ul style="display: flex-inline-block">
+                    ${list
+                        .map((el) => {
+                            return `
+                                <li style="padding-right: 20px; text-transform: capitalize">
+                                    ${el.language} (${el.level})
+                                </li>`;
+                        })
+                        .join('')}
+                </ul>`,
             );
+        },
+        renderReferences: function (list: Reference[]) {
+            if (!list.length) return '';
+            return _boxContent(
+                'Người tham khảo',
+                `<ul class="d-flex">
+                    ${list
+                        .map((e: Reference) => {
+                            return `
+                                <li class="col-6">
+                                    <p>${e.fullName.toLocaleUpperCase()}</p>
+                                    <p>Công ty: ${e.company}</p>
+                                    <p>Chức vụ: ${e.position}</p>
+                                    <p>Tel: ${e.phone} </p>
+                                </li>
+                            `;
+                        })
+                        .join('')}
+                </ul>`,
+            );
+        },
+        renderCertificates: function (list: Certificate[]) {
+            if (!list.length) return '';
+
+            const _content = list
+                .map((el: Certificate) => {
+                    const {
+                        organization: subTitle,
+                        name: title,
+                        startDate,
+                        endDate = +new Date(),
+                        description = '',
+                        isNoExpiration: isCurrent,
+                    } = el;
+                    return _layoutItem({ title, subTitle: `Nơi cấp: ${subTitle}`, startDate, endDate, isCurrent, description });
+                })
+                .join('');
+
+            return _boxContent('Chứng chỉ', _content);
+        },
+        renderAwards: function (list: Award[]) {
+            if (!list.length) return '';
+
+            const _content = list
+                .map((el: Award) => {
+                    const { organization: subTitle, name: title, issueDate: startDate, description = '' } = el;
+                    return _layoutItem({
+                        title,
+                        subTitle: `Đơn vị: ${subTitle}`,
+                        startDate,
+                        endDate: null,
+                        isCurrent: false,
+                        description,
+                    });
+                })
+                .join('');
+
+            return _boxContent('Giải thưởng', _content);
         },
     };
 };
@@ -370,6 +462,8 @@ const getHTMLLayout = (content = '') => {
                 }
                 .d-flex { display: flex; }
                 .d-flex.between { justify-content: space-between; }
+                .d-flex > .col-6 { flex-basis: 50% }
+
                 .bg-gray { background-color: #f5f5f5; }
                 
                 .item:not(:last-child) { margin-bottom: 1rem }
@@ -408,6 +502,8 @@ const getHTMLLayout = (content = '') => {
                 }
                 ul { list-style: disc; }
                 ol { list-style: circle; }
+                
+                .col-6 { flex-basic: 50% }
             </style>
         `;
     }

@@ -119,14 +119,14 @@ export const fullName = Joi.string().min(3).max(50).trim().strict().required().m
     'string.empty': 'Họ tên không được trống',
 });
 
-export const company = Joi.string().min(3).max(100).trim().strict().required().messages({
+export const company = Joi.string().min(0).max(100).trim().strict().required().messages({
     'any.required': 'Tên công ty là bắt buộc',
     'string.min': 'Tên công ty có ít nhất {#limit} ký tự',
     'string.max': 'Tên công ty có ít nhất {#limit} ký tự',
     'string.empty': 'Tên công ty tên không được trống',
 });
 
-export const position = Joi.string().min(3).max(100).trim().strict().required().messages({
+export const position = Joi.string().min(0).max(100).trim().strict().required().messages({
     'any.required': 'Vị trí là bắt buộc',
     'string.min': 'Vị trí ty có ít nhất {#limit} ký tự',
     'string.max': 'Vị trí ty có ít nhất {#limit} ký tự',
