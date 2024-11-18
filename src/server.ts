@@ -7,7 +7,7 @@ require('module-alias/register');
 require('./alias');
 import dotenv from 'dotenv';
 
-/* import path, { dirname } from 'path'; */
+ import path, { dirname } from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
