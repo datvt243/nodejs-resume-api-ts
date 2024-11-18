@@ -14,7 +14,8 @@
         "remove-build": "rm -rf build",
         "start": "NODE_ENV=production node dist/server.js",
         "nodemon-start": "nodemon dist/server.js",
-        "build-tsc": "tsc"
+        "build-tsc": "tsc && npm run copy",
+        "copy": "cp -R ./src/views ./src/public ./dist/"
     },
     "author": "DatVT",
     "license": "ISC",
