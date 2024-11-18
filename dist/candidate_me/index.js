@@ -51,7 +51,8 @@ const fnGetAboutMe = async (req, res) => {
 };
 exports.fnGetAboutMe = fnGetAboutMe;
 const handlerGetAboutMe = async (email) => {
-    const document = await MODEL.Candidate.findOne({ email }).exec();
+    const removeFields = { __v: 0, createdAt: 0, updatedAt: 0, candidateId: 0 };
+    const document = await MODEL.Candidate.findOne({ email }, { ...removeFields }).exec();
     if (!document)
         return (0, services_1.formatReturnFailed)('Email không tồn tại');
     const { _id } = document;
@@ -71,25 +72,18 @@ const handlerGetAboutMe = async (email) => {
     delete dataResult.password;
     for (const { collection, model } of getMoreInfo) {
         dataResult[collection] = [];
-        const _find = await model.find({ candidateId: _id }).exec();
+        const _find = await model
+            .find({ candidateId: _id }, { _id: 0, ...removeFields })
+            .exec();
         if (!_find)
             continue;
         dataResult[collection] = _find;
     }
-    /**
-     * remove các property bảo mật và dư thừa
-     */
-    const keys = ['password', '__v', 'createdAt', 'updatedAt'];
-    for (const key of keys) {
-        delete dataResult[key];
-    }
-    for (const { collection } of getMoreInfo) {
-        for (const record of dataResult[collection]) {
-            for (const key of keys) {
-                delete record[key];
-            }
-        }
-    }
+    dataResult['generalInformation'] = ((data) => {
+        if (!data.length)
+            return {};
+        return data[0];
+    })(dataResult['generalInformation']);
     return {
         success: true,
         data: dataResult,

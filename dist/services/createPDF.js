@@ -5,26 +5,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pageRender = exports.createCV = void 0;
 const puppeteer_1 = __importDefault(require("puppeteer"));
+// import open from 'open';
+const os_1 = __importDefault(require("os"));
 const utils_1 = require("@/utils");
-/* import { company } from '@/config'; */
-/* import { Award } from '@/models'; */
 const createCV = async (data, res) => {
     try {
-        /* const platform = os.platform();
+        const URL = `src/public/pdf/`;
+        const platform = os_1.default.platform();
         let executablePath = '';
-
         if (platform === 'win32') {
             executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-        } else if (platform === 'darwin') {
+        }
+        else if (platform === 'darwin') {
             executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-        } else if (platform === 'linux') {
+        }
+        else if (platform === 'linux') {
             executablePath = '/usr/bin/chromium-browser';
-        } else {
-            _log('Hệ điều hành không được hỗ trợ.');
+        }
+        else {
+            (0, utils_1._log)('Hệ điều hành không được hỗ trợ.');
             process.exit(1);
-        } */
+        }
         const otp = {
-            /* executablePath, */
+            executablePath,
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         };
@@ -37,7 +40,7 @@ const createCV = async (data, res) => {
         });
         const mm = '5mm';
         const pdfBuffer = await page.pdf({
-            path: `${email}.pdf`,
+            path: `${URL}${email}.pdf`,
             format: 'A4',
             margin: {
                 top: mm,
@@ -46,11 +49,23 @@ const createCV = async (data, res) => {
                 left: mm,
             },
         });
+        // Open the generated PDF file in the default PDF viewer
+        // try {
+        //     await (async () => {
+        //         const open: any = await import('open');
+        //         await open(`${URL}${email}.pdf`, { wait: true });
+        //     })();
+        //
+        // } catch (e) {
+        //     console.log({ e })
+        // }
+        // Close the browser
         await browser.close();
         res.contentType('application/pdf');
         res.send(pdfBuffer);
     }
     catch (error) {
+        console.log({ error });
         (0, utils_1._log)('Xảy ra lỗi, không thể đọc browser');
         res.status(500).send('Xảy ra lỗi, không thể đọc browser');
     }

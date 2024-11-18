@@ -11,7 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require('module-alias/register');
 require('./alias');
 const dotenv_1 = __importDefault(require("dotenv"));
-/* import path, { dirname } from 'path'; */
+const path_1 = __importDefault(require("path"));
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const cors_1 = __importDefault(require("cors"));
@@ -40,7 +40,7 @@ const runServer = () => {
     /**
      * use static-files
      */
-    /* app.use(express.static(path.join(__dirname, './public'))); */
+    app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
     /**
      * use router
      */
