@@ -65,9 +65,11 @@ const createCV = async (data, res) => {
         res.send(pdfBuffer);
     }
     catch (error) {
-        console.log({ error });
-        (0, utils_1._log)('Xảy ra lỗi, không thể đọc browser');
-        res.status(500).send('Xảy ra lỗi, không thể đọc browser');
+        res.status(500).send({
+            status: false,
+            message: 'Xảy ra lỗi, không thể đọc browser',
+            error: error
+        });
     }
 };
 exports.createCV = createCV;
