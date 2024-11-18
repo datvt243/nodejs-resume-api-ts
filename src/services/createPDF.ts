@@ -1,14 +1,18 @@
 import puppeteer from 'puppeteer';
-// import os from 'os';
+// import open from 'open';
+
+import os from 'os';
 import { Response } from 'express';
 import { _log } from '@/utils';
 import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
-/* import { company } from '@/config'; */
-/* import { Award } from '@/models'; */
+
 
 export const createCV = async (data: Record<string, any>, res: Response) => {
     try {
-        /* const platform = os.platform();
+
+        const URL = `src/public/pdf/`;
+
+        const platform = os.platform();
         let executablePath = '';
 
         if (platform === 'win32') {
@@ -20,10 +24,10 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         } else {
             _log('Hệ điều hành không được hỗ trợ.');
             process.exit(1);
-        } */
+        }
 
         const otp = {
-            /* executablePath, */
+            executablePath,
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
         };
@@ -40,7 +44,7 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
 
         const mm = '5mm';
         const pdfBuffer = await page.pdf({
-            path: `public/pdf/${email}.pdf`,
+            path: `${URL}${email}.pdf`,
             format: 'A4',
             margin: {
                 top: mm,
@@ -51,15 +55,24 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
         });
 
         // Open the generated PDF file in the default PDF viewer
-        const open = await import('open');
-        await open.default(`public/pdf/${email}.pdf`);
-        //close the browser
 
+        // try {
+        //     await (async () => {
+        //         const open: any = await import('open');
+        //         await open(`${URL}${email}.pdf`, { wait: true });
+        //     })();
+        //
+        // } catch (e) {
+        //     console.log({ e })
+        // }
+
+        // Close the browser
         await browser.close();
 
         res.contentType('application/pdf');
         res.send(pdfBuffer);
     } catch (error) {
+        console.log({error});
         _log('Xảy ra lỗi, không thể đọc browser');
         res.status(500).send('Xảy ra lỗi, không thể đọc browser');
     }
