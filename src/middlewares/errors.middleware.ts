@@ -8,11 +8,12 @@ import { StatusCodes } from 'http-status-codes';
 import { NODE_ENV } from '@/config/process.config';
 import { _log } from '@/utils';
 
-export const errorsMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
+type ErrorMid = Error | ReferenceError | TypeError
+export const errorsMiddleware = (err: ErrorMid, req: Request, res: Response, next: NextFunction) => {
     _log('***** WARNING!!! Ops! we got a problem');
 
-    let _message = '',
-        _code = StatusCodes.BAD_REQUEST;
+    let _message: string = '',
+        _code: StatusCodes = StatusCodes.BAD_REQUEST;
 
     if (err instanceof ReferenceError) {
         _message = err.message;

@@ -15,12 +15,12 @@ const connectMongo = function (callback = () => {}) {
             `mongodb+srv://${MONGOBD_USER}:${MONGOBD_PASSWORD}@davidapi.jhhu4ml.mongodb.net/resume-api?retryWrites=true&w=majority&appName=davidAPI`,
         )
         .then(() => {
-            _log(`--------------------`);
-            _log('MongoDB Connected!');
+            _log(`--------------------`)
+            _log('MongoDB Connected!')
             callback?.();
         })
         .catch((err) => {
-            _log({ text: `MongoDB Connect failed !!! ${err}`, type: 'error' });
+            _log({ text: `MongoDB Connect failed !!! ${err}`, type: 'error' })
         });
 };
 

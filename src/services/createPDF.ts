@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import os from 'os';
+// import os from 'os';
 import { Response } from 'express';
 import { _log } from '@/utils';
 import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
@@ -40,7 +40,7 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
 
         const mm = '5mm';
         const pdfBuffer = await page.pdf({
-            path: `${email}.pdf`,
+            path: `public/pdf/${email}.pdf`,
             format: 'A4',
             margin: {
                 top: mm,
@@ -49,6 +49,11 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
                 left: mm,
             },
         });
+
+        // Open the generated PDF file in the default PDF viewer
+        const open = await import('open');
+        await open.default(`public/pdf/${email}.pdf`);
+        //close the browser
 
         await browser.close();
 
