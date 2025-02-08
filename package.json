@@ -15,7 +15,9 @@
         "start": "NODE_ENV=production node dist/server.js",
         "nodemon-start": "nodemon dist/server.js",
         "build-tsc": "tsc && npm run copy",
-        "copy": "cp -R ./src/views ./src/public ./dist/"
+        "build": "tsc && npm run copy",
+        "copy": "cp -R ./src/views ./src/public ./dist/",
+        "test": "jest --passWithNoTests"
     },
     "author": "DatVT",
     "license": "ISC",
@@ -51,11 +53,14 @@
         "@types/express": "^4.17.21",
         "@types/express-session": "^1.18.0",
         "@types/http-status-codes": "^1.2.0",
+        "@types/jest": "^29.5.14",
         "@types/jsonwebtoken": "^9.0.6",
         "@types/mongoose": "^5.11.97",
         "@types/node": "^20.14.12",
         "babel-plugin-module-resolver": "^5.0.0",
+        "jest": "^29.7.0",
         "nodemon": "^3.1.0",
+        "ts-jest": "^29.2.5",
         "ts-node": "^10.9.2",
         "tsconfig-paths": "^4.2.0",
         "typescript": "^5.5.4"
