@@ -1,4 +1,4 @@
-name: Deploy to Render
+name: Build & Deploy to Render
 
 on:
   push:
@@ -13,6 +13,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: npm install  # Hoặc yarn install nếu dùng Yarn
+
+      - name: Build project
+        run: npm run build  # Build ra thư mục dist/
+
       - name: Deploy to Render
         run: |
-          curl -X POST "https://api.render.com/deploy/srv-cqp0podds78s73e275og?key=ARlic2XFAzA"
+          curl -X POST "https://api.render.com/deploy/srv-${{ secrets.RENDER_SRV }}?key=${{ secrets.RENDER_KEY }}"
