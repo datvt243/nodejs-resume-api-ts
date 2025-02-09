@@ -4,6 +4,7 @@
  * Description:
  */
 
+import { _log } from '.';
 import bcrypt from 'bcrypt';
 
 const saltRounds = 10; // số vòng mã hóa
@@ -14,7 +15,7 @@ export const bcryptGenerateSalt = async (pass: string): Promise<string> => {
         const hash = await bcrypt.hash(pass, salt);
         return hash;
     } catch (e) {
-        console.error('Error hashing password:', e);
+        _log('Error hashing password');
         throw new Error('Failed to hash password');
     }
 };
@@ -24,7 +25,7 @@ export const bcryptCompareHash = async (str: string, hash: string): Promise<bool
     try {
         return Boolean(await bcrypt.compare(str, hash)); // make sure alway return boolean
     } catch (error) {
-        console.error('Error comparing hash:', error);
+        _log('Error comparing hash:');
         return false;
     }
 };
