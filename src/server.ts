@@ -7,7 +7,7 @@ require('module-alias/register');
 require('./alias');
 import dotenv from 'dotenv';
 
- import path, { dirname } from 'path';
+import path, { dirname } from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -16,6 +16,7 @@ import session from 'express-session';
 
 import { errorsMiddleware } from '@/middlewares';
 import { sessionConfig, corsConfig } from '@/config';
+import { _log } from '@/utils';
 
 import router from '@/routers';
 
@@ -84,6 +85,13 @@ const runServer = () => {
 const { LOCAL_PORT = 3001 } = process.env;
 import connectMongo from '@/database/mongo.db';
 
-connectMongo(() => {
-    runServer?.();
-});
+const startServer = async () => {
+    try {
+        const isConnected = await connectMongo();
+        isConnected && runServer();
+    } catch (e) {
+        _log(`Failed to start server: ${e}`);
+    }
+}
+
+startServer();
