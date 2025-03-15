@@ -33,12 +33,12 @@ router.use('/certificate', verifyToken, routeCertificate);
 router.get('/download-pdf', verifyTokenByQuery, fnExportPDF);
 
 router.get('/*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Page not found',
-        errors: null,
-        data: null,
-    });
+  res.status(404).json({
+    success: false,
+    message: 'Page not found',
+    errors: null,
+    data: null,
+  });
 });
 
 export default router;

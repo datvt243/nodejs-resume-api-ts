@@ -6,118 +6,115 @@ import { Response } from 'express';
 import { _log } from '@/utils';
 import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
 
-
 export const createCV = async (data: Record<string, any>, res: Response) => {
-    try {
+  try {
+    const URL = `src/public/pdf/`;
 
-        const URL = `src/public/pdf/`;
+    const platform = os.platform();
+    let executablePath = '';
 
-        const platform = os.platform();
-        let executablePath = '';
-
-        if (platform === 'win32') {
-            executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-        } else if (platform === 'darwin') {
-            executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-        } else if (platform === 'linux') {
-            executablePath = '/usr/bin/chromium-browser';
-        } else {
-            _log('Hệ điều hành không được hỗ trợ.');
-            process.exit(1);
-        }
-
-        const otp = {
-            executablePath,
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        };
-        const browser = await puppeteer.launch(otp);
-        const page = await browser.newPage();
-
-        const { email, html: contentHTML } = pageRender(data);
-
-        /* res.send(contentHTML); */
-
-        await page.setContent(contentHTML, {
-            waitUntil: 'domcontentloaded',
-        });
-
-        const mm = '5mm';
-        const pdfBuffer = await page.pdf({
-            path: `${URL}${email}.pdf`,
-            format: 'A4',
-            margin: {
-                top: mm,
-                right: mm,
-                bottom: mm,
-                left: mm,
-            },
-        });
-
-        // Open the generated PDF file in the default PDF viewer
-
-        // try {
-        //     await (async () => {
-        //         const open: any = await import('open');
-        //         await open(`${URL}${email}.pdf`, { wait: true });
-        //     })();
-        //
-        // } catch (e) {
-        //     console.log({ e })
-        // }
-
-        // Close the browser
-        await browser.close();
-
-        res.contentType('application/pdf');
-        res.send(pdfBuffer);
-    } catch (error) {
-
-        res.status(500).send({
-            status: false,
-            message: 'Xảy ra lỗi, không thể đọc browser',
-            error: error
-        });
+    if (platform === 'win32') {
+      executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+    } else if (platform === 'darwin') {
+      executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    } else if (platform === 'linux') {
+      executablePath = '/usr/bin/chromium-browser';
+    } else {
+      _log('Hệ điều hành không được hỗ trợ.');
+      process.exit(1);
     }
+
+    const otp = {
+      executablePath,
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    };
+    const browser = await puppeteer.launch(otp);
+    const page = await browser.newPage();
+
+    const { email, html: contentHTML } = pageRender(data);
+
+    /* res.send(contentHTML); */
+
+    await page.setContent(contentHTML, {
+      waitUntil: 'domcontentloaded',
+    });
+
+    const mm = '5mm';
+    const pdfBuffer = await page.pdf({
+      path: `${URL}${email}.pdf`,
+      format: 'A4',
+      margin: {
+        top: mm,
+        right: mm,
+        bottom: mm,
+        left: mm,
+      },
+    });
+
+    // Open the generated PDF file in the default PDF viewer
+
+    // try {
+    //     await (async () => {
+    //         const open: any = await import('open');
+    //         await open(`${URL}${email}.pdf`, { wait: true });
+    //     })();
+    //
+    // } catch (e) {
+    //     console.log({ e })
+    // }
+
+    // Close the browser
+    await browser.close();
+
+    res.contentType('application/pdf');
+    res.send(pdfBuffer);
+  } catch (error) {
+    res.status(500).send({
+      status: false,
+      message: 'Xảy ra lỗi, không thể đọc browser',
+      error: error,
+    });
+  }
 };
 
 export const pageRender = (RECORD: Record<string, any>) => {
-    /**
-     * get data format
-     */
-    const {
-        candidate,
-        generalInformation,
-        educations,
-        experiences,
-        projects,
-        references = [],
-        certificates = [],
-        awards = [],
-    } = getDataCandidate(RECORD);
+  /**
+   * get data format
+   */
+  const {
+    candidate,
+    generalInformation,
+    educations,
+    experiences,
+    projects,
+    references = [],
+    certificates = [],
+    awards = [],
+  } = getDataCandidate(RECORD);
 
-    /**
-     * render HTML
-     */
-    let _content = '';
-    const _ = _helper();
+  /**
+   * render HTML
+   */
+  let _content = '';
+  const _ = _helper();
 
-    _content += _.renderInfo(candidate);
-    _content += _.renderSkills(generalInformation);
-    _content += _.renderExperience(experiences);
-    _content += _.renderProject(projects);
-    _content += _.renderEducation(educations);
-    _content += _.renderAwards(awards);
-    _content += _.renderCertificates(certificates);
-    _content += _.renderForeignLanguages(generalInformation?.foreignLanguages || []);
-    _content += _.renderReferences(references);
+  _content += _.renderInfo(candidate);
+  _content += _.renderSkills(generalInformation);
+  _content += _.renderExperience(experiences);
+  _content += _.renderProject(projects);
+  _content += _.renderEducation(educations);
+  _content += _.renderAwards(awards);
+  _content += _.renderCertificates(certificates);
+  _content += _.renderForeignLanguages(generalInformation?.foreignLanguages || []);
+  _content += _.renderReferences(references);
 
-    const html = getHTMLLayout(_content);
-    return {
-        email: candidate?.email || 'resume',
-        html,
-    };
-    /* res.send(html); */
+  const html = getHTMLLayout(_content);
+  return {
+    email: candidate?.email || 'resume',
+    html,
+  };
+  /* res.send(html); */
 };
 
 /**
@@ -126,70 +123,70 @@ export const pageRender = (RECORD: Record<string, any>) => {
  * @returns
  */
 const getDataCandidate = (RECORD: Record<string, any>) => {
-    // Thông tin cơ bản
-    const candidate = (() => {
-        const { firstName, lastName, phone, email, address, introduction, socialMedia = {} } = RECORD;
-        const { github = '', linkedin = '', website = '' } = socialMedia;
-        return {
-            firstName,
-            lastName,
-            phone,
-            email,
-            address,
-            introduction,
-            github,
-            linkedin,
-            website,
-        };
-    })();
-
-    // Thông tin công việc
-    const generalInformation = ((el) => {
-        if (!el) return {};
-        return Array.isArray(el) ? el?.[0] || {} : el;
-    })(RECORD?.generalInformation || null);
-
-    // ---
-    const { educations, experiences, projects, references = [], certificates = [], awards = [] } = RECORD;
-
+  // Thông tin cơ bản
+  const candidate = (() => {
+    const { firstName, lastName, phone, email, address, introduction, socialMedia = {} } = RECORD;
+    const { github = '', linkedin = '', website = '' } = socialMedia;
     return {
-        candidate,
-        generalInformation,
-        educations,
-        experiences,
-        projects,
-        references,
-        certificates,
-        awards,
+      firstName,
+      lastName,
+      phone,
+      email,
+      address,
+      introduction,
+      github,
+      linkedin,
+      website,
     };
+  })();
+
+  // Thông tin công việc
+  const generalInformation = ((el) => {
+    if (!el) return {};
+    return Array.isArray(el) ? el?.[0] || {} : el;
+  })(RECORD?.generalInformation || null);
+
+  // ---
+  const { educations, experiences, projects, references = [], certificates = [], awards = [] } = RECORD;
+
+  return {
+    candidate,
+    generalInformation,
+    educations,
+    experiences,
+    projects,
+    references,
+    certificates,
+    awards,
+  };
 };
 
 const _helper = () => {
-    const _layoutItem = (props: Item) => {
-        const { title, subTitle, startDate, endDate, isCurrent, description, skills = [] } = props;
+  const _layoutItem = (props: Item) => {
+    const { title, subTitle, startDate, endDate, isCurrent, description, skills = [] } = props;
 
-        const formatDate = (val: number | null) => {
-            if (!val) return '';
-            const date = new Date(val);
-            let m = date.getMonth() + 1,
-                y = date.getFullYear();
-            return `${m < 9 ? `0${m}` : m}/${y}`;
-        };
+    const formatDate = (val: number | null) => {
+      if (!val) return '';
+      const date = new Date(val);
+      let m = date.getMonth() + 1,
+        y = date.getFullYear();
+      return `${m < 9 ? `0${m}` : m}/${y}`;
+    };
 
-        const getTime = ((startDate, endDate, isCurrent) => {
-            const _start = formatDate(startDate);
-            if (!endDate) {
-                return _start;
-            }
+    const getTime = ((startDate, endDate, isCurrent) => {
+      const _start = formatDate(startDate);
+      if (!endDate) {
+        return _start;
+      }
 
-            const _end = isCurrent ? 'Hiện tại' : formatDate(endDate);
-            return `${_start} - ${_end}`;
-        })(startDate, endDate, isCurrent);
+      const _end = isCurrent ? 'Hiện tại' : formatDate(endDate);
+      return `${_start} - ${_end}`;
+    })(startDate, endDate, isCurrent);
 
-        const getSkills = ((skills = []) => {
-            return !skills.length ? `<div class="skills">${skills.join(', ')}</div>` : '';
-        })();
-        return `
+    const getSkills = ((skills = []) => {
+      return !skills.length ? `<div class="skills">${skills.join(', ')}</div>` : '';
+    })();
+    return `
             <div class="item">
                 <div class="header">
                     <div class="d-flex between bg-gray mb-0">
@@ -206,9 +203,9 @@ const _helper = () => {
                 </div>
             </div>
         `;
-    };
-    const _boxContent = (title = '', content = '') => {
-        return `
+  };
+  const _boxContent = (title = '', content = '') => {
+    return `
             <div class="box">
                 <div class="heading">${title.toUpperCase()}</div>
                 <div class="clear" style="padding-left: 1rem">
@@ -216,27 +213,27 @@ const _helper = () => {
                 </div>
             </div>
         `;
-    };
-    return {
-        renderInfo: function (props: informationPersonal) {
-            const { firstName, lastName, phone, email, address, introduction, github, linkedin, website } = props;
+  };
+  return {
+    renderInfo: function (props: informationPersonal) {
+      const { firstName, lastName, phone, email, address, introduction, github, linkedin, website } = props;
 
-            const getInfo = (phone: string, email: string, address: string) => {
-                let _result = '';
-                address && (_result += address);
-                email && (_result += ` - <a href="mailto:${email}">${email}</a>`);
-                phone && (_result += ` - <a href="tel:${phone}">${phone}</a>`);
-                return _result;
-            };
-            const getWebsite = (github: string = '', linkedin: string = '', website: string = '') => {
-                let _result = '';
-                github && (_result += `<a href="${github}">${github}</a>`);
-                linkedin && (_result += ` - <a href="${linkedin}">${linkedin}</a>`);
-                website && (_result += ` - <a href="${website}">${website}</a>`);
-                return _result;
-            };
+      const getInfo = (phone: string, email: string, address: string) => {
+        let _result = '';
+        address && (_result += address);
+        email && (_result += ` - <a href="mailto:${email}">${email}</a>`);
+        phone && (_result += ` - <a href="tel:${phone}">${phone}</a>`);
+        return _result;
+      };
+      const getWebsite = (github: string = '', linkedin: string = '', website: string = '') => {
+        let _result = '';
+        github && (_result += `<a href="${github}">${github}</a>`);
+        linkedin && (_result += ` - <a href="${linkedin}">${linkedin}</a>`);
+        website && (_result += ` - <a href="${website}">${website}</a>`);
+        return _result;
+      };
 
-            return `
+      return `
                 <div class="box">
                     <div class="text-center" style="margin-bottom: 10px">
                         <div class="full-name">${firstName} ${lastName}</div>
@@ -245,134 +242,134 @@ const _helper = () => {
                     </div>
                     <div class="description">${introduction}</div>
                 </div>`;
-        },
-        renderSkills: function (generalInformation: {
-            personalSkills: Skill[];
-            professionalSkills: Skill[];
-            professionalSkillsGroup: string[];
-        }) {
-            function getContent(title = '', skills: Skill[] = []) {
-                if (!skills.length) return '';
-                return `<li>${title}: ${skills.map((e) => e.name).join(', ')}</li>`;
-            }
-            function getProfessionalSkills(skills: Skill[], groups: string[]) {
-                if (!groups.length) return getContent('Kỹ năng chuyên môn', skills);
+    },
+    renderSkills: function (generalInformation: {
+      personalSkills: Skill[];
+      professionalSkills: Skill[];
+      professionalSkillsGroup: string[];
+    }) {
+      function getContent(title = '', skills: Skill[] = []) {
+        if (!skills.length) return '';
+        return `<li>${title}: ${skills.map((e) => e.name).join(', ')}</li>`;
+      }
+      function getProfessionalSkills(skills: Skill[], groups: string[]) {
+        if (!groups.length) return getContent('Kỹ năng chuyên môn', skills);
 
-                if (skills.filter((i) => i.group).length) {
-                    const _groups: { name: string; skills: Skill[] | [] }[] = [];
-                    for (const gr of groups) {
-                        _groups.push({ name: gr, skills: skills.filter((i) => i.group === gr) });
-                    }
+        if (skills.filter((i) => i.group).length) {
+          const _groups: { name: string; skills: Skill[] | [] }[] = [];
+          for (const gr of groups) {
+            _groups.push({ name: gr, skills: skills.filter((i) => i.group === gr) });
+          }
 
-                    _groups.push({ name: 'other', skills: skills.filter((i) => !i.group) });
+          _groups.push({ name: 'other', skills: skills.filter((i) => !i.group) });
 
-                    let str = '';
-                    for (const { name, skills } of _groups) {
-                        skills.length && (str += `<li>${name}: ${skills.map((i) => i.name).join(', ')}</li>`);
-                    }
+          let str = '';
+          for (const { name, skills } of _groups) {
+            skills.length && (str += `<li>${name}: ${skills.map((i) => i.name).join(', ')}</li>`);
+          }
 
-                    return str;
-                }
-                return getContent('Kỹ năng chuyên môn', skills);
-            }
-            const { personalSkills = [], professionalSkills = [], professionalSkillsGroup = [] } = generalInformation;
+          return str;
+        }
+        return getContent('Kỹ năng chuyên môn', skills);
+      }
+      const { personalSkills = [], professionalSkills = [], professionalSkillsGroup = [] } = generalInformation;
 
-            if (!personalSkills.length && !professionalSkills.length) return '';
+      if (!personalSkills.length && !professionalSkills.length) return '';
 
-            return _boxContent(
-                'Kỹ năng',
-                `<ul class="list" style="padding-left: 2.5rem">
+      return _boxContent(
+        'Kỹ năng',
+        `<ul class="list" style="padding-left: 2.5rem">
                     ${getProfessionalSkills(professionalSkills, professionalSkillsGroup)}
                 </ul>
                 <ul class="list">
                     ${getContent('Kỹ năng cá nhân', personalSkills)}
                 </ul>`,
-            );
-        },
-        renderEducation: function (list = []) {
-            if (!list.length) return '';
+      );
+    },
+    renderEducation: function (list = []) {
+      if (!list.length) return '';
 
-            const _content = list
-                .map((el) => {
-                    const { school: subTitle, major: title, startDate, endDate, description, isCurrent } = el;
-                    return _layoutItem({ title, subTitle: `Trường: ${subTitle}`, startDate, endDate, isCurrent, description });
-                })
-                .join('');
+      const _content = list
+        .map((el) => {
+          const { school: subTitle, major: title, startDate, endDate, description, isCurrent } = el;
+          return _layoutItem({ title, subTitle: `Trường: ${subTitle}`, startDate, endDate, isCurrent, description });
+        })
+        .join('');
 
-            return _boxContent('Học vấn', _content);
-        },
-        renderExperience: function (list = []) {
-            if (!list.length) return '';
+      return _boxContent('Học vấn', _content);
+    },
+    renderExperience: function (list = []) {
+      if (!list.length) return '';
 
-            const _content = list
-                .map((el) => {
-                    const { company: subTitle, position: title, startDate, endDate, description, isCurrent, skills } = el;
-                    return _layoutItem({
-                        title,
-                        subTitle: `${subTitle}`,
-                        startDate,
-                        endDate,
-                        isCurrent,
-                        description,
-                        skills,
-                    });
-                })
-                .join('');
+      const _content = list
+        .map((el) => {
+          const { company: subTitle, position: title, startDate, endDate, description, isCurrent, skills } = el;
+          return _layoutItem({
+            title,
+            subTitle: `${subTitle}`,
+            startDate,
+            endDate,
+            isCurrent,
+            description,
+            skills,
+          });
+        })
+        .join('');
 
-            return _boxContent('Kinh nghiệm làm việc', _content);
-        },
-        renderProject: function (list = []) {
-            if (!list.length) return '';
+      return _boxContent('Kinh nghiệm làm việc', _content);
+    },
+    renderProject: function (list = []) {
+      if (!list.length) return '';
 
-            const _content = list
-                .map((el) => {
-                    const {
-                        name: title,
-                        position: subTitle,
-                        startDate,
-                        endDate,
-                        description,
-                        isWorking: isCurrent,
-                        technology: skills,
-                    } = el;
-                    return _layoutItem({
-                        title,
-                        subTitle: `${subTitle}`,
-                        startDate,
-                        endDate,
-                        isCurrent,
-                        description,
-                        skills,
-                    });
-                })
-                .join('');
+      const _content = list
+        .map((el) => {
+          const {
+            name: title,
+            position: subTitle,
+            startDate,
+            endDate,
+            description,
+            isWorking: isCurrent,
+            technology: skills,
+          } = el;
+          return _layoutItem({
+            title,
+            subTitle: `${subTitle}`,
+            startDate,
+            endDate,
+            isCurrent,
+            description,
+            skills,
+          });
+        })
+        .join('');
 
-            return _boxContent('Dự Án', _content);
-        },
-        renderForeignLanguages: function (list: Language[] = []) {
-            if (!list.length) return '';
-            return _boxContent(
-                'Ngoại ngữ',
-                `<ul style="display: flex-inline-block">
+      return _boxContent('Dự Án', _content);
+    },
+    renderForeignLanguages: function (list: Language[] = []) {
+      if (!list.length) return '';
+      return _boxContent(
+        'Ngoại ngữ',
+        `<ul style="display: flex-inline-block">
                     ${list
-                        .map((el) => {
-                            return `
+                      .map((el) => {
+                        return `
                                 <li style="padding-right: 20px; text-transform: capitalize">
                                     ${el.language} (${el.level})
                                 </li>`;
-                        })
-                        .join('')}
+                      })
+                      .join('')}
                 </ul>`,
-            );
-        },
-        renderReferences: function (list: Reference[]) {
-            if (!list.length) return '';
-            return _boxContent(
-                'Người tham khảo',
-                `<ul class="d-flex">
+      );
+    },
+    renderReferences: function (list: Reference[]) {
+      if (!list.length) return '';
+      return _boxContent(
+        'Người tham khảo',
+        `<ul class="d-flex">
                     ${list
-                        .map((e: Reference) => {
-                            return `
+                      .map((e: Reference) => {
+                        return `
                                 <li class="col-6">
                                     <p>${e.fullName.toLocaleUpperCase()}</p>
                                     <p>Công ty: ${e.company}</p>
@@ -380,54 +377,54 @@ const _helper = () => {
                                     <p>Tel: ${e.phone} </p>
                                 </li>
                             `;
-                        })
-                        .join('')}
+                      })
+                      .join('')}
                 </ul>`,
-            );
-        },
-        renderCertificates: function (list: Certificate[]) {
-            if (!list.length) return '';
+      );
+    },
+    renderCertificates: function (list: Certificate[]) {
+      if (!list.length) return '';
 
-            const _content = list
-                .map((el: Certificate) => {
-                    const {
-                        organization: subTitle,
-                        name: title,
-                        startDate,
-                        endDate = +new Date(),
-                        description = '',
-                        isNoExpiration: isCurrent,
-                    } = el;
-                    return _layoutItem({ title, subTitle: `Nơi cấp: ${subTitle}`, startDate, endDate, isCurrent, description });
-                })
-                .join('');
+      const _content = list
+        .map((el: Certificate) => {
+          const {
+            organization: subTitle,
+            name: title,
+            startDate,
+            endDate = +new Date(),
+            description = '',
+            isNoExpiration: isCurrent,
+          } = el;
+          return _layoutItem({ title, subTitle: `Nơi cấp: ${subTitle}`, startDate, endDate, isCurrent, description });
+        })
+        .join('');
 
-            return _boxContent('Chứng chỉ', _content);
-        },
-        renderAwards: function (list: Award[]) {
-            if (!list.length) return '';
+      return _boxContent('Chứng chỉ', _content);
+    },
+    renderAwards: function (list: Award[]) {
+      if (!list.length) return '';
 
-            const _content = list
-                .map((el: Award) => {
-                    const { organization: subTitle, name: title, issueDate: startDate, description = '' } = el;
-                    return _layoutItem({
-                        title,
-                        subTitle: `Đơn vị: ${subTitle}`,
-                        startDate,
-                        endDate: null,
-                        isCurrent: false,
-                        description,
-                    });
-                })
-                .join('');
+      const _content = list
+        .map((el: Award) => {
+          const { organization: subTitle, name: title, issueDate: startDate, description = '' } = el;
+          return _layoutItem({
+            title,
+            subTitle: `Đơn vị: ${subTitle}`,
+            startDate,
+            endDate: null,
+            isCurrent: false,
+            description,
+          });
+        })
+        .join('');
 
-            return _boxContent('Giải thưởng', _content);
-        },
-    };
+      return _boxContent('Giải thưởng', _content);
+    },
+  };
 };
 
 const getHTMLLayout = (content = '') => {
-    const htmlContent = `
+  const htmlContent = `
         <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -451,8 +448,8 @@ const getHTMLLayout = (content = '') => {
             </body>
         </html>
     `;
-    function getStyles() {
-        return `
+  function getStyles() {
+    return `
             <style>
                 html { font-size: 9px; font-family: 'Barlow' }
                 body { font-size: 1.4rem }
@@ -527,6 +524,6 @@ const getHTMLLayout = (content = '') => {
                 .col-6 { flex-basic: 50% }
             </style>
         `;
-    }
-    return htmlContent;
+  }
+  return htmlContent;
 };

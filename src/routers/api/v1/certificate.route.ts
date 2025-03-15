@@ -12,22 +12,22 @@ import { fnCreate, fnUpdate } from '@/candidate_profile/certificates/certificate
 const router = express.Router();
 
 router.get(
-    '/',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body.collection = Collections.CERTIFICATE;
-        next();
-    },
-    baseGetAll,
+  '/',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body.collection = Collections.CERTIFICATE;
+    next();
+  },
+  baseGetAll,
 );
 router.post('/create', fnCreate);
 router.put('/update', fnUpdate);
 router.delete(
-    '/delete/:id',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.params.collection = Collections.CERTIFICATE;
-        next();
-    },
-    baseDelete,
+  '/delete/:id',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.params.collection = Collections.CERTIFICATE;
+    next();
+  },
+  baseDelete,
 );
 
 export default router;

@@ -13,37 +13,37 @@ import { formatReturn, validateSchema, _throwError } from '@/utils';
 const SCHEMA = schemaReference;
 
 export const fnCreate = async (req: Request, res: Response) => {
-    /**
-     * validate data gửi lên
-     */
-    const { isValidated, value = {}, errors } = validateSchema({ schema: SCHEMA, item: { ...req.body } });
-    if (!isValidated) return formatReturn(res, { success: false, message: 'Lỗi validate _', errors });
+  /**
+   * validate data gửi lên
+   */
+  const { isValidated, value = {}, errors } = validateSchema({ schema: SCHEMA, item: { ...req.body } });
+  if (!isValidated) return formatReturn(res, { success: false, message: 'Lỗi validate _', errors });
 
-    /**
-     * save mới document
-     */
-    try {
-        const _result = await handlerCreate(value);
-        return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
-    } catch (err) {
-        _throwError(res, err);
-    }
+  /**
+   * save mới document
+   */
+  try {
+    const _result = await handlerCreate(value);
+    return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
+  } catch (err) {
+    _throwError(res, err);
+  }
 };
 
 export const fnUpdate = async (req: Request, res: Response) => {
-    /**
-     * validate data gửi lên
-     */
-    const { isValidated, value = {}, errors } = validateSchema({ schema: SCHEMA, item: { ...req.body } });
-    if (!isValidated) return formatReturn(res, { success: false, message: 'Lỗi validate', errors });
+  /**
+   * validate data gửi lên
+   */
+  const { isValidated, value = {}, errors } = validateSchema({ schema: SCHEMA, item: { ...req.body } });
+  if (!isValidated) return formatReturn(res, { success: false, message: 'Lỗi validate', errors });
 
-    /**
-     * update document
-     */
-    try {
-        const _result = await handlerUpdate(value);
-        return formatReturn(res, { ..._result });
-    } catch (err) {
-        _throwError(res, err);
-    }
+  /**
+   * update document
+   */
+  try {
+    const _result = await handlerUpdate(value);
+    return formatReturn(res, { ..._result });
+  } catch (err) {
+    _throwError(res, err);
+  }
 };

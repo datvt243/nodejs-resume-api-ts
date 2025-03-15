@@ -4,12 +4,12 @@
  * Description:
  */
 
-import Joi from "joi";
-import { JoiSchemaTypesConst, renderJoi } from "@/plugins/joi";
+import Joi from 'joi';
+import { JoiSchemaTypesConst, renderJoi } from '@/plugins/joi';
 
 export const schemaAuthLogin = Joi.object({
-    email: renderJoi(JoiSchemaTypesConst.EMAIL, { 
-      required: { value: true, message: '' } 
-    }),
-    password: renderJoi(JoiSchemaTypesConst.PWD)
+  email: renderJoi(JoiSchemaTypesConst.EMAIL, {
+    required: { value: true, message: '' },
+  }),
+  password: renderJoi(JoiSchemaTypesConst.PWD),
 });

@@ -12,22 +12,22 @@ import { fnCreate, fnUpdate } from '@/candidate_profile/project/project.controll
 const router = express.Router();
 
 router.get(
-    '/',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body.collection = Collections.PROJECT;
-        next();
-    },
-    baseGetAll,
+  '/',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body.collection = Collections.PROJECT;
+    next();
+  },
+  baseGetAll,
 );
 router.post('/create', fnCreate);
 router.put('/update', fnUpdate);
 router.delete(
-    '/delete/:id',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.params.collection = Collections.PROJECT;
-        next();
-    },
-    baseDelete,
+  '/delete/:id',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.params.collection = Collections.PROJECT;
+    next();
+  },
+  baseDelete,
 );
 
 export default router;

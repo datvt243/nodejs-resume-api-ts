@@ -12,22 +12,22 @@ import { fnCreate, fnUpdate } from '@/candidate_profile/education/education.cont
 const router = express.Router();
 
 router.get(
-    '/',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body.collection = Collections.EDUCATION;
-        next();
-    },
-    baseGetAll,
+  '/',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body.collection = Collections.EDUCATION;
+    next();
+  },
+  baseGetAll,
 );
 router.post('/create', fnCreate);
 router.put('/update', fnUpdate);
 router.delete(
-    '/delete/:id',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.params.collection = Collections.EDUCATION;
-        next();
-    },
-    baseDelete,
+  '/delete/:id',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.params.collection = Collections.EDUCATION;
+    next();
+  },
+  baseDelete,
 );
 
 export default router;

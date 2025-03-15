@@ -7,6 +7,6 @@
 import CandidateModel from '@/models/candidate.model';
 
 export const checkEmailAlreadyExists = async (email: string): Promise<boolean> => {
-    const find = await CandidateModel.findOne({ email });
-    return !!find;
+  const find = await CandidateModel.findOne({ email });
+  return !!find;
 };
