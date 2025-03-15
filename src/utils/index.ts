@@ -62,3 +62,8 @@ export const getDataUserIdFromToken = (req: Request): { success: boolean; _id: s
         _id,
     };
 };
+
+export const logCatchError = (e: Error): void => {
+    const { message = '' } = e;
+    _log(message)
+}

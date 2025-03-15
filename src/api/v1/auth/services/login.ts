@@ -5,7 +5,7 @@
  */
 
 import CandidateModel from '@/models/candidate.model';
-import { bcryptGenerateSalt, bcryptCompareHash, jwtSign } from '@/utils';
+import { bcryptCompareHash, jwtSign } from '@/utils';
 import { TOKEN_SECRET, TOKEN_REFRESH } from '@/config/process.config';
 
 interface Auth {
@@ -13,41 +13,6 @@ interface Auth {
     password: string;
     repassword?: string;
 }
-
-export const isEmailAlreadyExists = async (email: string) => {
-    const find = await CandidateModel.findOne({ email });
-    return !!find;
-};
-
-export const handlerRegister = async (item: Auth) => {
-    /**
-     * FLOW
-     *  1. lấy thông tin input [email, pwd, re-pwd]
-     *  2. validate thông tin
-     *      2.1. 'false' -> return error
-     *  3. mã hoá pwd
-     *  4. lưu thông tin
-     */
-    const { email, password } = item;
-
-    /**
-     * check Email đã tồn tại chưa
-     */
-    const emailHasExits = await isEmailAlreadyExists(email);
-    if (emailHasExits) return { success: false, message: "Email đã tồn tại" };
-
-    /**
-     * TODO: validate data với mongo model.valid
-     */
-
-    const bcryptPwd = bcryptGenerateSalt(password);
-    const document = await CandidateModel.create({
-        _id: null,
-        email: email,
-        password: bcryptPwd,
-    });
-    return { success: true, message: `Đăng ký thành công` };
-};
 
 export const handlerLogin = async (data: Auth) => {
     /**
@@ -71,7 +36,7 @@ export const handlerLogin = async (data: Auth) => {
      */
     const { _id, password: pwdHash } = _user;
     const comparePwd = await bcryptCompareHash(password, pwdHash);
-    if (!comparePwd) return { success: false, message: 'Mật khẩu không chính xác' }; 
+    if (!comparePwd) return { success: false, message: 'Mật khẩu không chính xác' };
 
     /**
      * init token

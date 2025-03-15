@@ -5,9 +5,10 @@
  */
 
 import mongoose, { Model } from 'mongoose';
+import { Schema } from 'joi';
 import { _log } from '@/utils';
 
-export const validateSchema = (props: { schema: any; item: Record<string, any> }) => {
+export const validateSchema = ({ schema, item = {} }: { schema: Schema; item: Partial<Record<string, any>> }) => {
     /**
      * @return
      *  isValidated: boolean,
@@ -16,29 +17,17 @@ export const validateSchema = (props: { schema: any; item: Record<string, any> }
      *  error?: array
      *
      */
-
-    const { schema = null, item = {} } = props;
-    const message = 'Validation has errors';
-    if (!schema || !item || !Object.keys(item).length) {
-        return {
-            isValidated: false,
-            message,
-        };
+    const validationOptions = { abortEarly: false };
+    if (!schema || typeof schema.validate !== 'function') {
+        return { isValidated: false, message: 'Invalid schema' };
     }
-
-    const validOpt = { abortEarly: false }; // Báo lỗi tất cả 1 lượt
-    const { error, value } = schema.validate({ ...item }, validOpt);
-
-    if (error) return { isValidated: false, message, errors: formatValidateError(error) };
-
-    return {
-        isValidated: true,
-        value,
-        message: '',
-    };
+    const { error, value } = schema.validate(item, validationOptions);
+    return error
+        ? { isValidated: false, message: 'Validation has errors', errors: formatValidateError(error) }
+        : { isValidated: true, value, message: '' };
 };
 
-const formatValidateError = (error: any) => {
+export const formatValidateError = (error: any) => {
     const { details = [] } = error;
 
     const messages: Record<string, any> = {};

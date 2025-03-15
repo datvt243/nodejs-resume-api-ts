@@ -88,7 +88,7 @@ export const authRefreshToken = async (req: Request, res: Response) => {
 };
 
 /**
- * Chức năng Tạo mới RefreshToken
+ * Chức năng Tạo mới refreshToken
  */
 export const authCreateRefreshToken = async (req: Request, res: Response) => {
     // coming soon
