@@ -36,12 +36,13 @@ for lbl in "${labels[@]}"; do
   gh label create "$name" --color "$color" --description "$desc" --repo "$REPO" || echo "Label $name exists or failed"
 done
 
-# Create a milestone
+# Create a milestone using gh api
 MILESTONE_TITLE="v1.0.0 - Hardening"
-MILESTONE_DUE="2026-06-30"
 MILESTONE_DESC="Prepare release v1.0.0: security fixes, tests, docs"
 
-echo "Creating milestone: $MILESTONE_TITLE"
-gh milestone create "$MILESTONE_TITLE" --due-date "$MILESTONE_DUE" --description "$MILESTONE_DESC" --repo "$REPO" || echo "Milestone exists or failed"
+echo "Creating milestone: $MILESTONE_TITLE (via API)"
+gh api repos/datvt243/nodejs-resume-api-ts/milestones \
+  -f title="$MILESTONE_TITLE" \
+  -f description="$MILESTONE_DESC" 2>/dev/null && echo "✓ Milestone created" || echo "✗ Milestone failed (may already exist)"
 
 echo "Completed labels and milestone setup for $REPO"
