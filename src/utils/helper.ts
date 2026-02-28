@@ -97,3 +97,11 @@ export const formatReturn = (res: Response, props: formatReturn) => {
     }),
   );
 };
+
+/**
+ * Extract a token out of various request locations.
+ *
+ * @param req Express request
+ * @param fieldName field to look for in body/query/cookies (defaults to "token")
+ */
+// token extraction helper moved to helper-auth.ts to isolate auth-specific utilities

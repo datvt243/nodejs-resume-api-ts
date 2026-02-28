@@ -7,9 +7,11 @@
 import express from 'express';
 const router = express.Router();
 
-import { authRegister, authLogin } from '@/auth/auth.controller';
+import { authRegister, authLogin, authLogout, authRefreshToken } from '@/auth/auth.controller';
 
 router.post('/register', authRegister);
 router.get('/login', authLogin);
+router.post('/logout', authLogout);
+router.post('/refresh', authRefreshToken);
 
 export default router;
