@@ -9,21 +9,18 @@ import { NODE_ENV } from '@/config/process.config';
 import { _log } from '@/utils';
 
 type ErrorMid = Error | ReferenceError | TypeError;
-export const errorsMiddleware = (err: ErrorMid, req: Request, res: Response, next: NextFunction) => {
-  _log('***** WARNING!!! Ops! we got a problem');
+export const errorsMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
+  const statusCode = err?.statusCode || err?.status || StatusCodes.INTERNAL_SERVER_ERROR;
+  const message = err?.message || 'Internal Server Error';
 
-  let _message: string = '',
-    _code: StatusCodes = StatusCodes.BAD_REQUEST;
+  _log({
+    text: `ERROR: ${message}`,
+    type: 'error',
+  });
 
-  if (err instanceof ReferenceError) {
-    _message = err.message;
-  } else {
-    _message = 'Lỗi không xác định';
-    _code = 404;
-  }
-
-  res.status(_code || 404).json({
-    message: _message,
-    stack: NODE_ENV === 'development' ? err.stack : null,
+  res.status(statusCode).json({
+    success: false,
+    message: message,
+    ...(NODE_ENV === 'development' && { stack: err?.stack }),
   });
 };

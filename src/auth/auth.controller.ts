@@ -52,7 +52,7 @@ export const authLogin = async (req: Request, res: Response) => {
   /**
    * validate date come from req
    */
-  const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.query } });
+  const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.body } });
   if (!isValidated) {
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,

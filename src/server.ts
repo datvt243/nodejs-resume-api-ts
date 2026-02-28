@@ -68,10 +68,9 @@ const runServer = () => {
    * listen app
    */
   const _env = process.env.NODE_ENV || 'development';
-  const _port = _env !== 'production' ? LOCAL_PORT : 3008;
-  app.listen(_port, () => {
-    const str = _port === 'development' ? `http://localhost:${_port}` : _port;
-    console.log(`App listening on port: ${str} - ${_env}`);
+  const portNumber = _env !== 'production' ? parseInt(LOCAL_PORT || '3001', 10) : 3008;
+  app.listen(portNumber, () => {
+    console.log(`App listening on port: ${portNumber} - ${_env}`);
   });
 
   /* exitHook(() => {
