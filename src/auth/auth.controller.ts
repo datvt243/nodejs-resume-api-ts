@@ -9,6 +9,10 @@ import { validateSchema, formatReturn, _throwError } from '@/utils';
 
 import { schemaAuthRegister, schemaAuthLogin } from './auth.validate';
 import { handlerRegister, handlerLogin } from './auth.service';
+import { addToBlacklist, isBlacklisted } from '@/utils/tokenBlacklist';
+import { jwtSign, jwtVerify } from '@/utils';
+import { extractTokenFromRequest } from '@/utils/helper-auth';
+import { TOKEN_SECRET, TOKEN_REFRESH } from '@/config/process.config';
 
 /**
  * Chức năng Đăng ký mới
@@ -84,7 +88,52 @@ export const authLogin = async (req: Request, res: Response) => {
  * Chức năng Refresh token
  */
 export const authRefreshToken = async (req: Request, res: Response) => {
-  // coming soon
+  try {
+    // pull from multiple locations using helper
+    const refreshToken = extractTokenFromRequest(req, 'refreshToken');
+
+    if (!refreshToken) {
+      return formatReturn(res, {
+        statusCode: StatusCodes.UNAUTHORIZED,
+        success: false,
+        message: 'No refresh token provided',
+      });
+    }
+
+    if (await isBlacklisted(refreshToken)) {
+      return formatReturn(res, {
+        statusCode: StatusCodes.FORBIDDEN,
+        success: false,
+        message: 'Refresh token revoked',
+      });
+    }
+
+    // verify refresh token
+    const decoded = jwtVerify(refreshToken, TOKEN_REFRESH);
+    const { _id } = (decoded as { _id?: string }) || {};
+    if (!_id)
+      return formatReturn(res, {
+        statusCode: StatusCodes.UNAUTHORIZED,
+        success: false,
+        message: 'Invalid refresh token payload',
+      });
+
+    // rotate: blacklist old refresh token
+    await addToBlacklist(refreshToken);
+
+    // create new tokens
+    const newAccess = jwtSign({ _id }, TOKEN_SECRET);
+    const newRefresh = jwtSign({ _id }, TOKEN_REFRESH);
+
+    return formatReturn(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Token refreshed',
+      data: { token: newAccess, tokenRefresh: newRefresh },
+    });
+  } catch (err) {
+    _throwError(res, err);
+  }
 };
 
 /**
@@ -92,4 +141,32 @@ export const authRefreshToken = async (req: Request, res: Response) => {
  */
 export const authCreateRefreshToken = async (req: Request, res: Response) => {
   // coming soon
+};
+
+/**
+ * Chức năng Logout: thu hồi access token hiện tại
+ */
+export const authLogout = async (req: Request, res: Response) => {
+  try {
+    // attempt to extract token from header/cookie/query
+    const token = extractTokenFromRequest(req);
+
+    if (!token) {
+      return formatReturn(res, {
+        statusCode: StatusCodes.BAD_REQUEST,
+        success: false,
+        message: 'No token provided to logout',
+      });
+    }
+
+    await addToBlacklist(token);
+
+    return formatReturn(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (err) {
+    _throwError(res, err);
+  }
 };

@@ -65,13 +65,12 @@ labels=(
 )
 
 count=${#titles[@]}
-for i in "$(seq 0 $((count-1)))"; do
-  idx=$i
-  title="${titles[$idx]}"
-  body="${bodies[$idx]}"
-  label="${labels[$idx]}"
+for ((i=0; i<count; i++)); do
+  title="${titles[$i]}"
+  body="${bodies[$i]}"
+  label="${labels[$i]}"
 
-  echo "Creating issue: $title"
+  echo "Creating issue $((i+1))/$count: $title"
   gh issue create --repo "$REPO" --title "$title" --body "$body" --label "$label"
   sleep 1
 done

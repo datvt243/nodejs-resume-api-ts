@@ -3,10 +3,15 @@
   "main": "src/server.ts",
   "private": true,
   "version": "1.0.0",
-  "description": "",
+  "description": "Resume API backend with rate limiting and Redis support",
   "scripts": {
     "dev-node": "ts-node -r tsconfig-paths/register src/server.ts",
     "dev": "nodemon -r tsconfig-paths/register --exec ts-node ./src/server.ts",
+    "start:dev": "NODE_ENV=development npm run dev",
+    "start:prod": "NODE_ENV=production npm run start",
+    "env:setup": "cp .env.example .env",
+    "env:dev": "cp .env.development .env",
+    "env:prod": "cp .env.production .env",
     "babel-dev": "nodemon --exec babel-node src/server.js",
     "nodemon": "nodemon --exec babel-node ./src/server.js",
     "babel-start": "npm run remove-build && npm run build-babel && node ./build/server.js",
@@ -38,7 +43,8 @@
     "open": "^10.1.0",
     "pdfkit": "^0.15.0",
     "pug": "^3.0.2",
-    "puppeteer": "^22.13.1"
+    "puppeteer": "^22.13.1",
+    "redis": "^4.6.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.22.10",
