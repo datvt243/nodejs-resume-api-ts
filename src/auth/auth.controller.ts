@@ -100,7 +100,7 @@ export const authRefreshToken = async (req: Request, res: Response) => {
       });
     }
 
-    if (isBlacklisted(refreshToken)) {
+    if (await isBlacklisted(refreshToken)) {
       return formatReturn(res, {
         statusCode: StatusCodes.FORBIDDEN,
         success: false,
@@ -119,7 +119,7 @@ export const authRefreshToken = async (req: Request, res: Response) => {
       });
 
     // rotate: blacklist old refresh token
-    addToBlacklist(refreshToken);
+    await addToBlacklist(refreshToken);
 
     // create new tokens
     const newAccess = jwtSign({ _id }, TOKEN_SECRET);
@@ -159,7 +159,7 @@ export const authLogout = async (req: Request, res: Response) => {
       });
     }
 
-    addToBlacklist(token);
+    await addToBlacklist(token);
 
     return formatReturn(res, {
       statusCode: StatusCodes.OK,

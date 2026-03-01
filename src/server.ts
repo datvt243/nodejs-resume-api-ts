@@ -19,10 +19,11 @@ import { sessionConfig, corsConfig } from '@/config';
 import { _log } from '@/utils';
 
 import router from '@/routers';
+import { initRedis } from '@/services/redis';
 
 dotenv.config();
 
-const runServer = () => {
+const runServer = async () => {
   const app = express();
 
   /* const __dirname = dirname(new URL(import.meta.url).pathname); */
@@ -69,6 +70,10 @@ const runServer = () => {
    */
   const _env = process.env.NODE_ENV || 'development';
   const portNumber = _env !== 'production' ? parseInt(LOCAL_PORT || '3001', 10) : 3008;
+
+  // Initialize Redis for token blacklist (non-blocking)
+  await initRedis();
+
   app.listen(portNumber, () => {
     console.log(`App listening on port: ${portNumber} - ${_env}`);
   });

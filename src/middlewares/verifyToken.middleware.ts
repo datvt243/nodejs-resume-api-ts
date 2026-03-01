@@ -17,7 +17,7 @@ import { extractTokenFromRequest } from '@/utils/helper-auth';
 // note: `fieldName` defaults to 'token', so middleware does not need to pass it
 const extractToken = (req: any): string | null => extractTokenFromRequest(req);
 
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   const token = extractToken(req);
 
   if (!token) {
@@ -31,7 +31,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
 
   try {
     // check revoked tokens
-    if (isBlacklisted(token)) {
+    if (await isBlacklisted(token)) {
       return res.status(StatusCodes.FORBIDDEN).json({
         success: false,
         code: 'TOKEN_REVOKED',

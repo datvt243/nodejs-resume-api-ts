@@ -32,16 +32,16 @@ describe('authRefreshToken controller', () => {
   });
 
   it('returns 403 when refresh token is blacklisted', async () => {
-    mockedIsBlacklisted.mockReturnValue(true);
+    mockedIsBlacklisted.mockResolvedValue(true);
     const { req, res } = createMocks({}, { authorization: 'Bearer old' });
     await authRefreshToken(req, res);
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
   it('returns 200 and rotates tokens on valid refresh', async () => {
-    mockedIsBlacklisted.mockReturnValue(false);
+    mockedIsBlacklisted.mockResolvedValue(false);
     mockedJwtVerify.mockReturnValue({ _id: 'user1' } as any);
-    mockedAddToBlacklist.mockReturnValue(true);
+    mockedAddToBlacklist.mockResolvedValue(true);
     mockedJwtSign.mockReturnValueOnce('newAccess').mockReturnValueOnce('newRefresh');
 
     const { req, res } = createMocks({}, { authorization: 'Bearer oldRefresh' });
