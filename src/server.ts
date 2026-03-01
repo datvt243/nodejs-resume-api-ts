@@ -14,7 +14,7 @@ import cors from 'cors';
 import session from 'express-session';
 /* import exitHook from 'exit-hook'; */
 
-import { errorsMiddleware, rateLimitMiddleware, startMemStoreCleanup } from '@/middlewares';
+import { errorsMiddleware, rateLimitMiddleware, startMemStoreCleanup, requestLogger } from '@/middlewares';
 import { sessionConfig, corsConfig } from '@/config';
 import { _log } from '@/utils';
 
@@ -29,10 +29,14 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
   /* const __dirname = dirname(new URL(import.meta.url).pathname); */
 
   /**
+   * request logging
+   */
+  app.use(requestLogger);
+
+  /**
    * use Session
    */
   app.use(session(sessionConfig()));
-
   /**
    * use CORS
    */
