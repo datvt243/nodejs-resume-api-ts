@@ -6,52 +6,75 @@
  * Description:
  */
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 import { StatusCodes } from 'http-status-codes';
-import { TOKEN_SECRET, TOKEN_REFRESH } from '@/config/process.config';
+import { TOKEN_SECRET } from '@/config/process.config';
+import { jwtVerify } from '@/utils/jwt';
+import { isBlacklisted } from '@/utils/tokenBlacklist';
+import jwt from 'jsonwebtoken';
 
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+import { extractTokenFromRequest } from '@/utils/helper-auth';
 
-    if (!token) {
-        return res.status(StatusCodes.UNAUTHORIZED).json({
-            success: false,
-            message: 'Access denied. No token provided.',
-            invalidToken: true,
-        });
+// note: `fieldName` defaults to 'token', so middleware does not need to pass it
+const extractToken = (req: any): string | null => extractTokenFromRequest(req);
+
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
+  const token = extractToken(req);
+
+  if (!token) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      code: 'NO_TOKEN',
+      message: 'Access denied. No token provided.',
+      invalidToken: true,
+    });
+  }
+
+  try {
+    // check revoked tokens
+    if (await isBlacklisted(token)) {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        success: false,
+        code: 'TOKEN_REVOKED',
+        message: 'Token has been revoked.',
+        invalidToken: true,
+      });
+    }
+    const decoded = jwtVerify(token, TOKEN_SECRET);
+    const { _id } = (decoded as { _id?: string }) || {};
+
+    if (!_id) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        code: 'INVALID_TOKEN',
+        message: 'Invalid token payload.',
+        invalidToken: true,
+      });
     }
 
-    verify(token, req, res, next);
+    // attach authenticated user info without mutating body
+    (req as any).user = { _id };
+    return next();
+  } catch (err: any) {
+    if (err instanceof jwt.TokenExpiredError) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        success: false,
+        code: 'TOKEN_EXPIRED',
+        message: 'Token expired.',
+        expired: true,
+        invalidToken: true,
+      });
+    }
+
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      success: false,
+      code: 'INVALID_TOKEN',
+      message: err?.message || 'Invalid token.',
+      invalidToken: true,
+    });
+  }
 };
 
 export const verifyTokenByQuery = (req: Request, res: Response, next: NextFunction) => {
-    const { token } = req.query;
-
-    if (!token) {
-        return res.status(StatusCodes.UNAUTHORIZED).json({
-            success: false,
-            message: 'Access denied. No token provided.',
-            invalidToken: true,
-        });
-    }
-
-    verify(token, req, res, next);
+  // keep for compatibility; extractToken already supports query param
+  return verifyToken(req, res, next);
 };
-
-function verify(token: any, req: Request, res: Response, next: NextFunction) {
-    try {
-        const decoded = TOKEN_SECRET ? jwt.verify(token, TOKEN_SECRET) : { _id: null };
-        const { _id } = decoded as { _id: string | null };
-
-        /**
-         * thêm candidateId vào body
-         */
-        req.body.candidateId = _id;
-
-        /** next */
-        next();
-        /**  */
-    } catch (err) {
-        res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Invalid token.', invalidToken: true });
-    }
-}
