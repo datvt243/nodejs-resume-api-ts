@@ -34,6 +34,7 @@
     "dotenv": "^16.4.5",
     "exit-hook": "^4.0.0",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.3.0",
     "express-session": "^1.18.0",
     "http-status-codes": "^2.3.0",
     "joi": "^17.13.1",
