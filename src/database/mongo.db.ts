@@ -6,16 +6,33 @@
 
 import mongoose from 'mongoose';
 
-import { MONGOBD_USER, MONGOBD_PASSWORD } from '@/config/process.config';
+import { MONGO_URI, MONGOBD_USER, MONGOBD_PASSWORD } from '@/config/process.config';
 import { _log } from '@/utils';
+
+/**
+ * Fallback URI construction if MONGO_URI is not provided
+ * Supports both full connection string or user/password only mode
+ */
+const getMongoURI = (): string => {
+  // If full MONGO_URI is provided, use it
+  if (MONGO_URI) {
+    return MONGO_URI;
+  }
+
+  // Otherwise, construct from user/password (backward compatibility)
+  if (MONGOBD_USER && MONGOBD_PASSWORD) {
+    return `mongodb+srv://${MONGOBD_USER}:${MONGOBD_PASSWORD}@davidapi.jhhu4ml.mongodb.net/resume-api?retryWrites=true&w=majority&appName=davidAPI`;
+  }
+
+  // Throw error if no configuration
+  throw new Error(
+    'MongoDB configuration missing. Please set MONGO_URI or MONGOBD_USER/MONGOBD_PASSWORD in environment variables.',
+  );
+};
 
 const connectMongo = async function (callback = () => {}): Promise<boolean> {
   try {
-    if (!MONGOBD_USER || !MONGOBD_PASSWORD) {
-      throw new Error('Missing MongoDB credentials. Check MONGOBD_USER and MONGOBD_PASSWORD in .env file');
-    }
-
-    const MONGO_URI = `mongodb+srv://${MONGOBD_USER}:${MONGOBD_PASSWORD}@davidapi.jhhu4ml.mongodb.net/resume-api?retryWrites=true&w=majority&appName=davidAPI`;
+    const MONGO_URI = getMongoURI();
     await mongoose.connect(MONGO_URI);
     _log('MongoDB Connected!');
     return true;
