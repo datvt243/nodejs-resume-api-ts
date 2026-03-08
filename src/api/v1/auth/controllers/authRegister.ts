@@ -3,9 +3,9 @@
  * Date: `--/--`
  * Description:
  */
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { validateSchema, formatReturn, _throwError } from '@/utils';
+import { validateSchema, formatReturn, handleError } from '@/utils';
 
 import { schemaAuthRegister } from '../vaidations';
 import { handlerRegister } from '../services';
@@ -13,7 +13,7 @@ import { handlerRegister } from '../services';
 /**
  * Chức năng Đăng ký mới
  */
-export const authRegister = async (req: Request, res: Response) => {
+export const authRegister = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate dữ liệu đầu vào
    * { email, password, re-password } = req.body;
@@ -41,6 +41,6 @@ export const authRegister = async (req: Request, res: Response) => {
       data: null,
     });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

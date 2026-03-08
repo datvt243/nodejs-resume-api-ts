@@ -5,7 +5,6 @@
  */
 
 import express from 'express';
-import { verifyToken, verifyTokenByQuery } from '@/middlewares/verifyToken.middleware';
 
 const router = express.Router();
 

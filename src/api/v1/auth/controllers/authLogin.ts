@@ -3,9 +3,9 @@
  * Date: `--/--`
  * Description:
  */
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { validateSchema, formatReturn, _throwError } from '@/utils';
+import { validateSchema, formatReturn, handleError } from '@/utils';
 
 import { schemaAuthLogin } from '../vaidations';
 import { handlerLogin } from '../services';
@@ -13,11 +13,12 @@ import { handlerLogin } from '../services';
 /**
  * Chức năng Đăng nhập
  */
-export const authLogin = async (req: Request, res: Response) => {
+export const authLogin = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate date come from req
    */
   const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.query } });
+  console.log('value: ', isValidated, value, message, errors);
   if (!isValidated) {
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,
@@ -41,6 +42,6 @@ export const authLogin = async (req: Request, res: Response) => {
       data: _result?.data || null,
     });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

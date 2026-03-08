@@ -4,15 +4,15 @@
  * Description:
  */
 
-import { Response, Request } from 'express';
+import { Response, Request, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { schemaAward } from './award.validate';
 import { handlerCreate, handlerUpdate } from './award.service';
-import { validateSchema, formatReturn, _throwError } from '@/utils/index';
+import { validateSchema, formatReturn, handleError } from '@/utils/index';
 
 const SCHEMA = schemaAward;
 
-export const fnCreate = async (req: Request, res: Response) => {
+export const fnCreate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -27,11 +27,11 @@ export const fnCreate = async (req: Request, res: Response) => {
     const _result = await handlerCreate(value);
     return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
-export const fnUpdate = async (req: Request, res: Response) => {
+export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -54,6 +54,6 @@ export const fnUpdate = async (req: Request, res: Response) => {
     const _result = await handlerUpdate(value);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

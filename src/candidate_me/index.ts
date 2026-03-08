@@ -4,15 +4,15 @@
  * Description:
  */
 
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { formatReturn, _throwError } from '@/utils';
+import { formatReturn, handleError } from '@/utils';
 import { formatReturnFailed } from '@/services';
 import { createCV } from '@/services/createPDF';
 import * as MODEL from '@/models';
 
-export const fnGetAboutMe = async (req: Request, res: Response) => {
+export const fnGetAboutMe = async (req: Request, res: Response, next: NextFunction) => {
   const { email } = req.params;
   if (!email) res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Không tìm thấy Email'));
 
@@ -23,7 +23,7 @@ export const fnGetAboutMe = async (req: Request, res: Response) => {
     const _me = await handlerGetAboutMe(email);
     return formatReturn(res, _me);
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
@@ -72,7 +72,7 @@ export const handlerGetAboutMe = async (email: string) => {
   };
 };
 
-export const fnExportPDF = async (req: Request, res: Response) => {
+export const fnExportPDF = async (req: Request, res: Response, next: NextFunction) => {
   /**
    *
    */
@@ -103,6 +103,6 @@ export const fnExportPDF = async (req: Request, res: Response) => {
     }
     await createCV(data, res);
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

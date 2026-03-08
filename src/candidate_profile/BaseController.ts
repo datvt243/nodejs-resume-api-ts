@@ -1,7 +1,7 @@
-import { Response, Request } from 'express';
+import { Response, Request, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { formatReturn, _throwError } from '@/utils/index';
+import { formatReturn, handleError } from '@/utils/index';
 import { baseDeleteDocument, baseFindDocument } from '@/services';
 import * as MODELS from '@/models';
 interface baseProp {
@@ -20,31 +20,7 @@ const modelObject: { [key: string]: any } = {
   awards: MODELS.Award,
 };
 
-/* export const baseFindDocument = async (req: Request, res: Response) => {
-    const { collection, fields, findOne = true } = req.body;
-
-    if (!collection || !fields || !Object.keys(fields).length)
-        return formatReturn(res, {
-            success: false,
-            message: 'Không tìm thấy data',
-        });
-
-    const MODEL = modelObject[collection];
-    let find;
-    if (findOne) {
-        find = await MODEL.findOne({ ...fields }).exec();
-    } else {
-        find = await MODEL.find({ ...fields }).exec();
-    }
-    return formatReturn(res, {
-        success: true,
-        data: find,
-        message: '',
-        errors: null,
-    });
-}; */
-
-export const baseGetAll = async (req: Request, res: Response) => {
+export const baseGetAll = async (req: Request, res: Response, next: NextFunction) => {
   const { candidateId, collection } = req.body;
 
   if (!candidateId || !collection || !modelObject[collection])
@@ -58,11 +34,11 @@ export const baseGetAll = async (req: Request, res: Response) => {
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
-export const baseDelete = async (req: Request, res: Response) => {
+export const baseDelete = async (req: Request, res: Response, next: NextFunction) => {
   const { id, collection = '' } = req.params;
 
   if (!id) return formatReturn(res, { success: false, message: 'Xảy ra lỗi! Không tìm thấy ID' });
@@ -82,6 +58,6 @@ export const baseDelete = async (req: Request, res: Response) => {
     return formatReturn(res, { ..._result });
   } catch (err) {
     //
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
