@@ -4,16 +4,16 @@
  * Description:
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { handlerGet, handlerCreate, handlerUpdate } from './generalInformation.service';
 import { schemaGeneralInformation, schemaGeneralInformationPatch } from './generalInformation.validate';
-import { formatReturn, _throwError, validateSchema } from '@/utils';
+import { formatReturn, handleError, validateSchema } from '@/utils';
 
 const VALIDATE_SCHEMA = schemaGeneralInformation;
 const VALIDATE_SCHEMA_PATCH = schemaGeneralInformationPatch;
 
-export const fnGet = async (req: Request, res: Response) => {
+export const fnGet = async (req: Request, res: Response, next: NextFunction) => {
   const candidateId = req.body.candidateId || '';
   if (!candidateId) return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: 'Không tìm thấy data' });
   try {
@@ -29,11 +29,11 @@ export const fnGet = async (req: Request, res: Response) => {
 
     return formatReturn(res, { ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
-export const fnCreate = async (req: Request, res: Response) => {
+export const fnCreate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -47,11 +47,11 @@ export const fnCreate = async (req: Request, res: Response) => {
     const _result = await handlerCreate(value);
     return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
-export const fnUpdate = async (req: Request, res: Response) => {
+export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -70,11 +70,11 @@ export const fnUpdate = async (req: Request, res: Response) => {
     const _result = await handlerUpdate(value);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
-export const fnUpdateFields = async (req: Request, res: Response) => {
+export const fnUpdateFields = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -93,6 +93,6 @@ export const fnUpdateFields = async (req: Request, res: Response) => {
     const _result = await handlerUpdate(value);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

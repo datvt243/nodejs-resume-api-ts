@@ -3,15 +3,15 @@
  * Date: `--/--`
  * Description:
  */
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { schemaEducation } from './education.validate';
 import { handlerCreate, handlerUpdate } from './education.service';
-import { formatReturn, validateSchema, _throwError } from '@/utils';
+import { formatReturn, validateSchema, handleError } from '@/utils';
 
 const SCHEMA = schemaEducation;
 
-export const fnCreate = async (req: Request, res: Response) => {
+export const fnCreate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -26,11 +26,11 @@ export const fnCreate = async (req: Request, res: Response) => {
     const _result = await handlerCreate(value);
     return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
-export const fnUpdate = async (req: Request, res: Response) => {
+export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data gửi lên
    */
@@ -45,6 +45,6 @@ export const fnUpdate = async (req: Request, res: Response) => {
     const _result = await handlerUpdate(value);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

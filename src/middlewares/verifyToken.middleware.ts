@@ -1,16 +1,14 @@
-// comming soon
-
 /**
  * Author: Đạt Võ - https://github.com/datvt243
  * Date: `--/--`
- * Description:
+ * Description: JWT Token verification middleware
  */
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { TOKEN_SECRET } from '@/config/process.config';
 import { jwtVerify } from '@/utils/jwt';
 import { isBlacklisted } from '@/utils/tokenBlacklist';
-import jwt from 'jsonwebtoken';
+import { ErrorCode, TokenExpiredError, TokenRevokedError, InvalidTokenError, AuthenticationError } from '@/errors';
 
 import { extractTokenFromRequest } from '@/utils/helper-auth';
 
@@ -21,56 +19,30 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
   const token = extractToken(req);
 
   if (!token) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      success: false,
-      code: 'NO_TOKEN',
-      message: 'Access denied. No token provided.',
-      invalidToken: true,
-    });
+    return next(new AuthenticationError('Access denied. No token provided.', ErrorCode.NO_TOKEN));
   }
 
   try {
     // check revoked tokens
     if (await isBlacklisted(token)) {
-      return res.status(StatusCodes.FORBIDDEN).json({
-        success: false,
-        code: 'TOKEN_REVOKED',
-        message: 'Token has been revoked.',
-        invalidToken: true,
-      });
+      return next(new TokenRevokedError('Token has been revoked.'));
     }
+
     const decoded = jwtVerify(token, TOKEN_SECRET);
     const { _id } = (decoded as { _id?: string }) || {};
 
     if (!_id) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        success: false,
-        code: 'INVALID_TOKEN',
-        message: 'Invalid token payload.',
-        invalidToken: true,
-      });
+      return next(new InvalidTokenError('Invalid token payload.'));
     }
 
     // attach authenticated user info without mutating body
     (req as any).user = { _id };
     return next();
   } catch (err: any) {
-    if (err instanceof jwt.TokenExpiredError) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        success: false,
-        code: 'TOKEN_EXPIRED',
-        message: 'Token expired.',
-        expired: true,
-        invalidToken: true,
-      });
+    if (err?.name === 'TokenExpiredError' || err?.name === 'JsonWebTokenError') {
+      return next(new TokenExpiredError('Token expired.'));
     }
-
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      success: false,
-      code: 'INVALID_TOKEN',
-      message: err?.message || 'Invalid token.',
-      invalidToken: true,
-    });
+    return next(new InvalidTokenError(err?.message || 'Invalid token.'));
   }
 };
 

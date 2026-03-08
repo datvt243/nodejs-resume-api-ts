@@ -1,11 +1,21 @@
 /**
  * Author: Đạt Võ - https://github.com/datvt243
  * Date: `--/--`
- * Description:
+ * Description: Utility functions for HTTP responses and error handling
  */
-import type { BaseReturn } from '@/types/base.type.ts';
-import { Response } from 'express';
+import { Response, NextFunction, Request } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import type { BaseReturn } from '@/types/base.type.ts';
+import {
+  AppError,
+  ErrorCode,
+  ValidationError,
+  BadRequestError,
+  NotFoundError,
+  ConflictError,
+  IErrorOptions,
+  IErrorOptionsWithStatus,
+} from '@/errors';
 
 interface formatReturn extends BaseReturn {
   statusCode?: null | number;
@@ -13,13 +23,107 @@ interface formatReturn extends BaseReturn {
   statusCodeFailed?: string;
 }
 
-export const _throwError = (res: Response, message: any): void => {
-  res.status(StatusCodes.BAD_REQUEST);
-  throw new Error(message || 'something wrong bro!!!');
+/**
+ * Async handler wrapper to catch errors in async route handlers
+ * Use this wrapper instead of try-catch blocks in async controllers
+ *
+ * @example
+ * app.get('/users', asyncHandler(async (req, res, next) => {
+ *   const users = await User.find();
+ *   res.json(users);
+ * }));
+ */
+export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 };
 
+/**
+ * Legacy function - Throws a BadRequestError
+ * Kept for backward compatibility
+ * @deprecated Use custom error classes instead
+ */
+export const throwError = (res: Response, message: any): void => {
+  throw new BadRequestError({ message: message || 'Something wrong bro!!!' });
+};
+
+/**
+ * Throws a ValidationError with formatted validation errors
+ */
+export const throwValidationError = (options: IErrorOptions): never => {
+  throw new ValidationError(options);
+};
+
+/**
+ * Throws a NotFoundError
+ */
+export const throwNotFoundError = (options: IErrorOptions = {}): never => {
+  throw new NotFoundError({
+    message: options.message || 'Resource not found',
+    errors: options.errors,
+  });
+};
+
+/**
+ * Throws a ConflictError (e.g., duplicate resource)
+ */
+export const throwConflictError = (options: IErrorOptions = {}): never => {
+  throw new ConflictError({
+    message: options.message || 'Resource already exists',
+    errors: options.errors,
+  });
+};
+
+/**
+ * Throws a BadRequestError
+ */
+export const throwBadRequestError = (options: IErrorOptions): never => {
+  throw new BadRequestError(options);
+};
+
+/**
+ * Pass error to global error handler via next()
+ * Use this in catch blocks to forward errors to middleware
+ */
+export const handleError = (err: any, next: NextFunction): void => {
+  // If it's already an AppError, pass it through
+  if (err instanceof AppError) {
+    return next(err);
+  }
+
+  // If it's a Mongoose CastError (invalid ObjectId)
+  if (err?.name === 'CastError') {
+    return next(
+      new BadRequestError({
+        message: 'Invalid ID format',
+        errors: err.message,
+      }),
+    );
+  }
+
+  // If it's a Mongoose duplicate key error
+  if (err?.code === 11000) {
+    const field = Object.keys(err?.keyValue || {})[0] || 'field';
+    return next(new ConflictError({ message: `${field} already exists` }));
+  }
+
+  // If it's a Mongoose validation error
+  if (err?.name === 'ValidationError') {
+    const details = Object.values(err?.errors || {}).map((e: any) => e.message);
+    return next(new ValidationError({ message: 'Validation failed', errors: details }));
+  }
+
+  // Default to internal server error
+  return next(new AppError({ message: err?.message || 'Internal Server Error', statusCode: StatusCodes.INTERNAL_SERVER_ERROR }));
+};
+
+/**
+ * Format bad request response (legacy function)
+ * @deprecated Use formatReturn with AppError instead
+ */
 export const resBadRequest = (res: Response, error: string | { message: string; [key: string]: any }) => {
-  let errors = [];
+  let errors: string[] = [];
   if (typeof error === 'string') {
     errors.push(error);
   } else if (typeof error === 'object') {
@@ -37,6 +141,9 @@ export const resBadRequest = (res: Response, error: string | { message: string; 
   });
 };
 
+/**
+ * Standard response formatter
+ */
 export const formatResponse = (props: BaseReturn) => {
   /**
    * Chuẩn data trả về của API
@@ -67,10 +174,17 @@ export const formatResponse = (props: BaseReturn) => {
   };
 };
 
+/**
+ * Format and send response with status
+ */
 export const resFormatResponse = (res: Response, status: number, props: BaseReturn) => {
   res.status(status).json(formatResponse(props));
 };
 
+/**
+ * Format and send standardized API response
+ * Main utility function for controller responses
+ */
 export const formatReturn = (res: Response, props: formatReturn) => {
   const {
     success = false,
@@ -99,9 +213,23 @@ export const formatReturn = (res: Response, props: formatReturn) => {
 };
 
 /**
- * Extract a token out of various request locations.
- *
- * @param req Express request
- * @param fieldName field to look for in body/query/cookies (defaults to "token")
+ * Success response helper
  */
-// token extraction helper moved to helper-auth.ts to isolate auth-specific utilities
+export const successResponse = (res: Response, data: any = null, message: string = 'Success') => {
+  return formatReturn(res, {
+    success: true,
+    message,
+    data,
+    statusCode: StatusCodes.OK,
+  });
+};
+
+/**
+ * Error response helper (uses global error handler via next)
+ */
+export const errorResponse = (next: NextFunction, error: AppError | Error): void => {
+  if (error instanceof AppError) {
+    return next(error);
+  }
+  return next(new AppError({ message: error.message || 'Internal Server Error', statusCode: StatusCodes.INTERNAL_SERVER_ERROR }));
+};

@@ -6,26 +6,16 @@
 
 import 'dotenv/config';
 
-const ENV_KEYS = [
-  'NODE_ENV',
-  'LOCAL_PORT',
-  'MONGO_URI',
-  'MONGOBD_USER',
-  'MONGOBD_PASSWORD',
-  'SESSION_SECRET',
-  'TOKEN_SECRET',
-  'TOKEN_REFRESH',
-  'TOKEN_EXP_IN',
-];
-
 // Validate required environment variables
 const requiredEnvVars = ['MONGOBD_USER', 'MONGOBD_PASSWORD', 'TOKEN_SECRET', 'TOKEN_REFRESH', 'SESSION_SECRET'];
-const optionalEnvVars = ['REDIS_URL'];
 const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
 
 if (missingVars.length > 0) {
-  console.warn(`⚠️  Missing required environment variables: ${missingVars.join(', ')}`);
+  const keyList = missingVars.map((key) => `- ${key}`).join('\n');
+  console.warn('⚠️  Missing required environment variables:\n' + keyList);
+  console.warn('Please set these variables in your .env file or environment before running the application.');
 }
+
 const {
   NODE_ENV,
   LOCAL_PORT,
@@ -49,4 +39,5 @@ export {
   TOKEN_SECRET,
   TOKEN_REFRESH,
   TOKEN_EXP_IN,
+  REDIS_URL,
 };

@@ -26,15 +26,15 @@ describe('authRefreshToken controller', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('returns 401 when missing refresh token', async () => {
-    const { req, res } = createMocks();
-    await authRefreshToken(req, res);
+    const { req, res, next } = createMocks();
+    await authRefreshToken(req, res, next);
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it('returns 403 when refresh token is blacklisted', async () => {
     mockedIsBlacklisted.mockResolvedValue(true);
-    const { req, res } = createMocks({}, { authorization: 'Bearer old' });
-    await authRefreshToken(req, res);
+    const { req, res, next } = createMocks({}, { authorization: 'Bearer old' });
+    await authRefreshToken(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
@@ -44,8 +44,8 @@ describe('authRefreshToken controller', () => {
     mockedAddToBlacklist.mockResolvedValue(true);
     mockedJwtSign.mockReturnValueOnce('newAccess').mockReturnValueOnce('newRefresh');
 
-    const { req, res } = createMocks({}, { authorization: 'Bearer oldRefresh' });
-    await authRefreshToken(req, res);
+    const { req, res, next } = createMocks({}, { authorization: 'Bearer oldRefresh' });
+    await authRefreshToken(req, res, next);
 
     expect(mockedAddToBlacklist).toHaveBeenCalledWith('oldRefresh');
     expect(res.status).toHaveBeenCalledWith(200);

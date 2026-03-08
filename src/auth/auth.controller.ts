@@ -3,9 +3,9 @@
  * Date: `--/--`
  * Description:
  */
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { validateSchema, formatReturn, _throwError } from '@/utils';
+import { validateSchema, formatReturn, handleError, throwBadRequestError } from '@/utils';
 
 import { schemaAuthRegister, schemaAuthLogin } from './auth.validate';
 import { handlerRegister, handlerLogin } from './auth.service';
@@ -17,7 +17,7 @@ import { TOKEN_SECRET, TOKEN_REFRESH } from '@/config/process.config';
 /**
  * Chức năng Đăng ký mới
  */
-export const authRegister = async (req: Request, res: Response) => {
+export const authRegister = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate dữ liệu đầu vào
    * { email, password, re-password } = req.body;
@@ -45,14 +45,14 @@ export const authRegister = async (req: Request, res: Response) => {
       data: null,
     });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
 /**
  * Chức năng Đăng nhập
  */
-export const authLogin = async (req: Request, res: Response) => {
+export const authLogin = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate date come from req
    */
@@ -80,14 +80,14 @@ export const authLogin = async (req: Request, res: Response) => {
       data: _result?.data || null,
     });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
 /**
  * Chức năng Refresh token
  */
-export const authRefreshToken = async (req: Request, res: Response) => {
+export const authRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // pull from multiple locations using helper
     const refreshToken = extractTokenFromRequest(req, 'refreshToken');
@@ -132,7 +132,7 @@ export const authRefreshToken = async (req: Request, res: Response) => {
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };
 
@@ -146,7 +146,7 @@ export const authCreateRefreshToken = async (req: Request, res: Response) => {
 /**
  * Chức năng Logout: thu hồi access token hiện tại
  */
-export const authLogout = async (req: Request, res: Response) => {
+export const authLogout = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // attempt to extract token from header/cookie/query
     const token = extractTokenFromRequest(req);
@@ -167,6 +167,6 @@ export const authLogout = async (req: Request, res: Response) => {
       message: 'Logged out successfully',
     });
   } catch (err) {
-    _throwError(res, err);
+    handleError(err, next);
   }
 };

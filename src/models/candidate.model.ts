@@ -12,8 +12,8 @@ const schema = new Schema(
   {
     /* _id: ObjectId, */
     _id: { type: ObjectId, required: false },
-    email: { type: String, default: '', required: [true, 'Email is required'] },
-    password: { type: String, default: '', required: [true, 'Password is required'] },
+    email: { type: String, default: '', required: [false, 'Email is required'] },
+    password: { type: String, default: '', required: [false, 'Password is required'] },
 
     /* họ và tên */
     firstName: { type: String, default: '', required: false },
