@@ -17,7 +17,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
   /**
    * validate date come from req
    */
-  const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.query } });
+  const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.body } });
   console.log('value: ', isValidated, value, message, errors);
   if (!isValidated) {
     return formatReturn(res, {

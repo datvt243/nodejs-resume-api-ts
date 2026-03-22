@@ -5,7 +5,7 @@
  */
 
 import Joi, { StringSchema, NumberSchema } from 'joi';
-import { phoneRegex } from '@/config/regex.config';
+import { phoneRegex, passwordRegex, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '@/config';
 
 export enum JoiSchemaTypesConst {
   STRING = 'string',
@@ -38,10 +38,20 @@ interface RenderJoiProps {
   };
 }
 
-export const password = Joi.string().min(5).trim().strict().required().messages({
-  'any.required': 'Password là bắt buộc',
-  'string.empty': 'Password không được rỗng',
-});
+export const password = Joi.string()
+  .min(PASSWORD_MIN_LENGTH)
+  .max(PASSWORD_MAX_LENGTH)
+  .regex(passwordRegex)
+  .trim()
+  .strict()
+  .required()
+  .messages({
+    'any.required': 'Password là bắt buộc',
+    'string.empty': 'Password không được rỗng',
+    'string.min': 'Password phải có ít nhất 12 ký tự',
+    'string.max': 'Password không được vượt quá 128 ký tự',
+    'string.pattern.base': 'Password phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (!@#$%^&*()_+ etc.)',
+  });
 
 export const renderJoi = (type: string, opts?: RenderJoiProps) => {
   let schema;
@@ -60,10 +70,21 @@ export const renderJoi = (type: string, opts?: RenderJoiProps) => {
       setJoiOptions(schema, type, opts);
       break;
     case JoiSchemaTypesConst.PWD:
-      schema = Joi.string().min(8).trim().strict().required().messages({
-        'string.required': 'Password là bắt buộc',
-        'string.empty': 'Password không được rỗng',
-      });
+      schema = Joi.string()
+        .min(PASSWORD_MIN_LENGTH)
+        .max(PASSWORD_MAX_LENGTH)
+        .regex(passwordRegex)
+        .trim()
+        .strict()
+        .required()
+        .messages({
+          'string.required': 'Password là bắt buộc',
+          'string.empty': 'Password không được rỗng',
+          'string.min': 'Password phải có ít nhất 12 ký tự',
+          'string.max': 'Password không được vượt quá 128 ký tự',
+          'string.pattern.base':
+            'Password phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (!@#$%^&*()_+ etc.)',
+        });
       break;
     default:
       schema = Joi.string().trim().strict();
@@ -94,8 +115,7 @@ function setJoiOptions(schema: any, type: string, opts: Record<string, JoiProps>
 
   if (opts?.required) {
     schema.required();
-    _message[`${type}.required`] = `${type.toUpperCase()} là bắt buộc`;
   }
 
-  schema.message(_message);
+  schema.messages(_message);
 }

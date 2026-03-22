@@ -7,7 +7,7 @@
 import { _log } from '.';
 import bcrypt from 'bcrypt';
 
-const saltRounds = 10; // số vòng mã hóa
+const saltRounds = 12; // số vòng mã hóa (enhanced security)
 
 export const bcryptGenerateSalt = async (pass: string): Promise<string> => {
   try {
