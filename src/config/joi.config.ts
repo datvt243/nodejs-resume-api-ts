@@ -7,6 +7,9 @@
 import Joi from 'joi';
 import { phoneRegex } from '@/config/regex.config';
 
+export const PASSWORD_MIN_LENGTH = 12;
+export const PASSWORD_MAX_LENGTH = 128;
+
 interface JoiProps {
   type?: string;
   min?: number;
@@ -50,12 +53,11 @@ export const settingJoiValidate = (props: JoiProps) => {
 
   if (min !== null) {
     _joi.min(min);
-    _messages[`${type}.min`] = type === 'string' ? '{#label} có ít nhất {#limit} ký tự' : '{#label} không được nhỏ hơn {#limit}';
+    _messages[`string.min`] = 'Field phải có ít nhất {#limit} ký tự';
   }
   if (max !== null) {
     _joi.max(max);
-    _messages[`${type}.max`] =
-      type === 'string' ? '{#label} có nhiều nhất {#limit} ký tự' : '{#label} không được lớn hơn {#limit}';
+    _messages[`string.max`] = 'Field không được vượt quá {#limit} ký tự';
   }
 
   if (required) {
@@ -92,10 +94,22 @@ export const email = Joi.string()
     'string.empty': 'Email không được rỗng',
     'string.email': 'Email không đúng định dạng',
   });
-export const password = Joi.string().min(5).trim().strict().required().messages({
-  'any.required': 'Password là bắt buộc',
-  'string.empty': 'Password không được rỗng',
-});
+import { passwordRegex } from '@/config/regex.config';
+
+export const password = Joi.string()
+  .min(PASSWORD_MIN_LENGTH)
+  .max(PASSWORD_MAX_LENGTH)
+  .regex(passwordRegex)
+  .trim()
+  .strict()
+  .required()
+  .messages({
+    'any.required': 'Password là bắt buộc',
+    'string.empty': 'Password không được rỗng',
+    'string.min': 'Password phải có ít nhất 12 ký tự',
+    'string.max': 'Password không được vượt quá 128 ký tự',
+    'string.pattern.base': 'Password phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt',
+  });
 
 export const firstName = Joi.string().min(1).max(15).trim().strict().required().messages({
   'any.required': 'Họ là bắt buộc',
