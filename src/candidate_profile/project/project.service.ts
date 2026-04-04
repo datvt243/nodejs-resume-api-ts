@@ -6,6 +6,7 @@
 
 import ProjectModel from '@/models/project.model';
 import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument } from '@/services';
+import { withDBTimeout } from '@/utils/timeout';
 
 const MODEL = ProjectModel;
 const NAME = 'dự án';

@@ -6,6 +6,7 @@
 
 import ExperienceModel from '@/models/experience.model';
 import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument } from '@/services';
+import { withDBTimeout } from '@/utils/timeout';
 
 const MODEL = ExperienceModel;
 
