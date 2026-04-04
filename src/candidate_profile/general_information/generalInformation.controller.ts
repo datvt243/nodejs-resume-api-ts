@@ -17,17 +17,21 @@ export const fnGet = async (req: Request, res: Response, next: NextFunction) => 
   const candidateId = req.body.candidateId || '';
   if (!candidateId) return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: 'Không tìm thấy data' });
   try {
-    const _result = await handlerGet(candidateId);
+    const _resultRaw = await handlerGet(candidateId);
+
+    if (!_resultRaw.success) {
+      return formatReturn(res, _resultRaw);
+    }
 
     // information trả về 1 object or null
-    _result.data = ((data) => {
-      if (Array.isArray(data)) {
-        return data.length ? data[0] : {};
-      }
-      return data;
-    })(_result.data || []);
+    const rawData = (_resultRaw as any).data;
+    const data = Array.isArray(rawData) ? (rawData.length ? rawData[0] : {}) : rawData;
 
-    return formatReturn(res, { ..._result });
+    return formatReturn(res, {
+      success: true,
+      message: _resultRaw.message || '',
+      data,
+    });
   } catch (err) {
     handleError(err, next);
   }

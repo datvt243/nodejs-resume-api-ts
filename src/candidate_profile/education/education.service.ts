@@ -6,34 +6,47 @@
 
 import EducationModel from '@/models/education.model';
 import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument } from '@/services';
+import { withDBTimeout } from '@/utils/timeout';
 
 const MODEL = EducationModel;
 const NAME = 'Học vấn';
 
 export const handlerGet = async (candidateId: string) => {
-  return await baseFindDocument({ fields: { candidateId: candidateId }, model: MODEL, findOne: false });
+  try {
+    return await withDBTimeout(baseFindDocument({ fields: { candidateId: candidateId }, model: MODEL, findOne: false }));
+  } catch (error: any) {
+    return { success: false, message: 'Failed to fetch data', error: error.message };
+  }
 };
 
 export const handlerCreate = async (item: Record<string, any>) => {
   /**
    *
    */
-  return await baseCreateDocument({
-    document: { ...item },
-    model: MODEL,
-    name: NAME,
-    hookAfterSave: async (doc, { data }) => {
-      const { success, data: find } = await baseFindDocument({
+  try {
+    return await withDBTimeout(
+      baseCreateDocument({
+        document: { ...item },
         model: MODEL,
-        fields: { candidateId: doc.candidateId },
-        findOne: false, // Tìm tất cả
-      });
-      success && (data = find);
-    },
-    hookHasErrors: ({ err }) => {
-      // do something
-    },
-  });
+        name: NAME,
+        hookAfterSave: async (doc, { data }) => {
+          const { success, data: find } = await withDBTimeout(
+            baseFindDocument({
+              model: MODEL,
+              fields: { candidateId: doc.candidateId },
+              findOne: false, // Tìm tất cả
+            }),
+          );
+          success && (data = find);
+        },
+        hookHasErrors: ({ err }) => {
+          // do something
+        },
+      }),
+    );
+  } catch (error: any) {
+    return { success: false, message: 'Failed to create document', error: error.message };
+  }
 };
 
 export const handlerUpdate = async (item: Record<string, any>) => {

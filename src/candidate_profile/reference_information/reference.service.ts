@@ -6,6 +6,7 @@
 
 import ReferenceModel from '@/models/reference.modal';
 import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument } from '@/services';
+import { withDBTimeout } from '@/utils/timeout';
 
 const MODEL = ReferenceModel;
 
