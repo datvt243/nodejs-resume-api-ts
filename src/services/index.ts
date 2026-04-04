@@ -39,10 +39,13 @@ export const baseFindDocument = async (props: baseProp) => {
   if (!MODEL || !fields || !Object.keys(fields).length) return formatReturnFailed('Không tìm thấy Data');
 
   let find;
+  const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
   if (findOne) {
-    find = await MODEL.findOne({ ...fields }).exec();
+    const safeFields = idQuerySafe.safeQuery({}, fields);
+    find = await MODEL.findOne(safeFields).exec();
   } else {
-    find = await MODEL.find({ ...fields }).exec();
+    const safeFields = idQuerySafe.safeQuery({}, fields);
+    find = await MODEL.find(safeFields).exec();
   }
   return formatReturn({
     success: true,
@@ -307,7 +310,8 @@ const _baseHelper = () => {
       if (!_id) return { isExist: false, message };
 
       let isExist = true;
-      const _find = await MODEL.findById(_id).exec();
+      const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
+      const _find = await MODEL.findOne(idQuerySafe.safeQuery({}, { _id })).exec();
       if (!_find) {
         isExist = false;
       } else {

@@ -30,7 +30,9 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
 export const handlerGetAboutMe = async (email: string) => {
   const removeFields = { __v: 0, createdAt: 0, updatedAt: 0, candidateId: 0 };
 
-  const document = await MODEL.Candidate.findOne({ email }, { ...removeFields }).exec();
+  const { candidateQuerySafe } = await import('@/utils/querySafe');
+  const safeEmailQuery = candidateQuerySafe.safeQuery({}, { email });
+  const document = await MODEL.Candidate.findOne(safeEmailQuery, { ...removeFields }).exec();
   if (!document) return formatReturnFailed('Email không tồn tại');
 
   const { _id } = document;
@@ -53,8 +55,10 @@ export const handlerGetAboutMe = async (email: string) => {
 
   for (const { collection, model } of getMoreInfo) {
     dataResult[collection] = [];
+    const { idQuerySafe } = await import('@/utils/querySafe');
+    const safeCandidateQuery = idQuerySafe.safeQuery({}, { candidateId: _id });
     const _find: undefined | Record<string, any> | Record<string, any>[] = await model
-      .find({ candidateId: _id }, { _id: 0, ...removeFields })
+      .find(safeCandidateQuery, { _id: 0, ...removeFields })
       .exec();
     if (!_find) continue;
     dataResult[collection] = _find;
@@ -83,7 +87,8 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  const find = await MODEL.Candidate.findById(_id).exec();
+  const { idQuerySafe } = await import('@/utils/querySafe');
+  const find = await MODEL.Candidate.findOne(idQuerySafe.safeQuery({}, { _id })).exec();
   if (!find) {
     res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Candidate not found'));
     return;

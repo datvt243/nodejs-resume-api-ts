@@ -6,6 +6,7 @@
 
 import CandidateModel from '@/models/candidate.model';
 import { validateModel } from '@/utils';
+import { candidateQuerySafe } from '@/utils/querySafe';
 
 const MODEL = CandidateModel;
 
@@ -13,14 +14,16 @@ export const handlerGetInformationById = async (id: string, props: { select: str
   const { select = '' } = props;
   const find = MODEL.findById(id);
   if (select) {
-    find.select(select);
+    const safeSelect = candidateQuerySafe.whitelistSelect([select]);
+    find.select(safeSelect);
   }
 
   return await find.exec();
 };
 
 export const handlerGetInformationByEmail = async (email: string) => {
-  const find = await MODEL.findOne({ email }).exec();
+  const safeEmailQuery = candidateQuerySafe.safeQuery({}, { email });
+  const find = await MODEL.findOne(safeEmailQuery).exec();
   return find;
 };
 
@@ -52,20 +55,13 @@ export const handlerUpdate = async (item: Record<string, any>) => {
   const res = await MODEL.updateOne({ _id: value._id || '' }, value).exec();
 
   /**
-   * lấy thông tin vừa update
+   * lấy thông tin vừa update (SAFE SELECT)
    */
-  const _select = getSelectFields(value);
-  const _find = await handlerGetInformationById(value._id, { select: _select });
+  const updateFields = Object.keys(value);
+  const safeSelect = candidateQuerySafe.whitelistSelect(updateFields);
+  const _find = await handlerGetInformationById(value._id, { select: safeSelect });
   /**
    * return
    */
   return { success: true, message: 'Cập nhật thành công', errors: {}, data: _find ? _find : {} };
-};
-
-const getSelectFields = (val: Record<string, any>) => {
-  let f = [];
-  for (const v of Object.keys(val)) {
-    f.push(v);
-  }
-  return f.join(' ');
 };
