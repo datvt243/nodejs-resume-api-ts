@@ -54,10 +54,10 @@ class MongoDBConnection {
       const MONGO_URI = this.getMongoURI();
       await mongoose.connect(MONGO_URI);
       this.isConnected = true;
-      _log('MongoDB Connected!');
+      _log('[MongoDB] Connected!');
       return true;
     } catch (e) {
-      _log({ text: `MongoDB Connect failed !!! ${e}`, type: 'error' });
+      _log({ text: `[MongoDB] Connect failed !!! ${e}`, type: 'error' });
       this.isConnected = false;
       return false;
     }
@@ -70,9 +70,9 @@ class MongoDBConnection {
     try {
       await mongoose.disconnect();
       this.isConnected = false;
-      _log('MongoDB Disconnected!');
+      _log('[MongoDB] Disconnected!');
     } catch (e) {
-      _log({ text: `MongoDB Disconnect failed !!! ${e}`, type: 'error' });
+      _log({ text: `[MongoDB] Disconnect failed !!! ${e}`, type: 'error' });
     }
   }
 

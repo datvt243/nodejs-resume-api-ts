@@ -16,8 +16,7 @@ import session from 'express-session';
 
 import { errorsMiddleware, rateLimitMiddleware, startMemStoreCleanup, requestLogger } from '@/middlewares';
 import { sessionConfig, corsConfig } from '@/config';
-import { _log } from '@/utils';
-
+import { logger } from '@/logger';
 import router from '@/routers';
 import { initRedis } from '@/services/redis';
 
@@ -96,10 +95,10 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
   try {
     startMemStoreCleanup();
   } catch (err) {
-    console.error('[RateLimit] Failed to start memStore cleanup:', err);
+    logger.error('[RateLimit] Failed to start memStore cleanup', { err: (err as Error).message, stack: (err as Error).stack });
   }
   app.listen(_portNumber, () => {
-    console.log(`App listening on port: ${_portNumber} - ${_env}`);
+    logger.info(`App listening on port: ${_portNumber} - ${_env}`);
   });
 
   /* exitHook(() => {
@@ -118,7 +117,7 @@ const startServer = async () => {
     const isConnected = await connectMongo();
     isConnected && runServer({ portNumber: parseInt(LOCAL_PORT || '3001', 10) });
   } catch (e) {
-    _log(`Failed to start server: ${e}`);
+    logger.error(`Failed to start server`, { error: (e as Error).message, stack: (e as Error).stack });
   }
 };
 

@@ -5,6 +5,7 @@
 
 import { createClient, RedisClientType } from 'redis';
 import { REDIS_URL } from '@/config/process.config';
+import { logger } from '@/logger';
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;
@@ -15,7 +16,7 @@ let isConnected = false;
  */
 export const initRedis = async () => {
   if (!REDIS_URL) {
-    console.log('[Redis] REDIS_URL not configured; using in-memory fallback.');
+    logger.info('[Redis] REDIS_URL not configured; using in-memory fallback.');
     return;
   }
 
@@ -23,18 +24,18 @@ export const initRedis = async () => {
     redisClient = createClient({ url: REDIS_URL });
 
     redisClient.on('error', (err) => {
-      console.error('[Redis] Connection error:', err);
+      logger.error('[Redis] Connection error', { err: err.message, stack: (err as Error).stack });
       isConnected = false;
     });
 
     redisClient.on('connect', () => {
-      console.log('[Redis] Connected successfully');
+      logger.info('[Redis] Connected successfully');
       isConnected = true;
     });
 
     await redisClient.connect();
   } catch (err) {
-    console.error('[Redis] Failed to initialize:', err);
+    logger.error('[Redis] Failed to initialize', { err: (err as Error).message, stack: (err as Error).stack });
     redisClient = null;
   }
 };
@@ -60,9 +61,9 @@ export const closeRedis = async () => {
   if (redisClient && isConnected) {
     try {
       await redisClient.disconnect();
-      console.log('[Redis] Disconnected');
+      logger.info('[Redis] Disconnected');
     } catch (err) {
-      console.error('[Redis] Disconnect error:', err);
+      logger.error('[Redis] Disconnect error', { err: (err as Error).message, stack: (err as Error).stack });
     }
   }
 };

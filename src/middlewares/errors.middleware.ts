@@ -6,7 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { NODE_ENV } from '@/config/process.config';
-import { _log } from '@/utils';
+import { logger } from '@/logger';
 import { AppError, ErrorCode } from '@/errors/AppError';
 
 type ErrorMid = Error | ReferenceError | TypeError;
@@ -38,9 +38,12 @@ export enum Collections {
 export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Response, next: NextFunction) => {
   // Check if error is a known operational error
   if (err instanceof AppError) {
-    _log({
-      text: `ERROR [${err.errorCode}]: ${err.message}`,
-      type: 'error',
+    logger.error(`ERROR [${err.errorCode}]: ${err.message}`, {
+      errorCode: err.errorCode,
+      message: err.message,
+      errors: err.errors,
+      stack: err.stack,
+      ...(NODE_ENV === 'development' && { reqUrl: req.originalUrl }),
     });
 
     return res.status(err.statusCode).json({
@@ -56,9 +59,10 @@ export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Re
   const statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   const message = NODE_ENV === 'development' ? err.message : 'Internal Server Error';
 
-  _log({
-    text: `ERROR: ${err.message}`,
-    type: 'error',
+  logger.error(`ERROR: ${err.message}`, {
+    message: err.message,
+    stack: err.stack,
+    ...(NODE_ENV === 'development' && { reqUrl: req.originalUrl }),
   });
 
   res.status(statusCode).json({

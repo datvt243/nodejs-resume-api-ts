@@ -8,6 +8,8 @@ type RateLimitOptions = {
   skipPaths?: string[];
 };
 
+import { logger } from '@/logger';
+
 const DEFAULT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10); // 15 minutes
 const DEFAULT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
 
@@ -30,7 +32,7 @@ export const startMemStoreCleanup = (intervalMs = 60 * 1000) => {
         removed += 1;
       }
     }
-    if (removed > 0) console.debug(`[RateLimit] cleaned ${removed} expired memStore entries`);
+    if (removed > 0) logger.debug(`[RateLimit] cleaned ${removed} expired memStore entries`);
   }, intervalMs);
 };
 
@@ -90,14 +92,14 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
         res.setHeader('X-RateLimit-Remaining', String(remaining));
 
         if (current > max) {
-          console.warn(`[RateLimit] Blocked ${ip} (${userId}) on ${req.path} - quota exceeded`);
+          logger.warn(`[RateLimit] Blocked ${ip} (${userId}) on ${req.path} - quota exceeded`);
           res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000)));
           return res.status(429).json({ success: false, message: 'Too many requests', errors: null, data: null });
         }
 
         return next();
       } catch (err) {
-        console.error('[RateLimit] Redis error after retries:', err);
+        logger.error('[RateLimit] Redis error after retries', { err: (err as Error).message, stack: (err as Error).stack });
         return next();
       }
     }
@@ -119,7 +121,7 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
     res.setHeader('X-RateLimit-Remaining', String(remaining));
 
     if (entry.count > max) {
-      console.warn(`[RateLimit] Blocked ${ip} (${userId}) on ${req.path} - quota exceeded`);
+      logger.warn(`[RateLimit] Blocked ${ip} (${userId}) on ${req.path} - quota exceeded`);
       res.setHeader('Retry-After', String(Math.ceil((entry.reset - now) / 1000)));
       return res.status(429).json({ success: false, message: 'Too many requests', errors: null, data: null });
     }

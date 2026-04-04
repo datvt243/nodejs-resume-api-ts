@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { validateSchema, formatReturn, handleError } from '@/utils';
+import { logger } from '@/logger';
 
 import { schemaAuthLogin } from '../vaidations';
 import { handlerLogin } from '../services';
@@ -18,7 +19,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
    * validate date come from req
    */
   const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.body } });
-  console.log('value: ', isValidated, value, message, errors);
+  logger.debug('Auth login validation', { isValidated, value, message, hasErrors: !!errors?.length });
   if (!isValidated) {
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,

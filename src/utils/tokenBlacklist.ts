@@ -6,6 +6,7 @@
 
 import jwt from 'jsonwebtoken';
 import { isRedisAvailable, getRedisClient } from '@/services/redis';
+import { logger } from '@/logger';
 
 type Entry = { expiresAt: number };
 
@@ -68,7 +69,7 @@ export const isBlacklisted = async (token: string): Promise<boolean> => {
     }
     return true;
   } catch (err) {
-    console.error('[tokenBlacklist] Error checking blacklist:', err);
+    logger.error('[tokenBlacklist] Error checking blacklist', { err: (err as Error).message, stack: (err as Error).stack });
     return false;
   }
 };
