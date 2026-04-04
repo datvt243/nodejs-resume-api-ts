@@ -5,6 +5,7 @@ type RateLimitOptions = {
   windowMs?: number;
   max?: number;
   keyPrefix?: string;
+  skipPaths?: string[];
 };
 
 const DEFAULT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10); // 15 minutes
@@ -44,20 +45,44 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
   const windowMs = opts.windowMs ?? DEFAULT_WINDOW;
   const max = opts.max ?? DEFAULT_MAX;
   const prefix = opts.keyPrefix ?? 'rl';
+  const skipPaths = opts.skipPaths ?? [];
 
   return async (req: Request, res: Response, next: NextFunction) => {
+    // Skip rate limiting for exempt paths
+    if (skipPaths.some((path) => req.path === path || req.path.startsWith(path + '/'))) {
+      return next();
+    }
+
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const userId = (req as any).user?.id || 'anon'; // From verifyToken middleware
     const now = Date.now();
 
     if (isRedisAvailable()) {
       const client = getRedisClient();
       if (!client) return next();
 
-      const key = `${prefix}:${ip}`;
+      const key = `${prefix}:${userId}:${ip}`;
+
+      // Retry logic for Redis operations (wrap in try-catch)
       try {
-        const current = (await client.incr(key)) as number;
+        const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
+          let lastError: any;
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              return await fn();
+            } catch (err: any) {
+              lastError = err;
+              if (attempt < maxRetries) {
+                await new Promise((resolve) => setTimeout(resolve, attempt * 100)); // Backoff
+              }
+            }
+          }
+          throw lastError!;
+        };
+
+        const current = (await withRetry(() => client.incr(key))) as number;
         if (current === 1) {
-          await client.pExpire(key, windowMs);
+          await withRetry(() => client.pExpire(key, windowMs));
         }
 
         const remaining = Math.max(0, max - current);
@@ -65,19 +90,20 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
         res.setHeader('X-RateLimit-Remaining', String(remaining));
 
         if (current > max) {
+          console.warn(`[RateLimit] Blocked ${ip} (${userId}) on ${req.path} - quota exceeded`);
           res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000)));
           return res.status(429).json({ success: false, message: 'Too many requests', errors: null, data: null });
         }
 
         return next();
       } catch (err) {
-        console.error('[RateLimit] Redis error:', err);
+        console.error('[RateLimit] Redis error after retries:', err);
         return next();
       }
     }
 
     // In-memory fallback
-    const key = `${prefix}:${ip}`;
+    const key = `${prefix}:${userId}:${ip}`;
     const entry = memStore.get(key) || { count: 0, reset: now + windowMs };
     if (now > entry.reset) {
       entry.count = 1;
@@ -93,6 +119,7 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
     res.setHeader('X-RateLimit-Remaining', String(remaining));
 
     if (entry.count > max) {
+      console.warn(`[RateLimit] Blocked ${ip} (${userId}) on ${req.path} - quota exceeded`);
       res.setHeader('Retry-After', String(Math.ceil((entry.reset - now) / 1000)));
       return res.status(429).json({ success: false, message: 'Too many requests', errors: null, data: null });
     }
