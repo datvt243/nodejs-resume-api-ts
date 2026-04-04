@@ -1,6 +1,5 @@
 /**
  * Tests for auth.service.ts
- * Author: BLACKBOXAI
  */
 
 import CandidateModel from '@/models/candidate.model';

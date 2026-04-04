@@ -1,6 +1,5 @@
 /**
  * Tests for auth.controller.ts
- * Author: BLACKBOXAI
  */
 
 import { Request, Response, NextFunction } from 'express';
