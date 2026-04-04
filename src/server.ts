@@ -48,8 +48,17 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
 
+  // Health check endpoint (exempt from rate limiting)
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  });
+
   /**
-   * rate limiting
+   * rate limiting (with health exemption)
    */
   app.use(rateLimitMiddleware);
 
