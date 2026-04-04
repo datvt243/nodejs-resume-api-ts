@@ -12,7 +12,14 @@ const schema = new Schema(
   {
     /* _id: ObjectId, */
     _id: { type: ObjectId, required: false },
-    email: { type: String, default: '', required: [false, 'Email is required'] },
+    email: {
+      type: String,
+      default: '',
+      required: [false, 'Email is required'],
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Email không đúng định dạng'],
+    },
     password: { type: String, default: '', required: [false, 'Password is required'] },
 
     /* họ và tên */
