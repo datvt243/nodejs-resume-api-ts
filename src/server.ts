@@ -12,10 +12,11 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import session from 'express-session';
+import swaggerUi from 'swagger-ui-express';
 /* import exitHook from 'exit-hook'; */
 
 import { errorsMiddleware, rateLimitMiddleware, startMemStoreCleanup, requestLogger } from '@/middlewares';
-import { sessionConfig, corsConfig } from '@/config';
+import { sessionConfig, corsConfig, swaggerSpec } from '@/config';
 import { logger } from '@/logger';
 import router from '@/routers';
 import { initRedis } from '@/services/redis';
@@ -47,6 +48,29 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
 
+  /**
+   * @swagger
+   * /health:
+   *   get:
+   *     tags: [Health]
+   *     summary: Health check
+   *     responses:
+   *       200:
+   *         description: Service is healthy
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: ok
+   *                 timestamp:
+   *                   type: string
+   *                   format: date-time
+   *                 uptime:
+   *                   type: number
+   */
   // Health check endpoint (exempt from rate limiting)
   app.get('/health', (req, res) => {
     res.status(200).json({
@@ -54,6 +78,15 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     });
+  });
+
+  /**
+   * API documentation (Swagger UI) - exempt from rate limiting
+   */
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
   });
 
   /**

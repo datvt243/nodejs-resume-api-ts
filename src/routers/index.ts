@@ -24,6 +24,30 @@ router.use('/api/v2', routerAPIV2);
 /**
  * get ME
  */
+
+/**
+ * @swagger
+ * /api/me/{email}:
+ *   get:
+ *     tags: [CandidateMe]
+ *     summary: Get a candidate's full public profile (CV) by email, no auth required
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: email
+ *     responses:
+ *       200:
+ *         description: Aggregated public profile (candidate + general information + all CV sections)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Email not found
+ */
 router.get('/api/me/:email', fnGetAboutMe);
 
 /**
