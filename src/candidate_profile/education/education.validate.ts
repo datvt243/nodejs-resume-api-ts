@@ -5,7 +5,7 @@
  */
 
 import Joi from 'joi';
-import { _id, _boolean, candidateId, startDate, endDate } from '@/config/joi.config';
+import { _id, _boolean, candidateId, startDate, endDate, descriptionOptional } from '@/config/joi.config';
 
 export const schemaEducation = Joi.object({
   _id,
@@ -22,11 +22,6 @@ export const schemaEducation = Joi.object({
   startDate,
   endDate,
   isCurrent: _boolean,
-  description: Joi.string().min(0).trim().strict().label('Mô tả').messages({
-    'any.required': `{#label} là bắt buộc`,
-    'string.min': `{#label} có ít nhất {#limit} ký tự`,
-    'string.max': `{#label} có ít nhất {#limit} ký tự`,
-    'string.empty': `{#label} không được trống`,
-  }),
+  description: descriptionOptional,
   candidateId,
 });

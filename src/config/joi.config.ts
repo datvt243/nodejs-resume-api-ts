@@ -179,6 +179,13 @@ export const description = Joi.string().min(0).trim().strict().required().label(
   'string.empty': `{#label} không được trống`,
 });
 
+export const descriptionOptional = Joi.string().min(0).trim().strict().label('Mô tả').messages({
+  'any.required': `{#label} là bắt buộc`,
+  'string.min': `{#label} có ít nhất {#limit} ký tự`,
+  'string.max': `{#label} có ít nhất {#limit} ký tự`,
+  'string.empty': `{#label} không được trống`,
+});
+
 export const _stringDefault = (props: JoiProps) => {
   const { min = 3, max = 100, title = 'Title' } = props;
   return Joi.string().min(min).max(max).trim().strict().required().label(title).messages({

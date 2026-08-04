@@ -5,18 +5,22 @@
  */
 
 import Joi from 'joi';
-import { _id, _boolean, _arrayString, candidateId, startDate, endDate, _stringDefault, description } from '@/config/joi.config';
+import {
+  _id,
+  _boolean,
+  _arrayString,
+  candidateId,
+  startDate,
+  endDate,
+  _stringDefault,
+  descriptionOptional,
+} from '@/config/joi.config';
 
 export const schemaCertificate = Joi.object({
   _id,
   name: _stringDefault({ min: 0, max: 50, title: 'Chứng chỉ' }),
   organization: _stringDefault({ min: 0, max: 50, title: 'Tổ chức' }),
-  description: Joi.string().min(0).trim().strict().label('Mô tả').messages({
-    'any.required': `{#label} là bắt buộc`,
-    'string.min': `{#label} có ít nhất {#limit} ký tự`,
-    'string.max': `{#label} có ít nhất {#limit} ký tự`,
-    'string.empty': `{#label} không được trống`,
-  }),
+  description: descriptionOptional,
   startDate,
   endDate,
   isNoExpiration: _boolean,

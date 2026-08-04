@@ -57,8 +57,7 @@ export const handlerUpdate = async (item: Record<string, any>) => {
   /**
    * lấy thông tin vừa update (SAFE SELECT)
    */
-  const updateFields = Object.keys(value);
-  const safeSelect = candidateQuerySafe.whitelistSelect(updateFields);
+  const safeSelect = candidateQuerySafe.whitelistSelect(Object.keys(value));
   const _find = await handlerGetInformationById(value._id, { select: safeSelect });
   /**
    * return

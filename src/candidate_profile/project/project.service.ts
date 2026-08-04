@@ -5,59 +5,9 @@
  */
 
 import ProjectModel from '@/models/project.model';
-import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument } from '@/services';
-import { withDBTimeout } from '@/utils/timeout';
+import { createCrudService } from '@/candidate_profile/BaseService';
 
-const MODEL = ProjectModel;
-const NAME = 'dự án';
-
-export const handlerGet = async (candidateId: string) => {
-  return await baseFindDocument({ fields: { candidateId: candidateId }, model: MODEL, findOne: false });
-};
-
-export const handlerCreate = async (item: Record<string, any>) => {
-  /**
-   *
-   */
-  return await baseCreateDocument({
-    document: { ...item },
-    model: MODEL,
-    name: NAME,
-    hookAfterSave: async (doc, { data }) => {
-      const { success, data: find } = await baseFindDocument({
-        model: MODEL,
-        fields: { candidateId: doc.candidateId },
-        findOne: false,
-      });
-      success && (data = find);
-    },
-    hookHasErrors: ({ err }) => {
-      //
-    },
-  });
-};
-
-export const handlerUpdate = async (item: Record<string, any>) => {
-  /**
-   * @return
-   *  success: boolean,
-   *  message: string,
-   *  data: Document,
-   *  error: Array
-   *
-   */
-
-  return await baseUpdateDocument({
-    document: item,
-    model: MODEL,
-  });
-};
-
-export const handlerDelete = async (id: string, userID: string) => {
-  return await baseDeleteDocument({
-    model: MODEL,
-    _id: id,
-    userID,
-    name: NAME,
-  });
-};
+export const { handlerGet, handlerCreate, handlerUpdate, handlerDelete } = createCrudService({
+  model: ProjectModel,
+  name: 'dự án',
+});
