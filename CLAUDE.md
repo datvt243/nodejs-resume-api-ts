@@ -68,7 +68,8 @@ src/
 │   ├── cors.config.ts         # CORS: origin '*'
 │   ├── session.config.ts      # Express session config
 │   ├── joi.config.ts          # Shared Joi schemas (email, password, phone, etc.)
-│   └── regex.config.ts        # Password + phone regex
+│   ├── regex.config.ts        # Password + phone regex
+│   └── swagger.config.ts      # OpenAPI spec (swagger-jsdoc), served at /api-docs
 ├── database/
 │   └── mongo.db.ts            # Singleton MongoDB connection manager
 ├── middlewares/
@@ -192,6 +193,8 @@ Sections: `education`, `experience`, `award`, `certificate`, `project`, `referen
 | GET | `/health` | None | Health check |
 | GET | `/api/me/:email` | None | Public profile |
 | GET | `/api/download-pdf` | Token via query | Export PDF |
+| GET | `/api-docs` | None | Swagger UI (OpenAPI docs) |
+| GET | `/api-docs.json` | None | Raw OpenAPI spec (JSON) |
 
 ---
 
