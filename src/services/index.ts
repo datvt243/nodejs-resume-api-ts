@@ -5,6 +5,7 @@
  */
 import mongoose, { Schema, Document } from 'mongoose';
 import type { BaseReturn } from '@/types/base.type';
+import { getSelectFields } from '@/utils/helper';
 interface baseProp {
   model: any;
   fields: { _id?: string; candidateId?: string };
@@ -40,11 +41,10 @@ export const baseFindDocument = async (props: baseProp) => {
 
   let find;
   const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
+  const safeFields = idQuerySafe.safeQuery({}, fields);
   if (findOne) {
-    const safeFields = idQuerySafe.safeQuery({}, fields);
     find = await MODEL.findOne(safeFields).exec();
   } else {
-    const safeFields = idQuerySafe.safeQuery({}, fields);
     find = await MODEL.find(safeFields).exec();
   }
   return formatReturn({
@@ -138,7 +138,7 @@ export const baseUpdateDocument = async (props: {
 
   try {
     await MODEL.updateOne({ _id }, _valueUpdate).exec();
-    _data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: Object.keys(_valueUpdate).join(', ') });
+    _data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: getSelectFields(_valueUpdate) });
   } catch (err) {
     const { message = '', errors = [] } = _baseHelper().handlerCatchError(err);
     _success = false;
@@ -243,8 +243,7 @@ export const basePatchDocument = async (props: { document: Record<string, any>; 
     /**
      * get information
      */
-    const select = Object.keys(document);
-    const data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: select.join(', ') });
+    const data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: getSelectFields(document) });
 
     /**
      * return

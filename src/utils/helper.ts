@@ -24,6 +24,11 @@ interface formatReturn extends BaseReturn {
 }
 
 /**
+ * Derive a Mongoose `select` string from the keys of an update payload
+ */
+export const getSelectFields = (fields: Record<string, any>): string => Object.keys(fields).join(', ');
+
+/**
  * Async handler wrapper to catch errors in async route handlers
  * Use this wrapper instead of try-catch blocks in async controllers
  *

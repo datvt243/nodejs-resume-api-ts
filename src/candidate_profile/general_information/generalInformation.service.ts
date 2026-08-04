@@ -5,18 +5,14 @@
  */
 
 import generalInformationSchema from '@/models/generalInformation.model';
-import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument, basePatchDocument } from '@/services';
+import { baseFindDocument, baseCreateDocument } from '@/services';
 import { withDBTimeout } from '@/utils/timeout';
+import { createCrudService } from '@/candidate_profile/BaseService';
 
 const MODEL = generalInformationSchema;
+const NAME = 'Thông tin chung';
 
-export const handlerGet = async (candidateId: string) => {
-  try {
-    return await withDBTimeout(baseFindDocument({ fields: { candidateId: candidateId }, model: MODEL, findOne: false }));
-  } catch (error: any) {
-    return { success: false, message: 'Failed to fetch data', error: error.message };
-  }
-};
+export const { handlerGet, handlerUpdate, handlerDelete } = createCrudService({ model: MODEL, name: NAME });
 
 export const handlerCreate = async (document: Record<string, any>) => {
   /**
@@ -53,7 +49,7 @@ export const handlerCreate = async (document: Record<string, any>) => {
       baseCreateDocument({
         document: { ...document },
         model: MODEL,
-        name: 'Thông tin chung',
+        name: NAME,
         hookAfterSave: async (doc, { data }) => {
           const { success, data: find } = await withDBTimeout(
             baseFindDocument({
@@ -71,44 +67,6 @@ export const handlerCreate = async (document: Record<string, any>) => {
     );
   } catch (error: any) {
     return { success: false, message: 'Failed to create document', error: error.message };
-  }
-};
-
-export const handlerUpdate = async (document: Record<string, any>) => {
-  /**
-   * @return
-   *  success: boolean,
-   *  message: string,
-   *  data: Document,
-   *  error: Array | null
-   *
-   */
-
-  try {
-    return await withDBTimeout(
-      baseUpdateDocument({
-        document: { ...document },
-        model: MODEL,
-      }),
-    );
-  } catch (error: unknown) {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    return { success: false, message: 'Failed to update document', error: errorMsg };
-  }
-};
-
-export const handlerDelete = async (id: string, userID: string) => {
-  try {
-    return await withDBTimeout(
-      baseDeleteDocument({
-        model: MODEL,
-        _id: id,
-        userID,
-        name: 'Thông tin chung',
-      }),
-    );
-  } catch (error: any) {
-    return { success: false, message: 'Failed to delete document', error: error.message };
   }
 };
 
