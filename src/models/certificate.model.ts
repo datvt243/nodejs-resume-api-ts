@@ -19,7 +19,7 @@ const schema = new Schema(
     isNoExpiration: { type: Boolean, default: false },
     link: { type: String, default: '', required: [false, 'Vui lòng nhập liên kết'] },
     images: { type: Array, of: String },
-    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate' },
+    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
   },
   { timestamps: true },
 );

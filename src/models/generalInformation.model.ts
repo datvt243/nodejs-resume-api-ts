@@ -12,7 +12,7 @@ import { foreignLanguageSchema, professionalSkillsSchema, personalSkills } from 
 
 const schema = new Schema(
   {
-    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate' },
+    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', unique: true },
     /* vị trí mong muốn */
     positionDesired: { type: String, default: '', required: [false, 'Vui lòng nhập vị trí mong muốn'] },
     career: { type: String, default: '', required: [false, 'Vui lòng nhập nghề nghiệp'] },
