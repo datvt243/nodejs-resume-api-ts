@@ -21,7 +21,7 @@ const schema = new Schema(
     isWorking: { type: Boolean, default: false },
     startDate: { type: Number, default: '', required: [false, 'Vui lòng nhập ngày bắt đầu'] },
     endDate: { type: Number, default: '', required: [false, 'Vui lòng nhập ngày kết thúc'] },
-    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate' },
+    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
   },
   { timestamps: true },
 );

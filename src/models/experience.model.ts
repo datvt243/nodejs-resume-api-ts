@@ -16,7 +16,7 @@ const schema = new Schema(
     endDate: { type: Number, default: '', required: [false, 'Vui lòng nhập ngày kết thúc'] },
     description: { type: String, default: '', required: [false, 'Vui lòng nhập mô tả'] },
     isCurrent: { type: Boolean, default: false },
-    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate' },
+    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
     skills: { type: Array, of: String },
   },
   { timestamps: true },

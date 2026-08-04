@@ -27,6 +27,8 @@ const {
   TOKEN_EXP_IN,
   MONGO_URI,
   REDIS_URL,
+  MONGO_MAX_POOL_SIZE,
+  MONGO_MIN_POOL_SIZE,
 } = process.env;
 
 export {
@@ -40,4 +42,6 @@ export {
   TOKEN_REFRESH,
   TOKEN_EXP_IN,
   REDIS_URL,
+  MONGO_MAX_POOL_SIZE,
+  MONGO_MIN_POOL_SIZE,
 };

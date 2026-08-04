@@ -14,7 +14,7 @@ const schema = new Schema(
     phone: { type: String, default: '', required: [false, 'Vui lòng nhập Số điện thoại'] },
     company: { type: String, default: '', required: [false, 'Vui lòng nhập Công ty'] },
     position: { type: String, default: '', required: [false, 'Vui lòng nhập Vị trí công việc'] },
-    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate' },
+    candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
   },
   { timestamps: true },
 );

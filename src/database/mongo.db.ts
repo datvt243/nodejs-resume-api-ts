@@ -6,7 +6,7 @@
 
 import mongoose, { Mongoose } from 'mongoose';
 
-import { MONGO_URI, MONGOBD_USER, MONGOBD_PASSWORD } from '@/config/process.config';
+import { MONGO_URI, MONGOBD_USER, MONGOBD_PASSWORD, MONGO_MAX_POOL_SIZE, MONGO_MIN_POOL_SIZE } from '@/config/process.config';
 import { _log } from '@/utils';
 
 class MongoDBConnection {
@@ -52,7 +52,10 @@ class MongoDBConnection {
   public async connect(): Promise<boolean> {
     try {
       const MONGO_URI = this.getMongoURI();
-      await mongoose.connect(MONGO_URI);
+      await mongoose.connect(MONGO_URI, {
+        maxPoolSize: Number(MONGO_MAX_POOL_SIZE) || 10,
+        minPoolSize: Number(MONGO_MIN_POOL_SIZE) || 2,
+      });
       this.isConnected = true;
       _log('[MongoDB] Connected!');
       return true;

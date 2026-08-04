@@ -19,6 +19,9 @@ const schema = new Schema(
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Email không đúng định dạng'],
+      unique: true,
+      sparse: true,
+      index: true,
     },
     password: { type: String, default: '', required: [false, 'Password is required'] },
 
