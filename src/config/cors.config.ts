@@ -5,6 +5,6 @@
  */
 
 export const corsConfig = () => ({
-    origin: '*',
-    optionsSuccessStatus: 200,
+  origin: '*',
+  optionsSuccessStatus: 200,
 });

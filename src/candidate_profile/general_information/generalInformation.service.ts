@@ -5,83 +5,69 @@
  */
 
 import generalInformationSchema from '@/models/generalInformation.model';
-import { baseFindDocument, baseDeleteDocument, baseUpdateDocument, baseCreateDocument, basePatchDocument } from '@/services';
+import { baseFindDocument, baseCreateDocument } from '@/services';
+import { withDBTimeout } from '@/utils/timeout';
+import { createCrudService } from '@/candidate_profile/BaseService';
 
 const MODEL = generalInformationSchema;
+const NAME = 'Thông tin chung';
 
-export const handlerGet = async (candidateId: string) => {
-    return await baseFindDocument({ fields: { candidateId: candidateId }, model: MODEL, findOne: false });
-};
+export const { handlerGet, handlerUpdate, handlerDelete } = createCrudService({ model: MODEL, name: NAME });
 
 export const handlerCreate = async (document: Record<string, any>) => {
-    /**
-     * @return
-     *  success: boolean,
-     *  message: string,
-     *  data: Document,
-     *  error: Array | null
-     *
-     */
+  /**
+   * @return
+   *  success: boolean,
+   *  message: string,
+   *  data: Document,
+   *  error: Array | null
+   *
+   */
 
-    /**
-     * check candidate has any document,
-     *  - is has: don't save
-     */
-    const { success, data } = await baseFindDocument({
-        model: MODEL,
-        fields: { candidateId: document?.candidateId },
-    });
-    if (success && !!data) {
-        return {
-            success: false,
-            message: 'Candidate already has information, can not save',
-        };
-    }
+  /**
+   * check candidate has any document,
+   *  - is has: don't save
+   */
+  const { success, data } = await withDBTimeout(
+    baseFindDocument({
+      model: MODEL,
+      fields: { candidateId: document?.candidateId },
+    }),
+  );
+  if (success && !!data) {
+    return {
+      success: false,
+      message: 'Candidate already has information, can not save',
+    };
+  }
 
-    /**
-     * save
-     */
-    return await baseCreateDocument({
+  /**
+   * save
+   */
+  try {
+    return await withDBTimeout(
+      baseCreateDocument({
         document: { ...document },
         model: MODEL,
-        name: 'Thông tin chung',
+        name: NAME,
         hookAfterSave: async (doc, { data }) => {
-            const { success, data: find } = await baseFindDocument({
-                model: MODEL,
-                fields: { candidateId: doc.candidateId },
-                findOne: false,
-            });
-            success && (data = find);
+          const { success, data: find } = await withDBTimeout(
+            baseFindDocument({
+              model: MODEL,
+              fields: { candidateId: doc.candidateId },
+              findOne: false,
+            }),
+          );
+          success && (data = find);
         },
         hookHasErrors: ({ err }) => {
-            //
+          //
         },
-    });
-};
-
-export const handlerUpdate = async (document: Record<string, any>) => {
-    /**
-     * @return
-     *  success: boolean,
-     *  message: string,
-     *  data: Document,
-     *  error: Array | null
-     *
-     */
-
-    return await baseUpdateDocument({
-        document: { ...document },
-        model: MODEL,
-    });
-};
-
-export const handlerDelete = async (id: string, userID: string) => {
-    return await baseDeleteDocument({
-        model: MODEL,
-        _id: id,
-        userID,
-        name: 'Thông tin chung',
-    });
+      }),
+    );
+  } catch (error: any) {
+    return { success: false, message: 'Failed to create document', error: error.message };
+  }
 };
 
 /* export const handerUpdateFields = async (req, res) => {
