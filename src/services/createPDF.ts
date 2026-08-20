@@ -1,31 +1,19 @@
 import puppeteer from 'puppeteer';
 // import open from 'open';
 
-import os from 'os';
 import { Response } from 'express';
-import { _log } from '@/utils';
 import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
 
 export const createCV = async (data: Record<string, any>, res: Response) => {
   try {
     const URL = `src/public/pdf/`;
 
-    const platform = os.platform();
-    let executablePath = '';
-
-    if (platform === 'win32') {
-      executablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-    } else if (platform === 'darwin') {
-      executablePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-    } else if (platform === 'linux') {
-      executablePath = '/usr/bin/chromium-browser';
-    } else {
-      _log('Hệ điều hành không được hỗ trợ.');
-      process.exit(1);
-    }
+    // Optional override for CI/Docker where a specific Chrome/Chromium must be pinned.
+    // Unset: puppeteer resolves its own bundled Chromium automatically.
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
 
     const otp = {
-      executablePath,
+      ...(executablePath ? { executablePath } : {}),
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     };
