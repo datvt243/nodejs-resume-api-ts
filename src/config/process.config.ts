@@ -6,23 +6,42 @@
 
 import 'dotenv/config';
 
-const ENV_KEYS = [
-    'NODE_ENV',
-    'LOCAL_PORT',
-    'MONGOBD_USER',
-    'MONGOBD_PASSWORD',
-    'SESSION_SECRET',
-    'TOKEN_SECRET',
-    'TOKEN_REFRESH',
-    'TOKEN_EXP_IN',
-];
+// Validate required environment variables
+const requiredEnvVars = ['MONGOBD_USER', 'MONGOBD_PASSWORD', 'TOKEN_SECRET', 'TOKEN_REFRESH', 'SESSION_SECRET'];
+const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
 
-const result: Record<string, any> = {};
-for (const k of ENV_KEYS) {
-    result[k] = process.env?.[k];
+if (missingVars.length > 0) {
+  const keyList = missingVars.map((key) => `- ${key}`).join('\n');
+  console.warn('⚠️  Missing required environment variables:\n' + keyList);
+  console.warn('Please set these variables in your .env file or environment before running the application.');
 }
 
-const { NODE_ENV, LOCAL_PORT, MONGOBD_USER, MONGOBD_PASSWORD, SESSION_SECRET, TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN } =
-    process.env;
+const {
+  NODE_ENV,
+  LOCAL_PORT,
+  MONGOBD_USER,
+  MONGOBD_PASSWORD,
+  SESSION_SECRET,
+  TOKEN_SECRET,
+  TOKEN_REFRESH,
+  TOKEN_EXP_IN,
+  MONGO_URI,
+  REDIS_URL,
+  MONGO_MAX_POOL_SIZE,
+  MONGO_MIN_POOL_SIZE,
+} = process.env;
 
-export { NODE_ENV, LOCAL_PORT, MONGOBD_USER, MONGOBD_PASSWORD, SESSION_SECRET, TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN };
+export {
+  NODE_ENV,
+  LOCAL_PORT,
+  MONGO_URI,
+  MONGOBD_USER,
+  MONGOBD_PASSWORD,
+  SESSION_SECRET,
+  TOKEN_SECRET,
+  TOKEN_REFRESH,
+  TOKEN_EXP_IN,
+  REDIS_URL,
+  MONGO_MAX_POOL_SIZE,
+  MONGO_MIN_POOL_SIZE,
+};

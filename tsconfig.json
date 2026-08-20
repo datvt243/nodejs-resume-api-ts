@@ -1,19 +1,20 @@
 {
-    "compilerOptions": {
-        "target": "ES2020", // Cấp độ ECMAScript mà mã sẽ được biên dịch tới
-        "module": "CommonJS", // Định dạng module, sử dụng ES modules (import/export)
-        "moduleResolution": "node", // Cách TypeScript xử lý việc tìm module
-        "outDir": "./dist", // Thư mục đầu ra của file JavaScript biên dịch
-        "rootDir": "./src", // Thư mục gốc của mã nguồn TypeScript
-        "esModuleInterop": true, // Hỗ trợ import module theo chuẩn CommonJS
-        "forceConsistentCasingInFileNames": true, // Bắt buộc phân biệt chữ hoa chữ thường trong tên file
-        "strict": true, // Bật tất cả các kiểm tra chặt chẽ
-        "skipLibCheck": true, // Bỏ qua kiểm tra các file định nghĩa thư viện (.d.ts)
-        "baseUrl": "./",
-        "paths": {
-            "@/*": ["src/*"]
-        }
-    },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules"] // Các thư mục hoặc file bị loại trừ khỏi biên dịch
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "target": "ES2020", // Cấp độ ECMAScript mà mã sẽ được biên dịch tới
+    "module": "CommonJS", // Định dạng module, sử dụng ES modules (import/export)
+    "moduleResolution": "node16",
+    "outDir": "./dist", // Thư mục đầu ra của file JavaScript biên dịch
+    "rootDir": "./src", // Thư mục gốc của mã nguồn TypeScript
+    "esModuleInterop": true, // Hỗ trợ import module theo chuẩn CommonJS
+    "forceConsistentCasingInFileNames": true, // Bắt buộc phân biệt chữ hoa chữ thường trong tên file
+    "strict": true, // Bật tất cả các kiểm tra chặt chẽ
+    "skipLibCheck": true, // Bỏ qua kiểm tra các file định nghĩa thư viện (.d.ts)
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"] // Các thư mục hoặc file bị loại trừ khỏi biên dịch
 }

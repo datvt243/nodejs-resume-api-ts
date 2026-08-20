@@ -11,23 +11,119 @@ import { fnCreate, fnUpdate } from '@/candidate_profile/certificates/certificate
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/v1/certificate:
+ *   get:
+ *     tags: [Certificate]
+ *     summary: List all certificates for the authenticated candidate
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of certificates
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Certificate'
+ */
 router.get(
-    '/',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body.collection = Collections.CERTIFICATE;
-        next();
-    },
-    baseGetAll,
+  '/',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body.collection = Collections.CERTIFICATE;
+    next();
+  },
+  baseGetAll,
 );
+
+/**
+ * @swagger
+ * /api/v1/certificate/create:
+ *   post:
+ *     tags: [Certificate]
+ *     summary: Create a new certificate entry
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Certificate'
+ *     responses:
+ *       201:
+ *         description: Certificate created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ */
 router.post('/create', fnCreate);
+
+/**
+ * @swagger
+ * /api/v1/certificate/update:
+ *   put:
+ *     tags: [Certificate]
+ *     summary: Update an existing certificate entry
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Certificate'
+ *     responses:
+ *       200:
+ *         description: Certificate updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ */
 router.put('/update', fnUpdate);
+
+/**
+ * @swagger
+ * /api/v1/certificate/delete/{id}:
+ *   delete:
+ *     tags: [Certificate]
+ *     summary: Delete a certificate entry by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Certificate deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete(
-    '/delete/:id',
-    (req: Request, res: Response, next: NextFunction) => {
-        req.params.collection = Collections.CERTIFICATE;
-        next();
-    },
-    baseDelete,
+  '/delete/:id',
+  (req: Request, res: Response, next: NextFunction) => {
+    req.params.collection = Collections.CERTIFICATE;
+    next();
+  },
+  baseDelete,
 );
 
 export default router;

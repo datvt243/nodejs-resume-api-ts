@@ -30,15 +30,40 @@ router.use('/reference', verifyToken, routeReference);
 router.use('/general-information', verifyToken, routeGeneralInformation);
 router.use('/project', verifyToken, routeProject);
 router.use('/certificate', verifyToken, routeCertificate);
+
+/**
+ * @swagger
+ * /api/v1/download-pdf:
+ *   get:
+ *     tags: [CandidateMe]
+ *     summary: Export the authenticated candidate's CV as a PDF
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Access token (token is read from the query string for this endpoint)
+ *     responses:
+ *       200:
+ *         description: PDF file stream
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ */
 router.get('/download-pdf', verifyTokenByQuery, fnExportPDF);
 
 router.get('/*', (req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Page not found',
-        errors: null,
-        data: null,
-    });
+  res.status(404).json({
+    success: false,
+    message: 'Page not found',
+    errors: null,
+    data: null,
+  });
 });
 
 export default router;
