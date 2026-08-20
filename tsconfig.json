@@ -3,7 +3,7 @@
     "types": ["jest", "node"],
     "target": "ES2020", // Cấp độ ECMAScript mà mã sẽ được biên dịch tới
     "module": "CommonJS", // Định dạng module, sử dụng ES modules (import/export)
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "outDir": "./dist", // Thư mục đầu ra của file JavaScript biên dịch
     "rootDir": "./src", // Thư mục gốc của mã nguồn TypeScript
     "esModuleInterop": true, // Hỗ trợ import module theo chuẩn CommonJS
