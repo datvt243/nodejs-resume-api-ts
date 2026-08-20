@@ -41,7 +41,7 @@ router.post('/register', authRegister);
 /**
  * @swagger
  * /api/v1/auth/login:
- *   get:
+ *   post:
  *     tags: [Auth]
  *     summary: Log in and receive access + refresh tokens
  *     requestBody:
@@ -59,7 +59,27 @@ router.post('/register', authRegister);
  *               $ref: '#/components/schemas/AuthTokenResponse'
  *       401:
  *         description: Invalid credentials
+ *   get:
+ *     tags: [Auth]
+ *     summary: Log in and receive access + refresh tokens (deprecated, use POST)
+ *     deprecated: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AuthLoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthTokenResponse'
+ *       401:
+ *         description: Invalid credentials
  */
+router.post('/login', authLogin);
 router.get('/login', authLogin);
 
 /**
