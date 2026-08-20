@@ -16,16 +16,17 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 - 📊 **Logging** (Winston daily)
 - 🧪 **Tests** (Jest: auth/middlewares/utils/DB)
 - ✅ **Health**: `/health` endpoint
+- 📘 **API Docs**: Swagger UI at `/api-docs`, raw spec at `/api-docs.json`
 
 ## 🛠️ Tech Stack
 
 ### Core
 
-| Category  | Tech             |
-| --------- | ---------------- |
-| Runtime   | Node.js          |
-| Framework | Express 4.19.2   |
-| Language  | TypeScript 5.5.4 |
+| Category  | Tech                       |
+| --------- | -------------------------- |
+| Runtime   | Node.js `>=20.19.0 <23.0.0`|
+| Framework | Express 4.19.2             |
+| Language  | TypeScript 5.5.4           |
 
 ### Database & Cache
 
@@ -49,6 +50,7 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 | Joi                  | 17.13.1        | Validation |
 | PDFKit/Puppeteer/Pug | 0.15/22.13/3.0 | PDF        |
 | Winston              | 3.19.0         | Logging    |
+| swagger-jsdoc/swagger-ui-express | 6.3.0/5.0.1 | OpenAPI docs |
 
 ---
 
@@ -79,6 +81,10 @@ backend/
 ---
 
 ## 🚀 Quick Start
+
+> Requires Node.js `>=20.19.0 <23.0.0` (see `engines` in `package.json`).
+> Newer Node majors remove `Buffer.SlowBuffer`, which a `jsonwebtoken`
+> transitive dependency still relies on.
 
 1. **Install**: `npm install`
 2. **Env**: `npm run env:setup` + edit `.env`:
@@ -130,6 +136,14 @@ REDIS_URL=redis://localhost:6379  # Optional
 | DELETE | `/delete/:id` | Delete |
 
 **Header**: `Authorization: Bearer <token>`
+
+### Other
+
+| Method | Path             | Auth | Desc                          |
+| ------ | ---------------- | ---- | ------------------------------ |
+| GET    | `/health`        | None | Health check                  |
+| GET    | `/api-docs`      | None | Swagger UI (OpenAPI docs)     |
+| GET    | `/api-docs.json` | None | Raw OpenAPI spec (JSON)       |
 
 ---
 
