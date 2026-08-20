@@ -1,0 +1,5 @@
+# Scratch + local-only — evidence/ is audit trail and must NOT be ignored
+.DS_Store
+*.tmp
+*.swp
+scratch/
