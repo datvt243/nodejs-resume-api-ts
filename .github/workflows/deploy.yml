@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main  # Thay 'main' bằng nhánh bạn muốn deploy
+  workflow_dispatch: {}
 
 jobs:
   deploy:
