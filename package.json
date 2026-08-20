@@ -27,7 +27,7 @@
   "author": "DatVT",
   "license": "ISC",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=20.19.0 <23.0.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.22.10",
