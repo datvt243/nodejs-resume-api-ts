@@ -26,6 +26,9 @@
   },
   "author": "DatVT",
   "license": "ISC",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "dependencies": {
     "@babel/runtime": "^7.22.10",
     "bcrypt": "^5.1.1",
@@ -66,7 +69,6 @@
     "@types/http-status-codes": "^1.2.0",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/mongoose": "^5.11.97",
     "@types/node": "^20.14.12",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
