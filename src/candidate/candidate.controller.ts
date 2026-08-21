@@ -9,29 +9,35 @@ import { StatusCodes } from 'http-status-codes';
 import { formatReturn, validateSchema, handleError } from '@/utils';
 import { schemaCandidate, schemaCandidatePatch } from '@/candidate/candidate.validate';
 import { handlerUpdate, handlerDelete, handlerGetInformationByEmail, handlerGetInformationById } from '@/candidate/candidate.service';
+import { t } from '@/utils/i18n';
 
 export const fnGetInformationById = async (req: Request, res: Response) => {
   const { id = '' } = req.params;
   const doc = await handlerGetInformationById(id);
 
   const _flag = !!doc;
-  return formatReturn(res, { success: _flag, message: _flag ? '' : 'Không tìm thấy người dùng', data: doc });
+  return formatReturn(res, { success: _flag, message: _flag ? '' : t('candidate.userNotFound', (req as any).lang), data: doc });
 };
 
 export const fnGetInformationByEmail = async (req: Request, res: Response) => {
   const { email = '' } = req.params;
   const doc = await handlerGetInformationByEmail(email);
   const _flag = !!doc;
-  return formatReturn(res, { success: _flag, message: _flag ? '' : 'Không tìm thấy người dùng', data: doc });
+  return formatReturn(res, { success: _flag, message: _flag ? '' : t('candidate.userNotFound', (req as any).lang), data: doc });
 };
 
 export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data come from req.body
    */
-  const { isValidated, value, errors } = validateSchema({ schema: schemaCandidate, item: { ...req.body } });
+  const { isValidated, value, errors } = validateSchema({ schema: schemaCandidate, item: { ...req.body }, lang: (req as any).lang });
   if (!isValidated)
-    return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message: 'Xảy ra lỗi', errors });
+    return formatReturn(res, {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      success: false,
+      message: t('validation.hasErrors', (req as any).lang),
+      errors,
+    });
 
   /**
    * update data
@@ -40,10 +46,10 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
    * candidate's profile.
    */
   try {
-    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id });
+    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id }, (req as any).lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
 
@@ -53,10 +59,10 @@ export const fnDelete = async (req: Request, res: Response, next: NextFunction) 
    * client-supplied one (see fnUpdate for the same IDOR-safety pattern).
    */
   try {
-    const _result = await handlerDelete((req as any).user?._id);
+    const _result = await handlerDelete((req as any).user?._id, (req as any).lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
 
@@ -67,17 +73,23 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
   const { isValidated, value, errors } = validateSchema({
     schema: schemaCandidatePatch,
     item: { ...req.body },
+    lang: (req as any).lang,
   });
   if (!isValidated)
-    return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message: 'Xảy ra lỗi', errors });
+    return formatReturn(res, {
+      statusCode: StatusCodes.UNAUTHORIZED,
+      success: false,
+      message: t('validation.hasErrors', (req as any).lang),
+      errors,
+    });
 
   /**
    * update data — force _id to the authenticated user (see fnUpdate)
    */
   try {
-    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id });
+    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id }, (req as any).lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };

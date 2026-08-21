@@ -16,6 +16,7 @@ import {
   IErrorOptions,
   IErrorOptionsWithStatus,
 } from '@/errors';
+import { t, tErrorType, DEFAULT_LANG } from '@/utils/i18n';
 
 interface formatReturn extends BaseReturn {
   statusCode?: null | number;
@@ -91,7 +92,7 @@ export const throwBadRequestError = (options: IErrorOptions): never => {
  * Pass error to global error handler via next()
  * Use this in catch blocks to forward errors to middleware
  */
-export const handleError = (err: any, next: NextFunction): void => {
+export const handleError = (err: any, next: NextFunction, lang: string = DEFAULT_LANG): void => {
   // If it's already an AppError, pass it through
   if (err instanceof AppError) {
     return next(err);
@@ -101,7 +102,7 @@ export const handleError = (err: any, next: NextFunction): void => {
   if (err?.name === 'CastError') {
     return next(
       new BadRequestError({
-        message: 'Invalid ID format',
+        message: t('errors.invalidIdFormat', lang),
         errors: err.message,
       }),
     );
@@ -110,17 +111,30 @@ export const handleError = (err: any, next: NextFunction): void => {
   // If it's a Mongoose duplicate key error
   if (err?.code === 11000) {
     const field = Object.keys(err?.keyValue || {})[0] || 'field';
-    return next(new ConflictError({ message: `${field} already exists` }));
+    return next(new ConflictError({ message: t('errors.duplicateKey', lang).replace('{{field}}', field) }));
   }
 
-  // If it's a Mongoose validation error
+  // If it's a Mongoose validation error — translate each field's error using
+  // the same generic error-type + field-label approach as Joi (see
+  // utils/valid.ts). Only `required` is currently used by any model's
+  // schema; anything else falls back to Mongoose's own hardcoded message.
   if (err?.name === 'ValidationError') {
-    const details = Object.values(err?.errors || {}).map((e: any) => e.message);
-    return next(new ValidationError({ message: 'Validation failed', errors: details }));
+    const details = Object.entries(err?.errors || {}).map(([field, e]: [string, any]) => {
+      if (e?.kind === 'required') {
+        const labelKey = `fieldLabels.${field}`;
+        const translatedLabel = t(labelKey, lang);
+        const label = translatedLabel === labelKey ? field : translatedLabel;
+        return (tErrorType('any.required', lang) ?? '{{label}}').replace('{{label}}', label);
+      }
+      return e.message;
+    });
+    return next(new ValidationError({ message: t('validation.hasErrors', lang), errors: details }));
   }
 
   // Default to internal server error
-  return next(new AppError({ message: err?.message || 'Internal Server Error', statusCode: StatusCodes.INTERNAL_SERVER_ERROR }));
+  return next(
+    new AppError({ message: err?.message || t('errors.internalServerError', lang), statusCode: StatusCodes.INTERNAL_SERVER_ERROR }),
+  );
 };
 
 /**

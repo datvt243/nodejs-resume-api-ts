@@ -54,6 +54,6 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };

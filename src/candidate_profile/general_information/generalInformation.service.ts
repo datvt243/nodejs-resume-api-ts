@@ -8,13 +8,14 @@ import generalInformationSchema from '@/models/generalInformation.model';
 import { baseFindDocument, baseCreateDocument } from '@/services';
 import { withDBTimeout } from '@/utils/timeout';
 import { createCrudService } from '@/candidate_profile/BaseService';
+import { t, DEFAULT_LANG } from '@/utils/i18n';
 
 const MODEL = generalInformationSchema;
 const NAME = 'Thông tin chung';
 
 export const { handlerGet, handlerUpdate, handlerDelete } = createCrudService({ model: MODEL, name: NAME });
 
-export const handlerCreate = async (document: Record<string, any>) => {
+export const handlerCreate = async (document: Record<string, any>, lang: string = DEFAULT_LANG) => {
   /**
    * @return
    *  success: boolean,
@@ -37,7 +38,7 @@ export const handlerCreate = async (document: Record<string, any>) => {
   if (success && !!data) {
     return {
       success: false,
-      message: 'Candidate already has information, can not save',
+      message: t('generalInformation.alreadyExists', lang),
     };
   }
 
@@ -50,6 +51,7 @@ export const handlerCreate = async (document: Record<string, any>) => {
         document: { ...document },
         model: MODEL,
         name: NAME,
+        lang,
         hookAfterSave: async (doc) => {
           const { success, data: find } = await withDBTimeout(
             baseFindDocument({
@@ -66,7 +68,7 @@ export const handlerCreate = async (document: Record<string, any>) => {
       }),
     );
   } catch (error: any) {
-    return { success: false, message: 'Failed to create document', error: error.message };
+    return { success: false, message: t('common.createFailed', lang), error: error.message };
   }
 };
 

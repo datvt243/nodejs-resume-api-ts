@@ -34,7 +34,7 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
     const _me = await handlerGetAboutMe(email, lang);
     return formatReturn(res, _me);
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
 
@@ -159,6 +159,6 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
     }
     await createCV(data, res);
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };

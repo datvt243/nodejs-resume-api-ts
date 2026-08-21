@@ -33,3 +33,16 @@ export const t = (key: string, lang: string = DEFAULT_LANG): string => {
 
   return key;
 };
+
+/**
+ * Joi/Mongoose error-type codes (e.g. "any.required", "string.pattern.base")
+ * are themselves dot-separated strings, so they can't go through t()'s
+ * generic dot-path walker (`joiErrors.${type}` would be mis-parsed as
+ * nested namespaces instead of a single literal key under `joiErrors`).
+ * This does a flat, one-level lookup into `joiErrors[type]` instead.
+ * Returns undefined (not the key) when missing, so callers can
+ * distinguish "no template for this error type" from a real translation.
+ */
+export const tErrorType = (type: string, lang: string = DEFAULT_LANG): string | undefined => {
+  return locales[lang as SupportedLang]?.joiErrors?.[type] ?? locales[DEFAULT_LANG]?.joiErrors?.[type];
+};
