@@ -7,7 +7,7 @@
 import express from 'express';
 const router = express.Router();
 
-import { fnGetInformationByEmail, fnUpdate, fnUpdateFields } from '@/candidate/candidate.controller';
+import { fnGetInformationByEmail, fnUpdate, fnUpdateFields, fnDelete } from '@/candidate/candidate.controller';
 
 /**
  * @swagger
@@ -90,5 +90,23 @@ router.put('/update', fnUpdate);
  *         description: Validation error
  */
 router.patch('/update', fnUpdateFields);
+
+/**
+ * @swagger
+ * /api/v1/candidate:
+ *   delete:
+ *     tags: [Candidate]
+ *     summary: Delete the authenticated candidate's own account (and all their CV section data)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
+router.delete('/', fnDelete);
 
 export default router;

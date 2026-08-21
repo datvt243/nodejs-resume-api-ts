@@ -4,11 +4,23 @@
  * Description:
  */
 
-import CandidateModel from '@/models/candidate.model';
+import * as MODELS from '@/models';
 import { validateModel } from '@/utils';
 import { candidateQuerySafe } from '@/utils/querySafe';
 
-const MODEL = CandidateModel;
+const MODEL = MODELS.Candidate;
+
+// CV section models keyed by candidateId — deleted alongside the
+// candidate document itself so a self-delete doesn't leave orphaned data.
+const CV_SECTION_MODELS: any[] = [
+  MODELS.generalInformation,
+  MODELS.Experience,
+  MODELS.Education,
+  MODELS.Reference,
+  MODELS.Project,
+  MODELS.Certificate,
+  MODELS.Award,
+];
 
 export const handlerGetInformationById = async (id: string, props: { select: string } = { select: '' }) => {
   const { select = '' } = props;
@@ -64,4 +76,15 @@ export const handlerUpdate = async (item: Record<string, any>) => {
    * return
    */
   return { success: true, message: 'Cập nhật thành công', errors: {}, data: _find ? _find : {} };
+};
+
+export const handlerDelete = async (_id: string) => {
+  if (!(await MODEL.findById(_id))) {
+    return { success: false, message: 'ID không tồn tại' };
+  }
+
+  await Promise.all(CV_SECTION_MODELS.map((model) => model.deleteMany({ candidateId: _id })));
+  await MODEL.deleteOne({ _id }).exec();
+
+  return { success: true, message: 'Xoá tài khoản thành công', errors: {}, data: null };
 };
