@@ -8,7 +8,7 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { formatReturn, validateSchema, handleError } from '@/utils';
 import { schemaCandidate, schemaCandidatePatch } from '@/candidate/candidate.validate';
-import { handlerUpdate, handlerGetInformationByEmail, handlerGetInformationById } from '@/candidate/candidate.service';
+import { handlerUpdate, handlerDelete, handlerGetInformationByEmail, handlerGetInformationById } from '@/candidate/candidate.service';
 
 export const fnGetInformationById = async (req: Request, res: Response) => {
   const { id = '' } = req.params;
@@ -41,6 +41,19 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
    */
   try {
     const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id });
+    return formatReturn(res, { ..._result });
+  } catch (err) {
+    handleError(err, next);
+  }
+};
+
+export const fnDelete = async (req: Request, res: Response, next: NextFunction) => {
+  /**
+   * Self-delete only — always the authenticated user's own id, never a
+   * client-supplied one (see fnUpdate for the same IDOR-safety pattern).
+   */
+  try {
+    const _result = await handlerDelete((req as any).user?._id);
     return formatReturn(res, { ..._result });
   } catch (err) {
     handleError(err, next);

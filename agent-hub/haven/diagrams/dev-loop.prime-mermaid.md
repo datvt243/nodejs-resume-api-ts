@@ -46,6 +46,7 @@ flowchart TD
 | `fix-refresh-token-expiry-unused` | PENDING | `TOKEN_EXP_IN` (`.env`, config đã export) không hề được dùng ở `jwtSign()` call site nào (`auth.service.ts`, `auth.controller.ts`, `api/v1/auth/services/login.ts`) — access token và refresh token luôn cùng default 1h, refresh token mất tác dụng. |
 | `fix-v2-register-missing-await` | PENDING | `src/api/v1/auth/services/register.ts:44` — `bcryptGenerateSalt(password)` thiếu `await`, Promise được gán thẳng vào field password của Mongoose model → mọi request `POST /api/v2/auth/register` fail với lỗi cast Promise→string. |
 | `fix-create-response-null-id` | PENDING | Minor. `BaseService.ts` `handlerCreate`'s `hookAfterSave` reassign biến `data` cục bộ (destructured), không thực sự cập nhật giá trị trả về của `baseCreateDocument` → response của mọi `POST .../create` trả `data._id: null` thay vì ID thật vừa tạo. |
+| `add-candidate-self-delete` | PENDING | Feature (không phải bug). Không có endpoint nào để candidate tự xoá tài khoản — cần để dọn 2 account test tạo ra khi live-verify 5 fix bug trên production (`livecheck+...@example.com`, `livecheckB+...@example.com`). Yêu cầu: `DELETE /api/v1/candidate`, chỉ dùng `req.user._id` (không nhận id từ client — theo đúng pattern IDOR-safe của `fix-idor-broken-access-control`), cascade xoá luôn data ở 7 CV section model theo `candidateId`. |
 
 Any regression phải là **node mới** (LAI-13) — không được sửa trực tiếp PM
 status của node cũ để "gỡ" một SEAL đã có.
