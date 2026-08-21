@@ -5,6 +5,7 @@
  */
 
 import mongoose from 'mongoose';
+import { localizedTextSchema } from '@/models/part';
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
@@ -35,7 +36,7 @@ const schema = new Schema(
     address: { type: String, default: '' },
 
     phone: { type: String, default: '', required: false },
-    introduction: { type: String, default: '', required: false },
+    introduction: { type: localizedTextSchema, default: () => ({}) },
     socialMedia: {
       github: { type: String, required: false },
       linkedin: { type: String, required: false },

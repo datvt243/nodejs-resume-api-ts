@@ -38,6 +38,14 @@ router.use('/api/v2', routerAPIV2);
  *         schema:
  *           type: string
  *           format: email
+ *       - in: query
+ *         name: lang
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [vi, en]
+ *           default: vi
+ *         description: Language to resolve localized free-text fields (introduction, section descriptions, career/careerGoal) into. Falls back to whichever language has content if the requested one is empty.
  *     responses:
  *       200:
  *         description: Aggregated public profile (candidate + general information + all CV sections)

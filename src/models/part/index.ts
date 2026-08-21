@@ -45,3 +45,15 @@ export const socialMediaSchema = new Schema(
   },
   { _id: false },
 );
+
+// Free-text content (introduction/description-style fields) stored per
+// language. Proper-noun/label fields (school, company, position title,
+// etc.) stay plain String — only fields a candidate actually writes
+// prose into get this treatment.
+export const localizedTextSchema = new Schema(
+  {
+    vi: { type: String, default: '' },
+    en: { type: String, default: '' },
+  },
+  { _id: false },
+);

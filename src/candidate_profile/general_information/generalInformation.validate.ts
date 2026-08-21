@@ -6,7 +6,16 @@
 
 import Joi from 'joi';
 
-import { getObject, _id, position, candidateId, foreignLanguages, _arrayString, _stringDefault } from '@/config/joi.config';
+import {
+  getObject,
+  _id,
+  position,
+  candidateId,
+  foreignLanguages,
+  _arrayString,
+  _stringDefault,
+  description,
+} from '@/config/joi.config';
 
 const _sub = {
   candidateId,
@@ -45,7 +54,7 @@ export const schemaGeneralInformationPatch = getObject({
 export const schemaGeneralInformation = getObject({
   _id: _id,
   positionDesired: position,
-  career: _stringDefault({ min: 3, max: 100, title: 'Nghề nghiệp' }),
+  career: description.label('Nghề nghiệp'),
   levelCurrent: _stringDefault({ min: 3, max: 100, title: 'Cấp bậc hiện tại' }),
   levelDesired: _stringDefault({ min: 3, max: 100, title: 'Cấp bậc mong muốn' }),
   salaryDesired: Joi.number().min(0).required().label('Lương mong muốn').messages({
@@ -55,7 +64,7 @@ export const schemaGeneralInformation = getObject({
   education: _stringDefault({ min: 3, max: 100, title: 'Học vấn' }),
   workLocation: _stringDefault({ min: 3, max: 100, title: 'Địa điểm làm việc' }),
   workForm: _stringDefault({ min: 0, max: 100, title: 'Hình thức làm việc' }),
-  careerGoal: _stringDefault({ min: 0, max: 1000, title: 'Mục tiêu nghề nghiệp' }),
+  careerGoal: description.label('Mục tiêu nghề nghiệp'),
   yearsOfExperience: Joi.number().min(0).required().messages({
     'any.required': 'Số năm kinh nghiệm không được rỗng',
     'number.min': `Số năm kinh nghiệm không được nhỏ hơn {#limit}`,
