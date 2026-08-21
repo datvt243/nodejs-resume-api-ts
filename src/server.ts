@@ -15,7 +15,7 @@ import session from 'express-session';
 import swaggerUi from 'swagger-ui-express';
 /* import exitHook from 'exit-hook'; */
 
-import { errorsMiddleware, rateLimitMiddleware, startMemStoreCleanup, requestLogger } from '@/middlewares';
+import { errorsMiddleware, rateLimitMiddleware, startMemStoreCleanup, requestLogger, languageMiddleware } from '@/middlewares';
 import { sessionConfig, corsConfig, swaggerSpec } from '@/config';
 import { logger } from '@/logger';
 import router from '@/routers';
@@ -32,6 +32,11 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
    * request logging
    */
   app.use(requestLogger);
+
+  /**
+   * resolve request language (Accept-Language) → req.lang / req.t(key)
+   */
+  app.use(languageMiddleware);
 
   /**
    * use Session

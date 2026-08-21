@@ -61,7 +61,7 @@ describe('auth.controller', () => {
       await authRegister(req, res, mockNext);
 
       expect(validateSchema.validateSchema).toHaveBeenCalled();
-      expect(handlerRegister).toHaveBeenCalledWith({ _id: null, email: 'test@example.com', password: 'pass123' });
+      expect(handlerRegister).toHaveBeenCalledWith({ _id: null, email: 'test@example.com', password: 'pass123' }, undefined);
       expect(formatReturn.formatReturn).toHaveBeenCalledWith(res, {
         statusCode: StatusCodes.OK,
         success: true,
@@ -109,7 +109,7 @@ describe('auth.controller', () => {
 
       await authLogin(req, res, mockNext);
 
-      expect(handlerLogin).toHaveBeenCalledWith({ email: 'test@example.com', password: 'pass123' });
+      expect(handlerLogin).toHaveBeenCalledWith({ email: 'test@example.com', password: 'pass123' }, undefined);
       expect(formatReturn.formatReturn).toHaveBeenCalledWith(
         res,
         expect.objectContaining({
@@ -172,7 +172,7 @@ describe('auth.controller', () => {
         res,
         expect.objectContaining({
           statusCode: StatusCodes.UNAUTHORIZED,
-          message: 'No refresh token provided',
+          message: 'Không có refresh token',
         }),
       );
     });
@@ -190,7 +190,7 @@ describe('auth.controller', () => {
         res,
         expect.objectContaining({
           statusCode: StatusCodes.FORBIDDEN,
-          message: 'Refresh token revoked',
+          message: 'Refresh token đã bị thu hồi',
         }),
       );
     });
@@ -212,7 +212,7 @@ describe('auth.controller', () => {
         expect.objectContaining({
           statusCode: StatusCodes.OK,
           success: true,
-          message: 'Logged out successfully',
+          message: 'Đăng xuất thành công',
         }),
       );
     });
@@ -229,7 +229,7 @@ describe('auth.controller', () => {
         res,
         expect.objectContaining({
           statusCode: StatusCodes.BAD_REQUEST,
-          message: 'No token provided to logout',
+          message: 'Không có token để đăng xuất',
         }),
       );
     });
