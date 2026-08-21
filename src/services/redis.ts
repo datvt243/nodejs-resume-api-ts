@@ -6,6 +6,7 @@
 import { createClient, RedisClientType } from 'redis';
 import { REDIS_URL } from '@/config/process.config';
 import { logger } from '@/logger';
+import { withRedisTimeout } from '@/utils/timeout';
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;
@@ -21,7 +22,11 @@ export const initRedis = async () => {
   }
 
   try {
-    redisClient = createClient({ url: REDIS_URL });
+    // reconnectStrategy: false — default strategy retries forever
+    // (retries => Math.min(retries * 50, 500)), which kept initRedis()
+    // pending indefinitely when Redis is unreachable and blocked
+    // server.ts's `await initRedis()` from ever reaching app.listen().
+    redisClient = createClient({ url: REDIS_URL, socket: { reconnectStrategy: false } });
 
     redisClient.on('error', (err) => {
       logger.error('[Redis] Connection error', { err: err.message, stack: (err as Error).stack });
@@ -33,7 +38,7 @@ export const initRedis = async () => {
       isConnected = true;
     });
 
-    await redisClient.connect();
+    await withRedisTimeout(redisClient.connect());
   } catch (err) {
     logger.error('[Redis] Failed to initialize', { err: (err as Error).message, stack: (err as Error).stack });
     redisClient = null;

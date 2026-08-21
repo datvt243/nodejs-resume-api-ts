@@ -6,7 +6,7 @@
 
 import CandidateModel from '@/models/candidate.model';
 import { bcryptGenerateSalt, bcryptCompareHash, jwtSign } from '@/utils';
-import { TOKEN_SECRET, TOKEN_REFRESH } from '@/config/process.config';
+import { TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN, TOKEN_REFRESH_EXP_IN } from '@/config/process.config';
 
 interface Auth {
   email: string;
@@ -76,8 +76,8 @@ export const handlerLogin = async (data: Auth) => {
   /**
    * init token
    */
-  const token = jwtSign({ _id }, TOKEN_SECRET);
-  const tokenRefresh = jwtSign({ _id }, TOKEN_REFRESH);
+  const token = jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
+  const tokenRefresh = jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
 
   return {
     success: true,

@@ -31,6 +31,11 @@ const {
   MONGO_MIN_POOL_SIZE,
 } = process.env;
 
+// No dedicated env var for refresh-token lifetime; default it to
+// meaningfully outlive the access token (TOKEN_EXP_IN) so the refresh
+// flow (get a new access token once the old one expires) stays usable.
+const TOKEN_REFRESH_EXP_IN = process.env.TOKEN_REFRESH_EXP_IN || '7d';
+
 export {
   NODE_ENV,
   LOCAL_PORT,
@@ -41,6 +46,7 @@ export {
   TOKEN_SECRET,
   TOKEN_REFRESH,
   TOKEN_EXP_IN,
+  TOKEN_REFRESH_EXP_IN,
   REDIS_URL,
   MONGO_MAX_POOL_SIZE,
   MONGO_MIN_POOL_SIZE,

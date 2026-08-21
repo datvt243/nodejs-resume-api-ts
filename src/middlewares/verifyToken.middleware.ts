@@ -35,8 +35,15 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       return next(new InvalidTokenError('Invalid token payload.'));
     }
 
-    // attach authenticated user info without mutating body
+    // Attach authenticated user info. Also force req.body.candidateId to the
+    // authenticated user's own _id, overwriting whatever the client sent —
+    // every candidate_profile handler (list/create/update/delete/export)
+    // trusts req.body.candidateId as the acting user, so leaving it
+    // client-controlled let any authenticated user read/write/delete any
+    // other user's data by supplying a different candidateId in the body.
     (req as any).user = { _id };
+    if (!req.body || typeof req.body !== 'object') req.body = {};
+    req.body.candidateId = _id;
     return next();
   } catch (err: any) {
     if (err?.name === 'TokenExpiredError' || err?.name === 'JsonWebTokenError') {

@@ -97,7 +97,7 @@ describe('auth.service', () => {
 
       expect(CandidateModel.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
       expect(bcrypt.bcryptCompareHash).toHaveBeenCalledWith('correctpass', mockUser.password);
-      expect(jwt.jwtSign).toHaveBeenNthCalledWith(1, { _id: 'user_id' }, expect.any(String));
+      expect(jwt.jwtSign).toHaveBeenNthCalledWith(1, { _id: 'user_id' }, expect.any(String), expect.objectContaining({ expiresIn: expect.any(String) }));
       expect(result).toEqual({
         success: true,
         message: 'Đăng nhập thành công',
