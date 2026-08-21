@@ -46,6 +46,14 @@ router.use('/certificate', verifyToken, routeCertificate);
  *         schema:
  *           type: string
  *         description: Access token (token is read from the query string for this endpoint)
+ *       - in: query
+ *         name: lang
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [vi, en]
+ *           default: vi
+ *         description: Language to render localized free-text fields into. Falls back to whichever language has content if the requested one is empty.
  *     responses:
  *       200:
  *         description: PDF file stream

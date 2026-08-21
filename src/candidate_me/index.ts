@@ -12,22 +12,33 @@ import { formatReturnFailed } from '@/services';
 import { createCV } from '@/services/createPDF';
 import * as MODEL from '@/models';
 
+// Localized ({vi, en}) fields get resolved down to a single string for
+// public-facing reads (profile view, PDF export) — the owner's own
+// authenticated CRUD endpoints (candidate_profile/*) still return the
+// full {vi, en} object so they can edit both languages.
+const resolveLocalizedText = (value: any, lang: string): string => {
+  if (typeof value === 'string') return value; // defensive: pre-migration data shape
+  if (!value || typeof value !== 'object') return '';
+  return value[lang] || value.vi || value.en || '';
+};
+
 export const fnGetAboutMe = async (req: Request, res: Response, next: NextFunction) => {
   const { email } = req.params;
+  const lang = req.query.lang === 'en' ? 'en' : 'vi';
   if (!email) res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Không tìm thấy Email'));
 
   /**
    * get data
    */
   try {
-    const _me = await handlerGetAboutMe(email);
+    const _me = await handlerGetAboutMe(email, lang);
     return formatReturn(res, _me);
   } catch (err) {
     handleError(err, next);
   }
 };
 
-export const handlerGetAboutMe = async (email: string) => {
+export const handlerGetAboutMe = async (email: string, lang: string = 'vi') => {
   const removeFields = { __v: 0, createdAt: 0, updatedAt: 0, candidateId: 0 };
 
   const { candidateQuerySafe } = await import('@/utils/querySafe');
@@ -56,18 +67,55 @@ export const handlerGetAboutMe = async (email: string) => {
   for (const { collection, model } of getMoreInfo) {
     dataResult[collection] = [];
     const { idQuerySafe } = await import('@/utils/querySafe');
-    const safeCandidateQuery = idQuerySafe.safeQuery({}, { candidateId: _id });
+    // _id here is a Mongoose ObjectId instance (from the raw document,
+    // destructured before the JSON.parse/stringify flatten above), not a
+    // string. QuerySafe.safeQuery only accepts string values (typeof
+    // check) — passing the ObjectId directly made it silently drop the
+    // candidateId filter, so this query returned EVERY candidate's CV
+    // section data unfiltered.
+    const safeCandidateQuery = idQuerySafe.safeQuery({}, { candidateId: _id?.toString() || '' });
     const _find: undefined | Record<string, any> | Record<string, any>[] = await model
       .find(safeCandidateQuery, { _id: 0, ...removeFields })
       .exec();
     if (!_find) continue;
-    dataResult[collection] = _find;
+    // Flatten Mongoose documents to plain objects immediately (same as
+    // `document` above) — spreading a live Mongoose document later (for
+    // the language-resolution step) only copies its internal bookkeeping
+    // properties ($__, _doc, ...), not the clean schema fields, since
+    // those are only reachable via getters that a plain object spread
+    // doesn't invoke.
+    dataResult[collection] = JSON.parse(JSON.stringify(_find));
   }
 
   dataResult['generalInformation'] = ((data: Record<string, any>[]) => {
     if (!data.length) return {};
     return data[0];
   })(dataResult['generalInformation']);
+
+  /**
+   * Resolve localized ({vi, en}) fields down to a single string for this
+   * language, falling back to whichever variant is non-empty.
+   */
+  dataResult.introduction = resolveLocalizedText(dataResult.introduction, lang);
+  for (const key of ['educations', 'experiences', 'awards', 'certificates', 'projects']) {
+    dataResult[key] = (dataResult[key] || []).map((item: Record<string, any>) => ({
+      ...item,
+      description: resolveLocalizedText(item.description, lang),
+    }));
+  }
+  if (dataResult.generalInformation && Object.keys(dataResult.generalInformation).length) {
+    // Spread into a new plain object rather than mutating in place —
+    // generalInformation still holds a live Mongoose document here (only
+    // the top-level Candidate doc went through JSON.parse(JSON.stringify)
+    // above), so assigning a plain string onto a subdocument path would
+    // route through Mongoose's own setter/caster instead of just
+    // overwriting the value in the response payload.
+    dataResult.generalInformation = {
+      ...dataResult.generalInformation,
+      career: resolveLocalizedText(dataResult.generalInformation.career, lang),
+      careerGoal: resolveLocalizedText(dataResult.generalInformation.careerGoal, lang),
+    };
+  }
 
   return {
     success: true,
@@ -103,7 +151,8 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const { success, data } = await handlerGetAboutMe(email);
+    const lang = req.query.lang === 'en' ? 'en' : 'vi';
+    const { success, data } = await handlerGetAboutMe(email, lang);
     if (!success) {
       res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Lấy thông tin ứng viên thất bại'));
       return;

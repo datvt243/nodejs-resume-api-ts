@@ -152,8 +152,19 @@ export const phone = Joi.string().pattern(phoneRegex).trim().strict().required()
   'string.empty': 'Số điện thoại không được để trống',
 });
 
-export const introduction = Joi.string().required().messages({
-  'any.required': 'Giới thiệu bản thân không được rỗng',
+// Free-text content stored per language (vi/en) — see
+// models/part/index.ts's localizedTextSchema for the Mongoose side.
+// Individual language values may be empty; only the object itself is
+// required (matches the previous plain-string fields' lenient min(0)
+// behavior, just with a language dimension added).
+const localizedTextShape = {
+  vi: Joi.string().allow(''),
+  en: Joi.string().allow(''),
+};
+
+export const introduction = Joi.object(localizedTextShape).required().label('Giới thiệu bản thân').messages({
+  'any.required': '{#label} không được rỗng',
+  'object.base': '{#label} phải là object dạng vi/en',
 });
 
 export const startDate = Joi.number().required().messages({
@@ -172,18 +183,13 @@ export const foreignLanguages = Joi.array().items({
   level: Joi.string(),
 });
 
-export const description = Joi.string().min(0).trim().strict().required().label('Mô tả').messages({
+export const description = Joi.object(localizedTextShape).required().label('Mô tả').messages({
   'any.required': `{#label} là bắt buộc`,
-  'string.min': `{#label} có ít nhất {#limit} ký tự`,
-  'string.max': `{#label} có ít nhất {#limit} ký tự`,
-  'string.empty': `{#label} không được trống`,
+  'object.base': `{#label} phải là object dạng vi/en`,
 });
 
-export const descriptionOptional = Joi.string().min(0).trim().strict().label('Mô tả').messages({
-  'any.required': `{#label} là bắt buộc`,
-  'string.min': `{#label} có ít nhất {#limit} ký tự`,
-  'string.max': `{#label} có ít nhất {#limit} ký tự`,
-  'string.empty': `{#label} không được trống`,
+export const descriptionOptional = Joi.object(localizedTextShape).label('Mô tả').messages({
+  'object.base': `{#label} phải là object dạng vi/en`,
 });
 
 export const _stringDefault = (props: JoiProps) => {
