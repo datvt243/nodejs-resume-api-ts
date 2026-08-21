@@ -71,7 +71,7 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
    */
 
   try {
-    const _result = await handlerUpdate(value);
+    const _result = await handlerUpdate(value, (req as any).user?._id);
     return formatReturn(res, { ..._result });
   } catch (err) {
     handleError(err, next);
@@ -94,7 +94,7 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
    */
 
   try {
-    const _result = await handlerUpdate(value);
+    const _result = await handlerUpdate(value, (req as any).user?._id);
     return formatReturn(res, { ..._result });
   } catch (err) {
     handleError(err, next);

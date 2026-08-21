@@ -65,7 +65,10 @@ export const baseDelete = async (req: Request, res: Response, next: NextFunction
 
 export const createCrudController = (props: {
   schema: Schema;
-  service: { handlerCreate: (item: Record<string, any>) => Promise<any>; handlerUpdate: (item: Record<string, any>) => Promise<any> };
+  service: {
+    handlerCreate: (item: Record<string, any>) => Promise<any>;
+    handlerUpdate: (item: Record<string, any>, userID?: string) => Promise<any>;
+  };
   booleanDefaultField?: string;
 }) => {
   const { schema, service, booleanDefaultField } = props;
@@ -89,7 +92,7 @@ export const createCrudController = (props: {
 
     try {
       if (booleanDefaultField && !value[booleanDefaultField]) value[booleanDefaultField] = false;
-      const _result = await service.handlerUpdate(value);
+      const _result = await service.handlerUpdate(value, (req as any).user?._id);
       return formatReturn(res, { ..._result });
     } catch (err) {
       handleError(err, next);

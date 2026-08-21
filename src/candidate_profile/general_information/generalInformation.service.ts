@@ -50,7 +50,7 @@ export const handlerCreate = async (document: Record<string, any>) => {
         document: { ...document },
         model: MODEL,
         name: NAME,
-        hookAfterSave: async (doc, { data }) => {
+        hookAfterSave: async (doc) => {
           const { success, data: find } = await withDBTimeout(
             baseFindDocument({
               model: MODEL,
@@ -58,7 +58,7 @@ export const handlerCreate = async (document: Record<string, any>) => {
               findOne: false,
             }),
           );
-          success && (data = find);
+          return success ? find : undefined;
         },
         hookHasErrors: ({ err }) => {
           //

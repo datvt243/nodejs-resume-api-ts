@@ -97,12 +97,13 @@ export const baseDeleteDocument = async (props: { model: any; _id: string; name:
 export const baseUpdateDocument = async (props: {
   document: Record<string, any>;
   model: any;
+  userID?: string;
   hookHasErrors?: (props: any) => void;
 }) => {
   /**
    * get values
    */
-  const { document, model: MODEL } = props;
+  const { document, model: MODEL, userID } = props;
 
   /**
    * @return
@@ -119,8 +120,18 @@ export const baseUpdateDocument = async (props: {
   /**
    * Check Document có tồn tại không -> findById
    */
-  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById(MODEL, _id);
+  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById(MODEL, _id);
   if (!isExist) return formatReturnFailed(_mess);
+
+  /**
+   * Kiểm tra doc cần update có thuộc người đang update hay không
+   * (đối chiếu owner của document ĐÃ TỒN TẠI, không phải candidateId gửi
+   * lên trong payload — nếu không, update có thể "cướp" document của
+   * người khác bằng cách gửi kèm candidateId của chính mình)
+   */
+  if (userID !== undefined && _existing?.candidateId !== undefined && _existing.candidateId.toString() !== userID) {
+    return formatReturnFailed('Không thể cập nhật thông tin không phải của bạn');
+  }
 
   /**
    * validate ở mongoose model
@@ -163,7 +174,7 @@ export const baseCreateDocument = async (props: {
   model: any;
   name: string;
   hookHasErrors?: (p: any) => Promise<void> | void;
-  hookAfterSave?: (document: any, prop: BaseReturn) => void;
+  hookAfterSave?: (document: any, prop: BaseReturn) => Promise<any> | any;
 }) => {
   const { document, name = '', model: MODEL } = props;
   const _name = name ? (name + '').toLowerCase() : '';
@@ -195,10 +206,16 @@ export const baseCreateDocument = async (props: {
   try {
     _data = await MODEL.create({ _id: null, ...document });
     /**
-     * callback thực hiện sau khi thêm mới thành công
+     * callback thực hiện sau khi thêm mới thành công. Nếu hook trả về
+     * (khác undefined), dùng giá trị đó thay _data — trước đây hook nhận
+     * `data` qua destructure-by-value nên gán lại bên trong hook không hề
+     * cập nhật _data ở đây, khiến response luôn trả nguyên kết quả thô của
+     * MODEL.create() (Mongoose giữ `_id: null` như đã truyền, thay vì id
+     * thật mà MongoDB gán khi lưu) thay vì list mới đã refetch.
      */
     if (props?.hookAfterSave) {
-      await props.hookAfterSave?.(document, { success: _success, message: _message, data: _data });
+      const replacement = await props.hookAfterSave(document, { success: _success, message: _message, data: _data });
+      if (replacement !== undefined) _data = replacement;
     }
   } catch (err) {
     const { message = '', errors = [] } = _baseHelper().handlerCatchError(err);
