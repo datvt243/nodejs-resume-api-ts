@@ -25,7 +25,7 @@ export const createCrudService = (props: { model: any; name?: string }) => {
           document: { ...item },
           model: MODEL,
           name,
-          hookAfterSave: async (doc, { data }) => {
+          hookAfterSave: async (doc) => {
             const { success, data: find } = await withDBTimeout(
               baseFindDocument({
                 model: MODEL,
@@ -33,7 +33,7 @@ export const createCrudService = (props: { model: any; name?: string }) => {
                 findOne: false,
               }),
             );
-            success && (data = find);
+            return success ? find : undefined;
           },
           hookHasErrors: ({ err }) => {
             //
@@ -45,9 +45,9 @@ export const createCrudService = (props: { model: any; name?: string }) => {
     }
   };
 
-  const handlerUpdate = async (item: Record<string, any>) => {
+  const handlerUpdate = async (item: Record<string, any>, userID?: string) => {
     try {
-      return await withDBTimeout(baseUpdateDocument({ document: item, model: MODEL }));
+      return await withDBTimeout(baseUpdateDocument({ document: item, model: MODEL, userID }));
     } catch (error: any) {
       return { success: false, message: 'Failed to update document', error: error.message };
     }

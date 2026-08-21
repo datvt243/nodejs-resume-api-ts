@@ -81,7 +81,9 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
    *
    */
 
-  const _id = req.body.candidateId;
+  // Use the authenticated user's own id — never a client-supplied one,
+  // or any authenticated user could export another candidate's PDF.
+  const _id = (req as any).user?._id;
   if (!_id) {
     res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('CandidateId not found'));
     return;

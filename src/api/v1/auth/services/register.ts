@@ -42,7 +42,7 @@ export const handlerRegister = async (item: Auth) => {
      * TODO: validate data với mongo model.valid
      */
 
-    const bcryptPwd = bcryptGenerateSalt(password);
+    const bcryptPwd = await bcryptGenerateSalt(password);
     const document = await CandidateModel.create({
       _id: null,
       email: email,

@@ -12,7 +12,7 @@ import { handlerRegister, handlerLogin } from './auth.service';
 import { addToBlacklist, isBlacklisted } from '@/utils/tokenBlacklist';
 import { jwtSign, jwtVerify } from '@/utils';
 import { extractTokenFromRequest } from '@/utils/helper-auth';
-import { TOKEN_SECRET, TOKEN_REFRESH } from '@/config/process.config';
+import { TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN, TOKEN_REFRESH_EXP_IN } from '@/config/process.config';
 
 /**
  * Chức năng Đăng ký mới
@@ -122,8 +122,8 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     await addToBlacklist(refreshToken);
 
     // create new tokens
-    const newAccess = jwtSign({ _id }, TOKEN_SECRET);
-    const newRefresh = jwtSign({ _id }, TOKEN_REFRESH);
+    const newAccess = jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
+    const newRefresh = jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
 
     return formatReturn(res, {
       statusCode: StatusCodes.OK,

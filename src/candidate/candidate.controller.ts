@@ -35,9 +35,12 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
 
   /**
    * update data
+   * Force _id to the authenticated user's own id — never trust a client-
+   * supplied _id here, or any authenticated user could overwrite another
+   * candidate's profile.
    */
   try {
-    const _result = await handlerUpdate(value);
+    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id });
     return formatReturn(res, { ..._result });
   } catch (err) {
     handleError(err, next);
@@ -56,10 +59,10 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
     return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message: 'Xảy ra lỗi', errors });
 
   /**
-   * update data
+   * update data — force _id to the authenticated user (see fnUpdate)
    */
   try {
-    const _result = await handlerUpdate(value);
+    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id });
     return formatReturn(res, { ..._result });
   } catch (err) {
     handleError(err, next);

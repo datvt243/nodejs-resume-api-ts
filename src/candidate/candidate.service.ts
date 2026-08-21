@@ -12,18 +12,19 @@ const MODEL = CandidateModel;
 
 export const handlerGetInformationById = async (id: string, props: { select: string } = { select: '' }) => {
   const { select = '' } = props;
-  const find = MODEL.findById(id);
-  if (select) {
-    const safeSelect = candidateQuerySafe.whitelistSelect([select]);
-    find.select(safeSelect);
-  }
-
+  // `select` here is already a whitelisted, space-joined field list (see
+  // callers) — re-wrapping it in candidateQuerySafe.whitelistSelect([select])
+  // treated the whole joined string as a single field name, which never
+  // matched the allow-list, silently making the select a no-op and
+  // returning the full document (including password) to every caller.
+  // Default to excluding password when no explicit select is given.
+  const find = MODEL.findById(id).select(select || '-password');
   return await find.exec();
 };
 
 export const handlerGetInformationByEmail = async (email: string) => {
   const safeEmailQuery = candidateQuerySafe.safeQuery({}, { email });
-  const find = await MODEL.findOne(safeEmailQuery).exec();
+  const find = await MODEL.findOne(safeEmailQuery).select('-password').exec();
   return find;
 };
 
