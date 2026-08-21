@@ -28,15 +28,15 @@ describe('validateSchema', () => {
     const result = validateSchema({ schema, item: invalidData });
 
     expect(result.isValidated).toBe(false);
-    expect(result.message).toBe('Validation has errors');
+    expect(result.message).toBe('Dữ liệu không hợp lệ');
     expect(result.errors).toBeDefined();
   });
 
-  test('❌ Thiếu schema - Trả về lỗi "Invalid schema"', () => {
+  test('❌ Thiếu schema - Trả về lỗi "Schema không hợp lệ"', () => {
     const result = validateSchema({ schema: null as any, item: { email: 'test' } });
 
     expect(result.isValidated).toBe(false);
-    expect(result.message).toBe('Invalid schema');
+    expect(result.message).toBe('Schema không hợp lệ');
   });
 
   test('✅ Truyền `item = {}` nhưng schema không yêu cầu field - Vẫn hợp lệ', () => {

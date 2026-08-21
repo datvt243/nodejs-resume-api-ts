@@ -43,6 +43,6 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
       data: _result?.data || null,
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };

@@ -6,10 +6,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import type { BaseReturn } from '@/types/base.type';
 import { getSelectFields } from '@/utils/helper';
+import { t, DEFAULT_LANG } from '@/utils/i18n';
 interface baseProp {
   model: any;
   fields: { _id?: string; candidateId?: string };
   findOne?: boolean;
+  lang?: string;
 }
 
 const formatReturn = (props: BaseReturn) => {
@@ -35,9 +37,9 @@ export const formatReturnFailed = (props: string | BaseReturn) => {
 };
 
 export const baseFindDocument = async (props: baseProp) => {
-  const { model: MODEL, fields = { _id: '' }, findOne = true } = props;
+  const { model: MODEL, fields = { _id: '' }, findOne = true, lang = DEFAULT_LANG } = props;
 
-  if (!MODEL || !fields || !Object.keys(fields).length) return formatReturnFailed('Không tìm thấy Data');
+  if (!MODEL || !fields || !Object.keys(fields).length) return formatReturnFailed(t('common.notFoundData', lang));
 
   let find;
   const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
@@ -55,14 +57,13 @@ export const baseFindDocument = async (props: baseProp) => {
   });
 };
 
-export const baseDeleteDocument = async (props: { model: any; _id: string; name: string; userID: string }) => {
-  const { model: MODEL, _id: __id, name = '', userID } = props;
-  const _name = (name + '').toLowerCase();
+export const baseDeleteDocument = async (props: { model: any; _id: string; name: string; userID: string; lang?: string }) => {
+  const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
   /**
    * Check Document có tồn tại không -> findById
    */
-  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById(MODEL, __id);
+  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById(MODEL, __id, lang);
   if (!isExist) return formatReturnFailed(_mess);
 
   const { _id, candidateId = '' } = document;
@@ -70,19 +71,18 @@ export const baseDeleteDocument = async (props: { model: any; _id: string; name:
   /**
    * Kiểm tra doc cần xoá có thuộc người đang xoá hay không
    */
-  if (candidateId.toString() !== userID)
-    return formatReturnFailed(`Không thể xoá thông tin ${_name ? _name + ' ' : ''}không phải của bạn`);
+  if (candidateId.toString() !== userID) return formatReturnFailed(t('common.deleteNotYours', lang));
 
   /**
    * tiến hành xoá
    */
   let success = false,
-    message = 'Xoá thất bại',
+    message = t('common.deleteFailed', lang),
     error = null;
   try {
     const { deletedCount = 0 } = await MODEL.deleteOne({ _id }).exec();
     success = !!deletedCount;
-    message = 'Xoá thành công';
+    message = t('common.deleteSuccess', lang);
   } catch (err) {
     error = err;
   }
@@ -98,12 +98,13 @@ export const baseUpdateDocument = async (props: {
   document: Record<string, any>;
   model: any;
   userID?: string;
+  lang?: string;
   hookHasErrors?: (props: any) => void;
 }) => {
   /**
    * get values
    */
-  const { document, model: MODEL, userID } = props;
+  const { document, model: MODEL, userID, lang = DEFAULT_LANG } = props;
 
   /**
    * @return
@@ -120,7 +121,7 @@ export const baseUpdateDocument = async (props: {
   /**
    * Check Document có tồn tại không -> findById
    */
-  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById(MODEL, _id);
+  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById(MODEL, _id, lang);
   if (!isExist) return formatReturnFailed(_mess);
 
   /**
@@ -130,7 +131,7 @@ export const baseUpdateDocument = async (props: {
    * người khác bằng cách gửi kèm candidateId của chính mình)
    */
   if (userID !== undefined && _existing?.candidateId !== undefined && _existing.candidateId.toString() !== userID) {
-    return formatReturnFailed('Không thể cập nhật thông tin không phải của bạn');
+    return formatReturnFailed(t('common.updateNotYours', lang));
   }
 
   /**
@@ -143,7 +144,7 @@ export const baseUpdateDocument = async (props: {
    * Save
    */
   let _success = true,
-    _message = 'Cập nhật thành công',
+    _message = t('common.updateSuccess', lang),
     _data = null,
     _errors = {};
 
@@ -153,7 +154,7 @@ export const baseUpdateDocument = async (props: {
   } catch (err) {
     const { message = '', errors = [] } = _baseHelper().handlerCatchError(err);
     _success = false;
-    _message = message || `Cập nhật thất bại`;
+    _message = message || t('common.updateFailed', lang);
     _errors = errors;
     props?.hookHasErrors?.({ err });
   } finally {
@@ -173,11 +174,11 @@ export const baseCreateDocument = async (props: {
   document: Record<string, any>;
   model: any;
   name: string;
+  lang?: string;
   hookHasErrors?: (p: any) => Promise<void> | void;
   hookAfterSave?: (document: any, prop: BaseReturn) => Promise<any> | any;
 }) => {
-  const { document, name = '', model: MODEL } = props;
-  const _name = name ? (name + '').toLowerCase() : '';
+  const { document, model: MODEL, lang = DEFAULT_LANG } = props;
 
   /**
    * remove _id nếu có
@@ -187,7 +188,7 @@ export const baseCreateDocument = async (props: {
   /**
    * Nếu không có candidateId thì trả về thất bại
    */
-  if (!document.candidateId) return formatReturnFailed(`Thêm mới ${_name ? _name + ' ' : ''} thất bại`);
+  if (!document.candidateId) return formatReturnFailed(t('common.createFailed', lang));
 
   /**
    * validate ở mongoose model
@@ -200,7 +201,7 @@ export const baseCreateDocument = async (props: {
    */
   let _success = true,
     _data = null,
-    _message = `Thêm mới ${_name} thành công`,
+    _message = t('common.createSuccess', lang),
     _errors = {};
 
   try {
@@ -220,7 +221,7 @@ export const baseCreateDocument = async (props: {
   } catch (err) {
     const { message = '', errors = [] } = _baseHelper().handlerCatchError(err);
     _success = false;
-    _message = message || `Thêm mới ${_name} thất bại`;
+    _message = message || t('common.createFailed', lang);
     _errors = errors;
 
     /**
@@ -235,18 +236,18 @@ export const baseCreateDocument = async (props: {
   }
 };
 
-export const basePatchDocument = async (props: { document: Record<string, any>; model: any }) => {
+export const basePatchDocument = async (props: { document: Record<string, any>; model: any; lang?: string }) => {
   /**
    * get value
    */
-  const { document, model: MODEL } = props;
+  const { document, model: MODEL, lang = DEFAULT_LANG } = props;
 
   const { _id } = document;
 
   /**
    * Check Document có tồn tại không -> findById
    */
-  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById(MODEL, _id);
+  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById(MODEL, _id, lang);
   if (!isExist) return formatReturnFailed(_mess);
 
   /**
@@ -265,12 +266,12 @@ export const basePatchDocument = async (props: { document: Record<string, any>; 
     /**
      * return
      */
-    return { success: true, message: 'Updated successful', errors: {}, data: data ? data : null };
+    return { success: true, message: t('common.updateSuccess', lang), errors: {}, data: data ? data : null };
   } catch (err) {
     /**
      * catch errors
      */
-    return { success: false, message: 'Updated fail', error: err, data: null };
+    return { success: false, message: t('common.updateFailed', lang), error: err, data: null };
   }
 };
 
@@ -320,8 +321,8 @@ const _baseHelper = () => {
         errors: {},
       };
     },
-    baseCheckDocumentById: async (MODEL: any, _id: string) => {
-      let message = `ID không tồn tại`;
+    baseCheckDocumentById: async (MODEL: any, _id: string, lang: string = DEFAULT_LANG) => {
+      let message = t('common.idNotFound', lang);
 
       if (!_id) return { isExist: false, message };
 
