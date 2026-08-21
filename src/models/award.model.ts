@@ -5,6 +5,7 @@
  */
 
 import mongoose from 'mongoose';
+import { localizedTextSchema } from '@/models/part';
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
@@ -16,7 +17,7 @@ const schema = new Schema(
     issueDate: { type: Number, default: '', required: [false, 'Vui lòng nhập ngày bắt đầu'] },
     link: { type: String, default: '', required: [false, 'Vui lòng nhập liên kết'] },
     images: { type: Array, of: String },
-    description: { type: String, default: '', required: [false, 'Vui lòng nhập mô tả'] },
+    description: { type: localizedTextSchema, default: () => ({}) },
     candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
   },
   { timestamps: true },

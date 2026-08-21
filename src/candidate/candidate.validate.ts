@@ -6,7 +6,7 @@
 
 import Joi from 'joi';
 
-import { getObject, _id, firstName, lastName, phone, candidateId } from '@/config/joi.config';
+import { getObject, _id, firstName, lastName, phone, candidateId, introduction } from '@/config/joi.config';
 
 export const schemaCandidatePatch = getObject({
   _id: _id,
@@ -35,9 +35,7 @@ export const schemaCandidate = getObject({
   address: Joi.string().min(0).max(255).required().messages({
     'any.required': 'Địa chỉ không được rỗng',
   }),
-  introduction: Joi.string().required().messages({
-    'any.required': 'Giới thiệu bản thân không được rỗng',
-  }),
+  introduction,
   socialMedia: Joi.object({
     github: Joi.string(),
     linkedin: Joi.string(),

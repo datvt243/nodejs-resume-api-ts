@@ -22,7 +22,8 @@
     "build-tsc": "tsc && npm run copy",
     "build": "tsc && npm run copy",
     "copy": "cp -R ./src/views ./src/public ./dist/",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "migrate:localize-text": "ts-node -r tsconfig-paths/register src/scripts/migrate-localize-text-fields.ts"
   },
   "author": "DatVT",
   "license": "ISC",
