@@ -7,6 +7,7 @@
 import CandidateModel from '@/models/candidate.model';
 import { bcryptGenerateSalt, bcryptCompareHash, jwtSign } from '@/utils';
 import { TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN, TOKEN_REFRESH_EXP_IN } from '@/config/process.config';
+import { t, DEFAULT_LANG } from '@/utils/i18n';
 
 interface Auth {
   email: string;
@@ -19,7 +20,7 @@ export const isEmailAlreadyExists = async (email: string) => {
   return !!find;
 };
 
-export const handlerRegister = async (item: Auth) => {
+export const handlerRegister = async (item: Auth, lang: string = DEFAULT_LANG) => {
   /**
    * FLOW
    *  1. lấy thông tin input [email, pwd, re-pwd]
@@ -34,7 +35,7 @@ export const handlerRegister = async (item: Auth) => {
    * check Email đã tồn tại chưa
    */
   const emailHasExits = await isEmailAlreadyExists(email);
-  if (emailHasExits) return { success: false, message: 'Email đã tồn tại' };
+  if (emailHasExits) return { success: false, message: t('auth.emailAlreadyExists', lang) };
 
   /**
    * TODO: validate data với mongo model.valid
@@ -46,10 +47,10 @@ export const handlerRegister = async (item: Auth) => {
     email: email,
     password: bcryptPwd,
   });
-  return { success: true, message: `Đăng ký thành công` };
+  return { success: true, message: t('auth.registerSuccess', lang) };
 };
 
-export const handlerLogin = async (data: Auth) => {
+export const handlerLogin = async (data: Auth, lang: string = DEFAULT_LANG) => {
   /**
    * FLOW
    * 1. find user by email
@@ -64,14 +65,14 @@ export const handlerLogin = async (data: Auth) => {
   const { email, password } = data;
 
   const _user = await CandidateModel.findOne({ email });
-  if (!_user) return { success: false, message: 'Email không tồn tại' };
+  if (!_user) return { success: false, message: t('auth.emailNotFound', lang) };
 
   /**
    * so sánh Pwd với pwd trong database
    */
   const { _id, password: pwdHash } = _user;
   const comparePwd = await bcryptCompareHash(password, pwdHash);
-  if (!comparePwd) return { success: false, message: 'Mật khẩu không chính xác' };
+  if (!comparePwd) return { success: false, message: t('auth.wrongPassword', lang) };
 
   /**
    * init token
@@ -81,7 +82,7 @@ export const handlerLogin = async (data: Auth) => {
 
   return {
     success: true,
-    message: 'Đăng nhập thành công',
+    message: t('auth.loginSuccess', lang),
     data: {
       user: {
         email: _user.email,

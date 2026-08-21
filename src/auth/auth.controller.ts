@@ -13,6 +13,7 @@ import { addToBlacklist, isBlacklisted } from '@/utils/tokenBlacklist';
 import { jwtSign, jwtVerify } from '@/utils';
 import { extractTokenFromRequest } from '@/utils/helper-auth';
 import { TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN, TOKEN_REFRESH_EXP_IN } from '@/config/process.config';
+import { t } from '@/utils/i18n';
 
 /**
  * Chức năng Đăng ký mới
@@ -36,11 +37,11 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
    * save mới document
    */
   try {
-    const { success, message } = await handlerRegister({ _id: null, ...value });
+    const { success, message } = await handlerRegister({ _id: null, ...value }, (req as any).lang);
     return formatReturn(res, {
       statusCode: StatusCodes[success ? 'OK' : 'UNAUTHORIZED'],
       success: success,
-      message: message || 'Đăng ký thành công',
+      message: message || t('auth.registerSuccess', (req as any).lang),
       errors: null,
       data: null,
     });
@@ -70,12 +71,12 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
    * tiến hành Login
    */
   try {
-    const _result = await handlerLogin({ email: value.email, password: value.password });
+    const _result = await handlerLogin({ email: value.email, password: value.password }, (req as any).lang);
 
     return formatReturn(res, {
       statusCode: StatusCodes[_result?.success ? 'OK' : 'UNAUTHORIZED'],
       success: _result?.success || false,
-      message: _result?.message || 'Login thất bại',
+      message: _result?.message || t('auth.loginFailed', (req as any).lang),
       errors: _result?.errors || [],
       data: _result?.data || null,
     });
@@ -96,7 +97,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.UNAUTHORIZED,
         success: false,
-        message: 'No refresh token provided',
+        message: t('auth.noRefreshToken', (req as any).lang),
       });
     }
 
@@ -104,7 +105,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.FORBIDDEN,
         success: false,
-        message: 'Refresh token revoked',
+        message: t('auth.refreshTokenRevoked', (req as any).lang),
       });
     }
 
@@ -115,7 +116,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.UNAUTHORIZED,
         success: false,
-        message: 'Invalid refresh token payload',
+        message: t('auth.invalidRefreshPayload', (req as any).lang),
       });
 
     // rotate: blacklist old refresh token
@@ -128,7 +129,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     return formatReturn(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: 'Token refreshed',
+      message: t('auth.tokenRefreshed', (req as any).lang),
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
@@ -155,7 +156,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: 'No token provided to logout',
+        message: t('auth.noTokenToLogout', (req as any).lang),
       });
     }
 
@@ -164,7 +165,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
     return formatReturn(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: 'Logged out successfully',
+      message: t('auth.logoutSuccess', (req as any).lang),
     });
   } catch (err) {
     handleError(err, next);
