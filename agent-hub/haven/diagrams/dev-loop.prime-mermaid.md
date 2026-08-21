@@ -4,29 +4,29 @@ DNA: 'smallest_diff / edit_x_read_back_proof_x_independent_verdict'
 Auth: 65537 | Version: 1.0.0
 Law: LAI-13 - monotonic ratchet (PENDING -> IN_PROGRESS -> SEALED, never demote)
 
-> Mọi thay đổi tới repo code đi vào đây và đi ra bằng SEALED hoặc REOPENED —
-> không có trạng thái nào khác ở giữa.
+> Every repo code change enters here and exits as SEALED or REOPENED — no
+> other state exists in between.
 
 ```mermaid
 flowchart TD
     task[Task] --> pick[implementer: pick_next]
-    pick --> exist{Node tồn tại trên diagram?}
+    pick --> exist{Node exists on diagram?}
     exist -- no --> draft[DRAFT node<br/>diagram-first: no node, no code]
     draft --> pick
-    exist -- yes --> impl[implementer: implement<br/>diff nhỏ nhất]
-    impl --> outward{Chạm outward-facing?}
-    outward -- yes --> gate[SEAL GATE<br/>show diff, chờ approval]
+    exist -- yes --> impl[implementer: implement<br/>smallest diff]
+    impl --> outward{Outward-facing?}
+    outward -- yes --> gate[SEAL GATE<br/>show diff, wait for approval]
     gate --> test
-    outward -- no --> test[Chạy lệnh test CHÍNH XÁC<br/>từ doctrine/MEMORY.md]
-    test --> readback{Output đã đọc lại<br/>nguyên văn chưa?}
+    outward -- no --> test[Run the EXACT test command<br/>from doctrine/MEMORY.md]
+    test --> readback{Output read back<br/>verbatim yet?}
     readback -- no --> unverified[EDIT_UNVERIFIED]
     unverified --> impl
-    readback -- yes --> evidence[Ghi evidence note]
-    evidence --> verifier[verifier: verify_seal]
-    verifier --> verdict{Đạt mọi<br/>acceptance criteria?}
-    verdict -- no --> reopen[REOPEN + lý do cụ thể]
+    readback -- yes --> evidence[Write evidence note]
+    evidence --> verifier[verifier subagent: verify_seal]
+    verifier --> verdict{All acceptance<br/>criteria met?}
+    verdict -- no --> reopen[REOPEN + specific reason]
     reopen --> impl
-    verdict -- yes --> seal[SEAL<br/>cập nhật PM status]
+    verdict -- yes --> seal[SEAL<br/>update PM status]
 
     classDef gate fill:#f5c518,color:#000
     classDef bad fill:#e05555,color:#fff
@@ -39,18 +39,18 @@ flowchart TD
 ## PM status
 | Node | State | Notes |
 |---|---|---|
-| `fix-chrome-executable-path` | PENDING | `src/services/createPDF.ts:14-25` — Chrome executable path hardcoded, breaks PDF export in CI/Docker. Xem `doctrine/domains/PROJECT.md` Traps. Ứng viên candidate node đầu tiên. |
-| `fix-redis-init-blocks-dev-startup` | PENDING | `src/services/redis.ts:36` — `await redisClient.connect()` không timeout; redis v4 default `reconnectStrategy: retries => Math.min(retries*50,500)` retry vô hạn khi Redis không chạy. `server.ts:125` `await initRedis()` trước `app.listen()` → server treo vĩnh viễn, không bao giờ mở port, khi `REDIS_URL` trỏ tới Redis không reachable. Phát hiện khi chạy `npm run dev` thật (task: "chạy npm run dev và giải quyết bug"). |
-| `fix-idor-broken-access-control` | PENDING | **Critical.** Toàn bộ CRUD API cho candidate_profile (education/experience/award/certificate/project/reference/generalInformation) + `candidate.service.ts` + `fnExportPDF` không đối chiếu `candidateId`/`_id` với `req.user._id` (JWT) — tin `req.body.candidateId`/`_id` do client tự gửi. Live-test xác nhận: User B đọc/xoá/sửa được dữ liệu của User A, ghi đè được profile của A. Root cause: `verifyToken.middleware.ts` set `req.user` nhưng không cross-check. Phát hiện khi test toàn bộ API (task: "test lại toàn bộ API"). |
-| `fix-candidate-password-leak` | PENDING | `src/candidate/candidate.service.ts` — `handlerGetInformationByEmail` không `.select()` gì; `handlerGetInformationById` có bug double-wrap `whitelistSelect([select])` khiến select luôn no-op. Kết quả: `GET /api/v1/candidate/:email` và `PUT/PATCH /candidate/update` trả nguyên bcrypt password hash trong response. |
-| `fix-refresh-token-expiry-unused` | PENDING | `TOKEN_EXP_IN` (`.env`, config đã export) không hề được dùng ở `jwtSign()` call site nào (`auth.service.ts`, `auth.controller.ts`, `api/v1/auth/services/login.ts`) — access token và refresh token luôn cùng default 1h, refresh token mất tác dụng. |
-| `fix-v2-register-missing-await` | PENDING | `src/api/v1/auth/services/register.ts:44` — `bcryptGenerateSalt(password)` thiếu `await`, Promise được gán thẳng vào field password của Mongoose model → mọi request `POST /api/v2/auth/register` fail với lỗi cast Promise→string. |
-| `fix-create-response-null-id` | PENDING | Minor. `BaseService.ts` `handlerCreate`'s `hookAfterSave` reassign biến `data` cục bộ (destructured), không thực sự cập nhật giá trị trả về của `baseCreateDocument` → response của mọi `POST .../create` trả `data._id: null` thay vì ID thật vừa tạo. |
-| `add-candidate-self-delete` | PENDING | Feature (không phải bug). Không có endpoint nào để candidate tự xoá tài khoản — cần để dọn 2 account test tạo ra khi live-verify 5 fix bug trên production (`livecheck+...@example.com`, `livecheckB+...@example.com`). Yêu cầu: `DELETE /api/v1/candidate`, chỉ dùng `req.user._id` (không nhận id từ client — theo đúng pattern IDOR-safe của `fix-idor-broken-access-control`), cascade xoá luôn data ở 7 CV section model theo `candidateId`. |
-| `feat-multilang-resume-content` | PENDING | Feature, GitHub issue #79. Localize 8 field mô tả tự do (`Candidate.introduction`, `description` ở 5 CV section, `generalInformation.career`/`careerGoal`) từ `String` phẳng sang `{vi, en}`. KHÔNG đụng field tên riêng/label ngắn (`school`/`company`/`position`/`positionDesired`/`levelCurrent`/...). `?lang=` resolve về string đơn cho `GET /api/me/:email` + PDF export; authenticated CRUD trả nguyên `{vi,en}`. Migration script `src/scripts/migrate-localize-text-fields.ts` (`npm run migrate:localize-text`), idempotent — đã chạy thật, xác nhận qua evidence. **Correction**: note cũ ở đây từng ghi "không có quyền truy cập DB production" — SAI, `.env` local thực chất trỏ tới cùng cluster Atlas real data (xem node `fix-candidate-me-candidateid-not-string`). |
-| `fix-candidate-me-candidateid-not-string` | PENDING | **Critical, phát hiện tình cờ khi test #79.** `candidate_me/index.ts` `handlerGetAboutMe` — `_id` lấy từ raw Mongoose document là ObjectId instance, truyền thẳng vào `idQuerySafe.safeQuery({}, { candidateId: _id })` — `QuerySafe.safeQuery` chỉ nhận `typeof value === 'string'`, ObjectId fail check này nên `candidateId` bị âm thầm loại khỏi filter → `model.find({})` trả về data CV (education/experience/award/certificate/project/generalInformation) của **TẤT CẢ candidate trộn lẫn**, cho MỌI request `GET /api/me/:email` (public, no-auth) và `/download-pdf`. Live-test xác nhận: profile candidate mới toanh trả về data thật của `votan.it@gmail.com`. Fix: `.toString()` khi truyền `_id`. |
-| `feat-i18n-api-messages-auth` | PENDING | Feature, GitHub issue #78 (giai đoạn 1/nhiều). Hạ tầng i18n (hand-rolled `t(key, lang)`, đọc `locales/vi.json`/`en.json`, middleware detect `Accept-Language`, default `vi`) + migrate trọn vẹn auth flow (register/login/logout/refresh). KHÔNG migrate Joi validation message (kiến trúc khác — Joi schema tạo 1 lần lúc module load, không có context request; cần map error TYPE → i18n key, để follow-up riêng). KHÔNG đụng candidate/CV section messages (follow-up riêng). |
-| `feat-i18n-full-coverage` | PENDING | Feature, GitHub issue #78 (giai đoạn 2/2 — hoàn tất). Joi validation messages: hệ thống generic dịch theo `detail.type` + `fieldLabels` (`utils/valid.ts`), KHÔNG dựa vào `.messages()` hardcode trên từng schema nữa. Mongoose `required` messages: cùng cách áp dụng trong `handleError` (`utils/helper.ts`). Toàn bộ candidate/CV section success/error message (`services/index.ts`, `BaseController.ts`, `BaseService.ts`, `candidate.service.ts`, `generalInformation.*`) cascade qua 7 CV section. Bug tìm thấy khi implement: `t()`'s dot-path walker parse sai Joi type string chứa dấu chấm (`any.required` bị hiểu thành 3 cấp nested) — bắt được qua live-test thật (curl 2 ngôn ngữ), không phải qua code review. Fix: hàm `tErrorType()` riêng, lookup phẳng không qua dot-path. |
+| `fix-chrome-executable-path` | PENDING | `src/services/createPDF.ts:14-25` — Chrome executable path hardcoded, breaks PDF export in CI/Docker. See Traps in `doctrine/domains/PROJECT.md`. First candidate node. |
+| `fix-redis-init-blocks-dev-startup` | PENDING | `src/services/redis.ts:36` — `await redisClient.connect()` had no timeout; redis v4's default `reconnectStrategy: retries => Math.min(retries*50,500)` retries forever when Redis is down. `server.ts:125` `await initRedis()` runs before `app.listen()` → server hangs forever, port never opens, whenever `REDIS_URL` points at an unreachable Redis. Found by actually running `npm run dev` (task: "run npm run dev and fix the bug"). Fix already shipped in `f355e2f` (2026-08-21); node still PENDING because the 2026-08-22 verifier REOPENED the re-verification note for a truncated log line, not because the fix itself is missing — see `evidence/verifier/2026-08-22/`. |
+| `fix-idor-broken-access-control` | PENDING | **Critical.** All CRUD APIs for candidate_profile (education/experience/award/certificate/project/reference/generalInformation) + `candidate.service.ts` + `fnExportPDF` never cross-check `candidateId`/`_id` against `req.user._id` (JWT) — they trust client-supplied `req.body.candidateId`/`_id`. Live-tested confirmed: User B could read/delete/edit User A's data, overwrite A's profile. Root cause: `verifyToken.middleware.ts` sets `req.user` but nothing cross-checks it. Found while testing the full API (task: "test the whole API again"). |
+| `fix-candidate-password-leak` | PENDING | `src/candidate/candidate.service.ts` — `handlerGetInformationByEmail` has no `.select()` at all; `handlerGetInformationById` double-wraps `whitelistSelect([select])`, making the select a permanent no-op. Result: `GET /api/v1/candidate/:email` and `PUT/PATCH /candidate/update` return the raw bcrypt password hash in the response. |
+| `fix-refresh-token-expiry-unused` | PENDING | `TOKEN_EXP_IN` (`.env`, already exported in config) is never used at any `jwtSign()` call site (`auth.service.ts`, `auth.controller.ts`, `api/v1/auth/services/login.ts`) — access and refresh tokens always share the same default 1h expiry, so the refresh token is pointless. |
+| `fix-v2-register-missing-await` | PENDING | `src/api/v1/auth/services/register.ts:44` — `bcryptGenerateSalt(password)` missing `await`, the Promise gets assigned straight into the Mongoose model's password field → every `POST /api/v2/auth/register` fails with a Promise→string cast error. |
+| `fix-create-response-null-id` | PENDING | Minor. `BaseService.ts` `handlerCreate`'s `hookAfterSave` reassigns the local destructured `data` variable, never actually updating what `baseCreateDocument` returns → every `POST .../create` response has `data._id: null` instead of the real new ID. |
+| `add-candidate-self-delete` | PENDING | Feature (not a bug). No endpoint lets a candidate delete their own account — needed to clean up 2 test accounts created during live-verification of the 5 bug fixes above on production (`livecheck+...@example.com`, `livecheckB+...@example.com`). Requirement: `DELETE /api/v1/candidate`, using only `req.user._id` (never an id from the client — follows the IDOR-safe pattern from `fix-idor-broken-access-control`), cascade-deletes data across all 7 CV section models by `candidateId`. |
+| `feat-multilang-resume-content` | PENDING | Feature, GitHub issue #79. Localize 8 free-text description fields (`Candidate.introduction`, `description` on 5 CV sections, `generalInformation.career`/`careerGoal`) from flat `String` to `{vi, en}`. Does NOT touch proper-name/short-label fields (`school`/`company`/`position`/`positionDesired`/`levelCurrent`/...). `?lang=` resolves to a single string for `GET /api/me/:email` + PDF export; authenticated CRUD returns the full `{vi,en}`. Migration script `src/scripts/migrate-localize-text-fields.ts` (`npm run migrate:localize-text`), idempotent — actually run, confirmed via evidence. **Correction**: an earlier note here said "no access to production DB" — WRONG, local `.env` actually points at the same real-data Atlas cluster (see `fix-candidate-me-candidateid-not-string`). |
+| `fix-candidate-me-candidateid-not-string` | PENDING | **Critical, found by accident while testing #79.** `candidate_me/index.ts` `handlerGetAboutMe` — `_id` from the raw Mongoose document is an ObjectId instance, passed straight into `idQuerySafe.safeQuery({}, { candidateId: _id })` — `QuerySafe.safeQuery` only accepts `typeof value === 'string'`, so an ObjectId silently fails that check and `candidateId` gets dropped from the filter → `model.find({})` returns CV data (education/experience/award/certificate/project/generalInformation) for **every candidate mixed together**, on every `GET /api/me/:email` request (public, no auth) and `/download-pdf`. Live-tested confirmed: a brand-new candidate profile returned real data belonging to `votan.it@gmail.com`. Fix: `.toString()` on `_id` before passing it in. |
+| `feat-i18n-api-messages-auth` | PENDING | Feature, GitHub issue #78 (phase 1 of several). i18n infrastructure (hand-rolled `t(key, lang)`, reads `locales/vi.json`/`en.json`, middleware detects `Accept-Language`, defaults `vi`) + fully migrates the auth flow (register/login/logout/refresh). Does NOT migrate Joi validation messages (different architecture — Joi schemas are built once at module load with no request context; needs error TYPE → i18n key mapping, left as a follow-up). Does NOT touch candidate/CV section messages (separate follow-up). |
+| `feat-i18n-full-coverage` | PENDING | Feature, GitHub issue #78 (phase 2/2 — complete). Joi validation messages: a generic system translating by `detail.type` + `fieldLabels` (`utils/valid.ts`), no longer relying on hardcoded `.messages()` per schema. Mongoose `required` messages: same approach in `handleError` (`utils/helper.ts`). Every candidate/CV section success/error message (`services/index.ts`, `BaseController.ts`, `BaseService.ts`, `candidate.service.ts`, `generalInformation.*`) cascades across all 7 CV sections. Bug found during implementation: `t()`'s dot-path walker misparsed Joi type strings containing a dot (`any.required` was read as 3 nested levels) — caught via a real live test (curl in 2 languages), not code review. Fix: a dedicated `tErrorType()` function, flat lookup with no dot-path walking. |
 
-Any regression phải là **node mới** (LAI-13) — không được sửa trực tiếp PM
-status của node cũ để "gỡ" một SEAL đã có.
+Any regression must be a **new node** (LAI-13) — never edit an existing
+node's PM status directly to "undo" an existing SEAL.
