@@ -7,6 +7,7 @@
 import * as MODELS from '@/models';
 import { validateModel } from '@/utils';
 import { candidateQuerySafe } from '@/utils/querySafe';
+import { t, DEFAULT_LANG } from '@/utils/i18n';
 
 const MODEL = MODELS.Candidate;
 
@@ -40,7 +41,7 @@ export const handlerGetInformationByEmail = async (email: string) => {
   return find;
 };
 
-export const handlerUpdate = async (item: Record<string, any>) => {
+export const handlerUpdate = async (item: Record<string, any>, lang: string = DEFAULT_LANG) => {
   /**
    * @return
    *  success: boolean,
@@ -51,7 +52,7 @@ export const handlerUpdate = async (item: Record<string, any>) => {
    */
 
   if (!(await MODEL.findById(item._id))) {
-    return { success: false, message: 'ID không tồn tại' };
+    return { success: false, message: t('common.idNotFound', lang) };
   }
 
   const value = { ...item };
@@ -75,16 +76,16 @@ export const handlerUpdate = async (item: Record<string, any>) => {
   /**
    * return
    */
-  return { success: true, message: 'Cập nhật thành công', errors: {}, data: _find ? _find : {} };
+  return { success: true, message: t('common.updateSuccess', lang), errors: {}, data: _find ? _find : {} };
 };
 
-export const handlerDelete = async (_id: string) => {
+export const handlerDelete = async (_id: string, lang: string = DEFAULT_LANG) => {
   if (!(await MODEL.findById(_id))) {
-    return { success: false, message: 'ID không tồn tại' };
+    return { success: false, message: t('common.idNotFound', lang) };
   }
 
   await Promise.all(CV_SECTION_MODELS.map((model) => model.deleteMany({ candidateId: _id })));
   await MODEL.deleteOne({ _id }).exec();
 
-  return { success: true, message: 'Xoá tài khoản thành công', errors: {}, data: null };
+  return { success: true, message: t('candidate.deleteAccountSuccess', lang), errors: {}, data: null };
 };

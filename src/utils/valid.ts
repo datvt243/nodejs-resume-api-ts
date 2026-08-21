@@ -7,8 +7,17 @@
 import mongoose, { Model } from 'mongoose';
 import { Schema } from 'joi';
 import { _log } from '@/utils';
+import { t, tErrorType, DEFAULT_LANG } from '@/utils/i18n';
 
-export const validateSchema = ({ schema, item = {} }: { schema: Schema; item: Partial<Record<string, any>> }) => {
+export const validateSchema = ({
+  schema,
+  item = {},
+  lang = DEFAULT_LANG,
+}: {
+  schema: Schema;
+  item: Partial<Record<string, any>>;
+  lang?: string;
+}) => {
   /**
    * @return
    *  isValidated: boolean,
@@ -19,24 +28,45 @@ export const validateSchema = ({ schema, item = {} }: { schema: Schema; item: Pa
    */
   const validationOptions = { abortEarly: false };
   if (!schema || typeof schema.validate !== 'function') {
-    return { isValidated: false, message: 'Invalid schema' };
+    return { isValidated: false, message: t('validation.invalidSchema', lang) };
   }
   const { error, value } = schema.validate(item, validationOptions);
   return error
-    ? { isValidated: false, message: 'Validation has errors', errors: formatValidateError(error) }
+    ? { isValidated: false, message: t('validation.hasErrors', lang), errors: formatValidateError(error, lang) }
     : { isValidated: true, value, message: '' };
 };
 
-export const formatValidateError = (error: any) => {
+/**
+ * Translate a single Joi error detail using a generic, per-error-type
+ * template (`joiErrors.<type>`) + a translated field label
+ * (`fieldLabels.<key>`) — this ignores whatever `.messages({...})` string
+ * was set on the schema itself, since those are baked in at module-load
+ * time in one hardcoded language and can't respond to a per-request
+ * Accept-Language. Falls back to Joi's own rendered message if the error
+ * type isn't in our template dictionary (better a real message in the
+ * wrong language than nothing).
+ */
+const translateJoiDetail = (detail: any, lang: string): string => {
+  const template = tErrorType(detail.type, lang);
+  if (template === undefined) return detail.message;
+
+  const fieldKey = detail?.context?.key ?? detail?.path?.[detail.path.length - 1];
+  const labelKey = `fieldLabels.${fieldKey}`;
+  const translatedLabel = t(labelKey, lang);
+  const label = translatedLabel === labelKey ? detail?.context?.label || fieldKey : translatedLabel;
+
+  return template.replace('{{label}}', label).replace('{{limit}}', String(detail?.context?.limit ?? ''));
+};
+
+export const formatValidateError = (error: any, lang: string = DEFAULT_LANG) => {
   const { details = [] } = error;
 
   const messages: Record<string, any> = {};
 
   for (const detail of details) {
-    const _field = detail?.path[0],
-      _mess = detail.message;
-
-    _mess && (messages[_field] = _mess);
+    const _field = detail?.path[0];
+    if (!_field) continue;
+    messages[_field] = translateJoiDetail(detail, lang);
   }
   return messages;
 };

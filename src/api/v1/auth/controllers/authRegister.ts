@@ -41,6 +41,6 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
       data: null,
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };

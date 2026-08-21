@@ -23,7 +23,11 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
    * validate dữ liệu đầu vào
    * { email, password, re-password } = req.body;
    */
-  const { isValidated, value = {}, errors, message } = validateSchema({ schema: schemaAuthRegister, item: { ...req.body } });
+  const { isValidated, value = {}, errors, message } = validateSchema({
+    schema: schemaAuthRegister,
+    item: { ...req.body },
+    lang: (req as any).lang,
+  });
   if (!isValidated) {
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,
@@ -46,7 +50,7 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
       data: null,
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
 
@@ -57,7 +61,11 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
   /**
    * validate date come from req
    */
-  const { isValidated, value = {}, message, errors } = validateSchema({ schema: schemaAuthLogin, item: { ...req.body } });
+  const { isValidated, value = {}, message, errors } = validateSchema({
+    schema: schemaAuthLogin,
+    item: { ...req.body },
+    lang: (req as any).lang,
+  });
   if (!isValidated) {
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,
@@ -81,7 +89,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
       data: _result?.data || null,
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
 
@@ -133,7 +141,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
 
@@ -168,6 +176,6 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
       message: t('auth.logoutSuccess', (req as any).lang),
     });
   } catch (err) {
-    handleError(err, next);
+    handleError(err, next, (req as any).lang);
   }
 };
