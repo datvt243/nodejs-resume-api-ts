@@ -172,6 +172,7 @@ All v1 routes: `/api/v1/...` — JWT required except auth.
 | GET | `/:email` | Get profile by email |
 | PUT | `/update` | Full update |
 | PATCH | `/update` | Partial update |
+| DELETE | `/` | Delete own account + all CV section data (self only, via `req.user._id`) |
 
 ### CV Sections (all follow same CRUD pattern)
 
