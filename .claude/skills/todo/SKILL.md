@@ -34,11 +34,12 @@ argument-hint: "<task>"
 
 ## Hiển thị agent-hub trong phiên
 `agent-hub/` (evidence note của cả 2 lượt, PM status, MEMORY.md) là tài
-liệu cho AI đọc — KHÔNG dán git diff của các file này ra chat dù ở lượt
-nào. Mỗi lần ghi xong chỉ in dòng `update nội dung agent-hub`, không mô tả
-lại nội dung. Chỉ báo kết quả cuối: verdict (SEAL/REOPEN/blocked) + lý do
-ngắn gọn nếu REOPEN. Diff của `src/` vẫn hiển thị đầy đủ khi implementer
-đụng code thật.
+liệu cho AI đọc — áp dụng cho MỌI thay đổi, dù sửa file có sẵn hay tạo file
+mới (kể cả note thứ 2/3 khi REOPEN lặp lại nhiều vòng). KHÔNG dán git diff,
+KHÔNG paste/trích nội dung file vừa tạo, KHÔNG mô tả lại nội dung, dù ở
+lượt nào. Mỗi lần ghi xong chỉ in đúng 1 dòng `update nội dung agent-hub`.
+Chỉ báo kết quả cuối: verdict (SEAL/REOPEN/blocked) + lý do ngắn gọn nếu
+REOPEN. Diff của `src/` vẫn hiển thị đầy đủ khi implementer đụng code thật.
 
 ## Ràng buộc cứng
 - Đây KHÔNG phải 1 pass tự viết tự chấm — luôn là implementer (phiên

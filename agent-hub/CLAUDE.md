@@ -43,8 +43,10 @@ Before any **outward-facing** action — `commit` · `push` · `publish` ·
 operator approval. No approval = no action.
 
 `agent-hub/` writes (evidence notes, PM status updates, doctrine edits) are
-NOT outward-facing in the diff-display sense — don't paste their git diff
-into chat. Print the line `update nội dung agent-hub`, then report done
+NOT outward-facing in the diff-display sense — this applies to EVERY write,
+editing an existing file or creating a brand-new one. Never paste their git
+diff, never paste/quote the new file's content, never narrate what's inside
+it. Print exactly the line `update nội dung agent-hub`, then report done
 when finished. Only `src/` (real product code) diffs get shown for review.
 
 ## Four lenses (apply in order)

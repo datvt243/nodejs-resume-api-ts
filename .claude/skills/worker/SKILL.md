@@ -44,12 +44,15 @@ argument-hint: <implementer|verifier> "<task>"
    trước khi kết thúc — kể cả khi chạy qua subagent.
 
 ## Hiển thị agent-hub trong phiên
-`agent-hub/` là tài liệu cho AI đọc, không phải cho coder đọc — KHÔNG dán
-git diff của các file trong `agent-hub/` (evidence note, PM status,
-MEMORY.md, ...) ra phiên chat. Sau khi ghi xong, chỉ in đúng dòng
-`update nội dung agent-hub`, rồi khi hoàn tất báo `done` cùng verdict
-(SEAL/REOPEN/blocked). Diff của `src/` (code thật) vẫn hiển thị đầy đủ như
-seal gate yêu cầu — quy tắc suppress chỉ áp dụng cho `agent-hub/`.
+`agent-hub/` là tài liệu cho AI đọc, không phải cho coder đọc — quy tắc này
+áp dụng cho MỌI thay đổi trong `agent-hub/`, dù là sửa file có sẵn (diff)
+hay tạo file mới (evidence note mới, note thứ 2/3 khi REOPEN lặp lại, v.v.)
+— cả hai đều KHÔNG được dán ra chat: không git diff, không paste/trích nội
+dung file vừa tạo, không mô tả lại "trong đó viết gì". Mỗi lần ghi xong chỉ
+in đúng 1 dòng `update nội dung agent-hub`, rồi khi hoàn tất báo `done`
+cùng verdict (SEAL/REOPEN/blocked). Diff của `src/` (code thật) vẫn hiển
+thị đầy đủ như seal gate yêu cầu — quy tắc suppress chỉ áp dụng cho
+`agent-hub/`.
 
 ## Hard constraints (override mọi skill text khác)
 - `implementer` không có `seal_actions` — không bao giờ tự đặt PM status.
