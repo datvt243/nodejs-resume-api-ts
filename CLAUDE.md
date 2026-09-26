@@ -2,7 +2,7 @@
 
 Node.js/TypeScript REST API for managing candidate CVs/resumes with auth, PDF export, Redis caching, and Winston logging.
 
-**Version**: 1.0.0 | **Author**: DatVT | **License**: ISC
+**Version**: 1.7.0 | **Author**: DatVT | **License**: ISC
 
 ---
 
@@ -53,6 +53,9 @@ SESSION_SECRET=...
 REDIS_URL=redis://localhost:6379   # optional; fallback to in-memory if absent
 MONGO_MAX_POOL_SIZE=10       # optional; MongoDB connection pool max size
 MONGO_MIN_POOL_SIZE=2        # optional; MongoDB connection pool min size
+CORS_ORIGIN=...              # comma-separated allow-list; required for the httpOnly cookie auth flow
+                              # (credentials: true can't combine with a wildcard origin)
+TOKEN_REFRESH_EXP_IN=7d      # optional; refresh token lifetime (default 7d)
 ```
 
 ---
@@ -65,7 +68,7 @@ src/
 ├── alias.ts                   # module-alias: @ → src/ (dev) or dist/ (prod)
 ├── config/
 │   ├── process.config.ts      # Env var validation + export
-│   ├── cors.config.ts         # CORS: origin '*'
+│   ├── cors.config.ts         # CORS: CORS_ORIGIN allow-list (credentials: true)
 │   ├── session.config.ts      # Express session config
 │   ├── joi.config.ts          # Shared Joi schemas (email, password, phone, etc.)
 │   ├── regex.config.ts        # Password + phone regex
@@ -73,10 +76,18 @@ src/
 ├── database/
 │   └── mongo.db.ts            # Singleton MongoDB connection manager
 ├── middlewares/
-│   ├── verifyToken.middleware.ts   # JWT extraction + blacklist check; attaches req.user._id
+│   ├── verifyToken.middleware.ts   # JWT extraction (Bearer/cookie/body/query) + blacklist +
+│   │                                # session-revocation + CSRF check; attaches req.user._id,
+│   │                                # forces req.body.candidateId
+│   ├── csrf.middleware.ts          # Standalone CSRF check for routes not behind verifyToken
+│   │                                # (/auth/refresh, /auth/logout)
+│   ├── language.middleware.ts      # Resolves Accept-Language → req.lang / req.t(key)
 │   ├── rateLimit.middleware.ts     # Redis-backed rate limit (100 req/15 min); mem fallback
 │   ├── errors.middleware.ts        # Global error handler; AppError-aware; stack in dev only
-│   └── requestLogger.middleware.ts # Logs method, URL, status, duration via Winston
+│   ├── requestLogger.middleware.ts # Logs method, URL, status, duration via Winston
+│   ├── uploadCV.middleware.ts      # Multer: candidate's own PDF résumé (max 5MB)
+│   ├── uploadImages.middleware.ts  # Multer: CV-section image attachments
+│   └── uploadLinkedInExport.middleware.ts # Multer: LinkedIn export ZIP (max 20MB)
 ├── models/
 │   ├── candidate.model.ts
 │   ├── generalInformation.model.ts
@@ -86,16 +97,21 @@ src/
 │   ├── certificate.model.ts
 │   ├── award.model.ts
 │   ├── reference.modal.ts
-│   └── part/index.ts          # Reusable sub-schemas (skills, languages, socialMedia)
+│   ├── application.model.ts   # Job application tracker (applied/interview/offer/rejected)
+│   ├── profile.model.ts       # Named CV profile (multi-version): subset of section ids
+│   ├── visit.model.ts         # One doc per public-profile visit (ip + geo, no soft-delete)
+│   └── part/index.ts          # Reusable sub-schemas (skills, languages, socialMedia, localizedText)
 ├── routers/
 │   ├── api/v1/                # All active routes (see API section)
-│   └── api/v2/                # Auth v2 (WIP)
+│   └── api/v2/                # Auth v2 (WIP: register/login only)
 ├── auth/
 │   ├── auth.controller.ts
 │   └── auth.service.ts
 ├── candidate/
 │   ├── candidate.controller.ts
-│   └── candidate.service.ts
+│   ├── candidate.service.ts
+│   ├── candidate.validate.ts
+│   └── parseLinkedInExport.service.ts # Parses LinkedIn "Data export" ZIP → Education/Experience (stateless)
 ├── candidate_profile/         # One controller+service+validate per CV section
 │   ├── experience/
 │   ├── education/
@@ -104,19 +120,33 @@ src/
 │   ├── certificates/
 │   ├── project/
 │   ├── reference_information/
-│   └── BaseController.ts      # baseGetAll() + baseDelete() shared across sections
+│   ├── application/            # Job application tracker CRUD
+│   ├── profile/                # CV profile CRUD + ensureDefaultProfile()
+│   ├── BaseController.ts      # baseGetAll()/baseDelete()/baseRestore()/baseUploadImages() shared
+│   └── BaseService.ts         # createCrudService() factory shared across section services
 ├── candidate_me/
-│   └── index.ts               # Public profile aggregation + PDF export
+│   └── index.ts               # Public profile aggregation (slug/email, i18n, ?profile= filter),
+│                               # visit recording, PDF/JSON/DOCX export
 ├── services/
-│   ├── index.ts               # Core DB ops: baseFindDocument, baseCreateDocument, etc.
+│   ├── index.ts               # Core DB ops: baseFindDocument, baseCreateDocument,
+│   │                           # baseUpdateDocument, basePatchDocument, baseDeleteDocument
+│   │                           # (soft-delete), baseRestoreDocument
 │   ├── redis.ts               # Redis client singleton (init/get/close/isAvailable)
-│   └── createPDF.ts           # Puppeteer PDF generation (createCV, pageRender)
+│   ├── createPDF.ts           # Puppeteer PDF generation (createCV, pageRender)
+│   └── createDocx.ts          # docx-based Word export (same aggregated data as PDF)
 ├── utils/
 │   ├── jwt.ts                 # jwtSign(), jwtVerify()
 │   ├── bcrypt.ts              # bcryptGenerateSalt(), bcryptCompareHash()
 │   ├── tokenBlacklist.ts      # Redis/mem blacklist; cleanup every 60s; key: blacklist:{token}
+│   ├── sessionRevocation.ts   # "Logout of all devices" — per-candidate invalidated-at timestamp
+│   ├── authCookies.ts         # Sets/clears httpOnly access+refresh JWT cookies
+│   ├── csrf.ts                # requiresCsrfCheck()/isCsrfTokenValid() double-submit CSRF check
+│   ├── slug.ts                # Vanity slug generation for public profile URLs
+│   ├── i18n.ts                # t(key, lang), SUPPORTED_LANGS, DEFAULT_LANG (vi/en)
+│   ├── emailVerification.ts   # Email-verification token issue/check (stub, logged not emailed)
+│   ├── passwordReset.ts       # Forgot/reset-password token issue/check (stub, logged not emailed)
 │   ├── helper.ts              # asyncHandler, throwError, formatReturn, response helpers
-│   ├── helper-auth.ts         # extractTokenFromRequest() (header/body/query/cookie)
+│   ├── helper-auth.ts         # extractTokenFromRequest()/extractTokenWithSource() (header/body/query/cookie)
 │   ├── valid.ts               # validateSchema() (Joi), validateModel() (Mongoose)
 │   ├── querySafe.ts           # QuerySafe: blocks $ and javascript: to prevent NoSQL injection
 │   ├── timeout.ts             # withTimeout, withDBTimeout(5s), withRedisTimeout(2s)
@@ -139,31 +169,42 @@ src/
 ## Express Middleware Stack (server.ts order)
 
 1. Request logger (Winston)
-2. Session middleware
-3. CORS (origin: `*`)
-4. Body parser (JSON + URL-encoded)
-5. `GET /health` — exempt from rate limit
-6. Rate limiter (Redis or mem)
-7. Static files (`public/`)
-8. API router
-9. Global error handler
+2. Cookie parser (httpOnly JWT cookies → `req.cookies`)
+3. Language middleware (`Accept-Language` → `req.lang` / `req.t(key)`)
+4. Session middleware
+5. CORS (`CORS_ORIGIN` allow-list, `credentials: true`)
+6. Body parser (JSON + URL-encoded)
+7. `GET /health` — exempt from rate limit
+8. Swagger UI (`/api-docs`, `/api-docs.json`) — exempt from rate limit
+9. Rate limiter (Redis or mem)
+10. Static files (`public/`)
+11. API router
+12. Global error handler
 
-Pug is set as view engine. Dev: port 3001, Prod: port 3008.
+Pug is set as view engine. Dev: port 3001, Prod: port 3008 (both respect `LOCAL_PORT` when set).
 
 ---
 
 ## API Endpoints
 
-All v1 routes: `/api/v1/...` — JWT required except auth.
+All v1 routes: `/api/v1/...` — JWT required except auth. Auth accepts either an
+`Authorization: Bearer <token>` header or an httpOnly JWT cookie; cookie-only
+state-changing requests must also pass the double-submit CSRF check (see Security).
 
 ### Auth `/api/v1/auth` (authLimiter: 150 req/15 min)
 
 | Method | Path | Description |
 |---|---|---|
 | POST | `/register` | Create user, bcrypt hash password |
-| GET | `/login` | Validate + return access + refresh tokens |
-| POST | `/logout` | Blacklist current token |
-| POST | `/refresh` | Rotate tokens; blacklist old refresh token |
+| POST / GET | `/login` | Validate + return access + refresh tokens (GET deprecated) |
+| POST | `/logout` | Blacklist current token (CSRF-checked) |
+| POST | `/logout-all` | Revoke every token issued to this candidate up to now |
+| POST | `/refresh` | Rotate tokens; blacklist old refresh token (CSRF-checked) |
+| POST | `/forgot-password` | Request password reset (stub — logged, not emailed) |
+| POST | `/reset-password` | Reset password using a reset token |
+| GET | `/verify-email` | Verify email using a token issued on register (stub) |
+
+`api/v2/auth` mirrors `/register` and `/login` only — still WIP.
 
 ### Candidate `/api/v1/candidate`
 
@@ -173,27 +214,36 @@ All v1 routes: `/api/v1/...` — JWT required except auth.
 | PUT | `/update` | Full update |
 | PATCH | `/update` | Partial update |
 | DELETE | `/` | Delete own account + all CV section data (self only, via `req.user._id`) |
+| POST | `/upload-cv` | Upload own PDF résumé (multer, max 5MB) |
+| GET | `/cv-file` | Download own uploaded résumé |
+| POST | `/parse-linkedin-export` | Parse a LinkedIn "Data export" ZIP → Education/Experience entries; stateless, nothing persisted |
+| GET | `/visits` | Own public-profile visit count + list |
 
-### CV Sections (all follow same CRUD pattern)
+### CV Sections + Application + Profile (all follow same CRUD pattern)
 
-Sections: `education`, `experience`, `award`, `certificate`, `project`, `reference`, `generalInformation`
+Sections: `education`, `experience`, `award`, `certificate`, `project`, `reference`, `generalInformation`, `application`, `profile`
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/` | List all for authenticated user |
+| GET | `/` | List all for authenticated user (optional `page`/`limit`/`sort` query) |
 | POST | `/create` | Create entry |
 | PUT | `/update` | Update entry |
-| DELETE | `/delete/:id` | Delete by ID (ownership checked) |
+| DELETE | `/delete/:id` | Soft-delete by ID (`deletedAt` set; ownership checked) |
+| POST | `/restore/:id` | Restore a soft-deleted entry by ID |
 
-`generalInformation` also has `PATCH /update`.
+`generalInformation` also has `PATCH /update`. `profile` (see `profile.model.ts`)
+holds named subsets of the other sections' ids for tailoring a public share
+link; `GET /` synthesizes a default "Tổng hợp" (All) profile on first read if
+the candidate has none yet (`ensureDefaultProfile`).
 
 ### Other
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/health` | None | Health check |
-| GET | `/api/me/:email` | None | Public profile |
-| GET | `/api/download-pdf` | Token via query | Export PDF |
+| GET | `/api/me/:email` | None | Public profile by vanity slug (checked first) or email; `?lang=vi\|en` and `?profile=<id>` (filters sections to that CV profile) |
+| POST | `/api/me/:email/visit` | None | Record a visit (count, timestamp, IP, geo via `geoip-lite`) |
+| GET | `/api/v1/download-pdf` | Token via query | Export own CV; `?format=pdf\|json\|docx` (default `pdf`), `?lang=vi\|en` |
 | GET | `/api-docs` | None | Swagger UI (OpenAPI docs) |
 | GET | `/api-docs.json` | None | Raw OpenAPI spec (JSON) |
 
@@ -202,20 +252,21 @@ Sections: `education`, `experience`, `award`, `certificate`, `project`, `referen
 ## Auth Flow
 
 1. `POST /auth/register` → validate Joi → check duplicate email → bcrypt(password, 12) → create Candidate doc
-2. `POST /auth/login` → find by email → bcryptCompare → sign `accessToken` (TOKEN_SECRET) + `refreshToken` (TOKEN_REFRESH) with payload `{ _id: candidateId }`
-3. All protected requests → `verifyToken` middleware → extract Bearer token → `jwtVerify` → check blacklist → attach `req.user._id`
-4. `POST /auth/refresh` → verify refresh token → blacklist old refresh token → issue new pair
-5. `POST /auth/logout` → add token to blacklist (Redis TTL = token remaining exp; mem fallback)
+2. `POST /auth/login` → find by email → bcryptCompare → sign `accessToken` (TOKEN_SECRET) + `refreshToken` (TOKEN_REFRESH) with payload `{ _id: candidateId }` → set as httpOnly cookies (`utils/authCookies.ts`) and returned in the response body
+3. All protected requests → `verifyToken` middleware → extract token (Bearer header, cookie, body, or query via `extractTokenWithSource`) → `jwtVerify` → check blacklist → check per-candidate session-revocation timestamp (`sessionRevocation.ts`) → if the request authenticated purely off the cookie, require a valid double-submit CSRF token → attach `req.user._id` and force `req.body.candidateId` to it
+4. `POST /auth/refresh` → CSRF-checked → verify refresh token → blacklist old refresh token → issue new pair
+5. `POST /auth/logout` → CSRF-checked → add token to blacklist (Redis TTL = token remaining exp; mem fallback)
+6. `POST /auth/logout-all` → bump the candidate's session-invalidated-at timestamp so every token issued before now is rejected on next use, even if not individually blacklisted or expired
 
 ---
 
 ## Models
 
-All models use Mongoose with `timestamps: true` and `candidateId` foreign key (except Candidate).
+All models use Mongoose with `timestamps: true` and `candidateId` foreign key (except Candidate). Every CV-section model plus `Application` and `Profile` carries a nullable `deletedAt: Number` for soft-delete/restore (`Visit` does not).
 
 | Model | Key Fields |
 |---|---|
-| Candidate | email, password, firstName, lastName, gender, marital, birthday, address, phone, introduction, socialMedia |
+| Candidate | email, password, firstName, lastName, gender, marital, birthday, address, phone, introduction, socialMedia, slug (vanity public-profile URL) |
 | GeneralInformation | candidateId, position/career, professionalSkills[], personalSkills[], foreignLanguages[], workLocation, workForm |
 | Experience | candidateId, company, position, startDate, endDate, isCurrent, description, skills[] |
 | Education | candidateId, school, major, startDate, endDate, isCurrent, description |
@@ -223,8 +274,13 @@ All models use Mongoose with `timestamps: true` and `candidateId` foreign key (e
 | Certificate | candidateId, name, organization, startDate, endDate, isNoExpiration, link, images[], description |
 | Award | candidateId, name, organization, issueDate, link, images[], description |
 | Reference | candidateId, fullName, phone, company, position |
+| Application | candidateId, company, position, appliedDate, status (`applied`\|`interview`\|`offer`\|`rejected`), note, jobLink |
+| Profile | candidateId, name, educationIds[], experienceIds[], projectIds[], certificateIds[], awardIds[], referenceIds[] |
+| Visit | candidateId, ip, location (no `_id` override — see comment in `visit.model.ts` on why) |
 
-**Reusable sub-schemas** (`models/part/index.ts`): `foreignLanguageSchema`, `professionalSkillsSchema`, `personalSkills`, `socialMediaSchema`
+Free-text fields on several models (e.g. Award/Certificate `description`, GeneralInformation `career`/`careerGoal`, Candidate `introduction`) use `localizedTextSchema` (`{ vi, en }`) resolved per-request by `?lang=`.
+
+**Reusable sub-schemas** (`models/part/index.ts`): `foreignLanguageSchema`, `professionalSkillsSchema`, `personalSkills`, `socialMediaSchema`, `localizedTextSchema`
 
 ---
 
@@ -232,13 +288,18 @@ All models use Mongoose with `timestamps: true` and `candidateId` foreign key (e
 
 `services/index.ts` exposes base DB operations used by all feature services:
 
-- `baseFindDocument(model, query, findMany?)` — query with NoSQL injection guard
-- `baseCreateDocument(model, data, hooks?)` — create with Mongoose validation + optional hooks
-- `baseUpdateDocument(model, filter, data)` — update with validation
-- `baseDeleteDocument(model, id, candidateId)` — delete with ownership check
-- `basePatchDocument(model, filter, data)` — partial update
+- `baseFindDocument(props)` — query with NoSQL injection guard; optional `page`/`limit`/`sort`
+- `baseCreateDocument(props)` — create with Mongoose validation + optional `hookAfterSave`/`hookHasErrors`
+- `baseUpdateDocument(props)` — update with validation
+- `basePatchDocument(props)` — partial update
+- `baseDeleteDocument(props)` — soft-delete (`deletedAt`) with ownership check
+- `baseRestoreDocument(props)` — clears `deletedAt`, same ownership check
 
-`BaseController.ts` wraps `baseGetAll()` (find all by `candidateId`) and `baseDelete()` shared across all CV section controllers.
+`candidate_profile/BaseService.ts` (`createCrudService()`) wraps these into a
+`{ handlerGet, handlerCreate, handlerUpdate, handlerDelete, ... }` factory used
+by every CV-section service. `BaseController.ts` wraps `baseGetAll()`,
+`baseDelete()`, `baseRestore()`, and `baseUploadImages()` (ownership-checked
+image attachment) shared across all CV section controllers.
 
 ---
 
@@ -248,12 +309,12 @@ All models use Mongoose with `timestamps: true` and `candidateId` foreign key (e
 AppError (base: statusCode, message, errorCode, isOperational)
 ├── ValidationError       400  VALIDATION_ERROR
 ├── BadRequestError       400  BAD_REQUEST
-├── AuthenticationError   401  UNAUTHORIZED
+├── AuthenticationError   401  UNAUTHORIZED | NO_TOKEN
 │   ├── InvalidCredentialsError   INVALID_CREDENTIALS
 │   ├── TokenExpiredError         TOKEN_EXPIRED
 │   ├── TokenRevokedError         TOKEN_REVOKED
 │   └── InvalidTokenError         INVALID_TOKEN
-├── AuthorizationError    403  FORBIDDEN
+├── AuthorizationError    403  FORBIDDEN | INSUFFICIENT_PERMISSIONS | CSRF_TOKEN_INVALID
 ├── NotFoundError         404  NOT_FOUND
 └── ConflictError         409  CONFLICT
 ```
@@ -267,8 +328,13 @@ Global error middleware catches all `AppError` instances, logs via Winston, and 
 - **NoSQL injection**: `QuerySafe` class in `utils/querySafe.ts` blocks `$` operators and `javascript:` patterns before any DB query
 - **Password**: bcrypt with 12 salt rounds
 - **Token blacklist**: Redis `blacklist:{token}` with TTL; in-memory Map fallback; cleanup job every 60s
+- **Session revocation**: `utils/sessionRevocation.ts` — logout-all invalidates every token issued before the recorded timestamp, independent of blacklist/expiry
+- **CSRF**: double-submit check (`utils/csrf.ts`) required whenever a state-changing request authenticated purely off the httpOnly cookie (no Bearer header) — enforced inline in `verifyToken` and standalone via `csrf.middleware.ts` on `/auth/refresh` and `/auth/logout`, which sit outside `verifyToken`
+- **IDOR**: `verifyToken` always overwrites `req.body.candidateId` with the authenticated `req.user._id` — handlers must never trust a client-supplied `candidateId`
 - **Rate limiting**: Redis-backed (100 req/15 min general, 150 req/15 min auth); Redis failure falls back to in-memory
-- **Token extraction**: Supports Bearer header, request body, query param, and cookie
+- **Token extraction**: Supports Bearer header, request body, query param, and httpOnly cookie
+- **CORS**: `CORS_ORIGIN` allow-list with `credentials: true` — a wildcard origin cannot be combined with credentialed cookies
+- **i18n**: `utils/i18n.ts` / `language.middleware.ts` resolve vi/en from `Accept-Language`; error/response messages and localized model fields respect it
 
 ---
 
@@ -279,18 +345,33 @@ npm test                         # run all tests
 ```
 
 - Config: `jest.config.ts` — preset `ts-jest`, root `src/`, module alias `@/* → src/*`, coverage from `src/**/*.{js,ts}`
-- Test files: `src/__tests__/` and co-located `.test.ts`
+- Test files: `src/__tests__/`, mirroring `src/` by feature
 
 | Test File | Coverage |
 |---|---|
 | auth/auth.service.test.ts | register, login, email check (mocks: CandidateModel, bcrypt, JWT) |
 | auth/auth.controller.test.ts | controller layer |
 | auth/refreshToken.test.ts | token rotation |
-| middlewares/verifyToken.test.ts | token extraction + blacklist check |
+| candidate/candidate.controller.test.ts | candidate controller (upload/download CV, visits, etc.) |
+| candidate/parseLinkedInExport.service.test.ts | LinkedIn export ZIP/CSV parsing |
+| candidate_me/index.test.ts | public profile aggregation, visit recording, export |
+| candidate_profile/BaseController.test.ts | shared getAll/delete/restore/upload-images controller |
+| candidate_profile/profile.service.test.ts | CV profile CRUD + default-profile synthesis |
+| config/cors.config.test.ts | CORS allow-list behavior |
+| middlewares/verifyToken.test.ts | token extraction + blacklist + session-revocation + CSRF check |
+| middlewares/csrf.test.ts | CSRF middleware |
 | middlewares/rateLimit.test.ts | rate limiting logic |
 | middlewares/requestLogger.test.ts | request logging |
+| services/baseFindDocument.test.ts | query/pagination/sort |
+| services/baseSoftDelete.test.ts | soft-delete behavior |
+| services/baseUpdatePatchSoftDelete.test.ts | update/patch interaction with soft-delete |
+| services/createPDF.test.ts | PDF export |
+| services/createDocx.test.ts | DOCX export |
+| utils/authCookies.test.ts | httpOnly cookie set/clear |
+| utils/csrf.test.ts | double-submit CSRF token validation |
 | utils/bcrypt.test.ts | hash + compare |
 | utils/valid.test.ts | Joi + Mongoose validation |
+| utils/helper.test.ts | response/format helpers |
 | database/mongo.db.ts | DB connection |
 
 ---
