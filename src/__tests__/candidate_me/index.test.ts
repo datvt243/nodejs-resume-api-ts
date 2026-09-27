@@ -4,6 +4,12 @@
  * QuerySafe.safeQuery silently DROPS a rejected value (e.g. containing "$")
  * instead of throwing. Before the fix, that made the resulting Mongo filter
  * collapse to {} and match an arbitrary candidate instead of failing.
+ *
+ * Also covers issue #153 (see bottom describe block) — a sibling instance
+ * of the same "value silently dropped by QuerySafe" bug class, but at the
+ * candidateId field instead of the identifier lookup: `_id` from a raw
+ * Mongoose document is an ObjectId instance, not a string, and
+ * QuerySafe.safeQuery only accepts string values.
  */
 
 import * as MODEL from '@/models';
@@ -111,5 +117,47 @@ describe('candidate_me/index.ts (issue #135)', () => {
       expect(MODEL.Profile.findOne).not.toHaveBeenCalled();
       expect(MODEL.Education.find).toHaveBeenCalledWith(expect.not.objectContaining({ _id: expect.anything() }), expect.anything());
     });
+  });
+});
+
+describe('handlerGetAboutMe — candidateId filter with an ObjectId _id (issue #153)', () => {
+  // Mirrors a real Mongoose document: _id is an ObjectId instance (has a
+  // .toString() method), never a plain string. Before the fix,
+  // idQuerySafe.safeQuery({}, { candidateId: _id }) silently dropped the
+  // whole candidateId key (QuerySafe.safeQuery only accepts
+  // typeof value === 'string'), collapsing every CV-section query's filter
+  // to {} — every candidate's data came back mixed together.
+  const objectIdLike = {
+    toString: () => '507f1f77bcf86cd799439011',
+  };
+  const candidateDoc = { _id: objectIdLike, email: 'votan.it@gmail.com' };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (MODEL.Candidate.findOne as jest.Mock).mockReturnValue({ exec: jest.fn().mockResolvedValue(candidateDoc) });
+    const emptyFind = { exec: jest.fn().mockResolvedValue([]) };
+    (MODEL.generalInformation.find as jest.Mock).mockReturnValue(emptyFind);
+    (MODEL.Experience.find as jest.Mock).mockReturnValue(emptyFind);
+    (MODEL.Education.find as jest.Mock).mockReturnValue(emptyFind);
+    (MODEL.Reference.find as jest.Mock).mockReturnValue(emptyFind);
+    (MODEL.Project.find as jest.Mock).mockReturnValue(emptyFind);
+    (MODEL.Certificate.find as jest.Mock).mockReturnValue(emptyFind);
+    (MODEL.Award.find as jest.Mock).mockReturnValue(emptyFind);
+  });
+
+  it('stringifies an ObjectId _id before filtering, instead of dropping candidateId entirely', async () => {
+    await handlerGetAboutMe('votan.it@gmail.com', 'vi');
+
+    expect(MODEL.Education.find).toHaveBeenCalledWith(
+      expect.objectContaining({ candidateId: '507f1f77bcf86cd799439011' }),
+      expect.anything(),
+    );
+    expect(MODEL.Experience.find).toHaveBeenCalledWith(
+      expect.objectContaining({ candidateId: '507f1f77bcf86cd799439011' }),
+      expect.anything(),
+    );
+    // Never the raw object itself, and never silently dropped ({} filter).
+    expect(MODEL.Education.find).not.toHaveBeenCalledWith(expect.objectContaining({ candidateId: objectIdLike }), expect.anything());
+    expect(MODEL.Education.find).not.toHaveBeenCalledWith({}, expect.anything());
   });
 });
