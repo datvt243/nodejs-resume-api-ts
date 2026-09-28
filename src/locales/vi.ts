@@ -44,6 +44,8 @@ export default {
     updateSuccess: 'Cập nhật thành công',
     updateFailed: 'Cập nhật thất bại',
     updateNotYours: 'Không thể cập nhật thông tin không phải của bạn',
+    bulkNoItems: 'Không có dữ liệu nào được gửi lên',
+    bulkTooManyItems: 'Gửi quá nhiều mục trong một lần (tối đa 100)',
   },
   candidate: {
     userNotFound: 'Không tìm thấy người dùng',
