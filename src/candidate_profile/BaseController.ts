@@ -19,6 +19,10 @@ interface baseProp {
 // which rows come back. A leading `-` (Mongoose convention) means desc.
 const SORT_FIELD_REGEX = /^-?[a-zA-Z0-9_.]+$/;
 
+// Bulk-create (issue #161) hard cap — a single request cannot create more
+// than this many entries regardless of what the client sends.
+const MAX_BULK_ITEMS = 100;
+
 const modelObject: { [key: string]: any } = {
   generalInformation: MODELS.generalInformation,
   experiences: MODELS.Experience,
@@ -197,5 +201,63 @@ export const createCrudController = (props: {
     }
   };
 
-  return { fnCreate, fnUpdate };
+  // Bulk-create (issue #161): one request, many entries, best-effort per
+  // item (a bad entry doesn't block the rest) — pairs with the stateless
+  // LinkedIn-export-parse flow (#141): parse -> review client-side -> bulk-save.
+  const fnBulkCreate = async (req: Request, res: Response, next: NextFunction) => {
+    const lang = (req as any).lang;
+    // Same IDOR-safe pattern as every other write path, but applied per
+    // array item: verifyToken only forces req.body.candidateId at the top
+    // level, never touching entries nested inside req.body.items.
+    const candidateId = (req as any).user?._id;
+    const items = Array.isArray(req.body.items) ? req.body.items : null;
+
+    if (!items || !items.length) {
+      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('common.bulkNoItems', lang) });
+    }
+    if (items.length > MAX_BULK_ITEMS) {
+      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('common.bulkTooManyItems', lang) });
+    }
+
+    try {
+      const results: Array<{ index: number; success: boolean; [key: string]: any }> = [];
+
+      for (let index = 0; index < items.length; index++) {
+        const { isValidated, value = {}, errors, message } = validateSchema({
+          schema,
+          item: { ...items[index], candidateId },
+          lang,
+        });
+
+        if (!isValidated) {
+          results.push({ index, success: false, message, errors });
+          continue;
+        }
+
+        if (booleanDefaultField && !value[booleanDefaultField]) value[booleanDefaultField] = false;
+        const result = await service.handlerCreate(value, lang);
+        results.push({ index, ...result });
+      }
+
+      const succeeded = results.filter((r) => r.success).length;
+      const summary = { total: results.length, succeeded, failed: results.length - succeeded };
+
+      // Envelope `success` is always true here (the bulk request itself was
+      // processed) — never tie it to summary.failed. utils/helper.ts's
+      // formatResponse() nulls out `data` whenever `success` is false, which
+      // would silently drop `results`/`summary` on a partial failure, the
+      // one time the caller most needs to see them. Per-item outcome lives
+      // in `results[].success`/`summary`, not the envelope.
+      return formatReturn(res, {
+        statusCode: StatusCodes.CREATED,
+        success: true,
+        message: summary.failed === 0 ? t('common.createSuccess', lang) : t('common.createFailed', lang),
+        data: { results, summary },
+      });
+    } catch (err) {
+      handleError(err, next, lang);
+    }
+  };
+
+  return { fnCreate, fnUpdate, fnBulkCreate };
 };

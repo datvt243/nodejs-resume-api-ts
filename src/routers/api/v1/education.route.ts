@@ -7,7 +7,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { Collections } from '@/types/base.type';
 import { baseDelete, baseGetAll, baseRestore } from '@/candidate_profile/BaseController';
-import { fnCreate, fnUpdate } from '@/candidate_profile/education/education.controller';
+import { fnCreate, fnUpdate, fnBulkCreate } from '@/candidate_profile/education/education.controller';
 
 const router = express.Router();
 
@@ -72,6 +72,54 @@ router.get(
  *         description: Validation error
  */
 router.post('/create', fnCreate);
+
+/**
+ * @swagger
+ * /api/v1/education/bulk:
+ *   post:
+ *     tags: [Education]
+ *     summary: Create multiple education entries in one request (best-effort per item)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               items:
+ *                 type: array
+ *                 maxItems: 100
+ *                 items:
+ *                   $ref: '#/components/schemas/Education'
+ *     responses:
+ *       201:
+ *         description: Per-item results, each with its own success/message/data or errors, plus a summary
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         results:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         summary:
+ *                           type: object
+ *                           properties:
+ *                             total: { type: integer }
+ *                             succeeded: { type: integer }
+ *                             failed: { type: integer }
+ *       400:
+ *         description: No items provided, or more than 100 items in one request
+ */
+router.post('/bulk', fnBulkCreate);
 
 /**
  * @swagger
