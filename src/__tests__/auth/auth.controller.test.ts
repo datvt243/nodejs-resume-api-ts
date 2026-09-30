@@ -95,6 +95,27 @@ describe('auth.controller', () => {
         errors: ['Invalid email'],
       });
     });
+
+    // issue #159 — the fallback message (`message || t('auth.registerSuccess', lang)`)
+    // resolves through the real, unmocked `t()` and must respect req.lang.
+    it('localizes the fallback success message to English when req.lang is en', async () => {
+      const req: any = mockRequest({ email: 'test@example.com', password: 'pass123', repassword: 'pass123' });
+      req.lang = 'en';
+      const res = mockResponse();
+
+      (validateSchema.validateSchema as jest.Mock).mockReturnValue({
+        isValidated: true,
+        value: { email: 'test@example.com', password: 'pass123' },
+      });
+      (handlerRegister as jest.Mock).mockResolvedValue({ success: true, message: undefined });
+
+      await authRegister(req, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ message: 'Registration successful' }),
+      );
+    });
   });
 
   describe('authLogin', () => {
@@ -139,6 +160,27 @@ describe('auth.controller', () => {
           statusCode: StatusCodes.UNAUTHORIZED,
           success: false,
         }),
+      );
+    });
+
+    // issue #159 — same fallback-through-t() proof as authRegister, for the
+    // `_result?.message || t('auth.loginFailed', lang)` branch.
+    it('localizes the fallback failure message to English when req.lang is en', async () => {
+      const req: any = mockRequest({ email: 'test@example.com', password: 'wrong' });
+      req.lang = 'en';
+      const res = mockResponse();
+
+      (validateSchema.validateSchema as jest.Mock).mockReturnValue({
+        isValidated: true,
+        value: { email: 'test@example.com', password: 'wrong' },
+      });
+      (handlerLogin as jest.Mock).mockResolvedValue({ success: false, message: undefined });
+
+      await authLogin(req, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ success: false, message: 'Login failed' }),
       );
     });
   });
@@ -201,6 +243,35 @@ describe('auth.controller', () => {
         }),
       );
     });
+
+    // issue #159 — both error branches call t() directly (not via a
+    // `|| t(...)` fallback), so this proves req.lang drives them too.
+    it('localizes the no-refresh-token and revoked-token messages to English when req.lang is en', async () => {
+      const req: any = mockRequest({}, {});
+      req.lang = 'en';
+      const res = mockResponse();
+
+      (helperAuth.extractTokenFromRequest as jest.Mock).mockReturnValue(null);
+
+      await authRefreshToken(req, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ message: 'No refresh token provided' }),
+      );
+
+      jest.clearAllMocks();
+      (sessionRevocation.getSessionsInvalidatedAt as jest.Mock).mockResolvedValue(null);
+      (helperAuth.extractTokenFromRequest as jest.Mock).mockReturnValue('blacklisted_token');
+      (tokenBlacklist.isBlacklisted as jest.Mock).mockResolvedValue(true);
+
+      await authRefreshToken(req, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ message: 'Refresh token revoked' }),
+      );
+    });
   });
 
   describe('authLogout', () => {
@@ -241,6 +312,35 @@ describe('auth.controller', () => {
         }),
       );
     });
+
+    // issue #159 — proves both the error and success paths localize.
+    it('localizes the no-token and success messages to English when req.lang is en', async () => {
+      const req: any = mockRequest({}, { authorization: 'Bearer access_token' });
+      req.lang = 'en';
+      const res = mockResponse();
+
+      (helperAuth.extractTokenFromRequest as jest.Mock).mockReturnValue('access_token');
+      (tokenBlacklist.addToBlacklist as jest.Mock).mockResolvedValue(undefined);
+
+      await authLogout(req, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ success: true, message: 'Logged out successfully' }),
+      );
+
+      jest.clearAllMocks();
+      const reqNoToken: any = mockRequest();
+      reqNoToken.lang = 'en';
+      (helperAuth.extractTokenFromRequest as jest.Mock).mockReturnValue(null);
+
+      await authLogout(reqNoToken, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ message: 'No token provided to logout' }),
+      );
+    });
   });
 
   describe('authLogoutAll', () => {
@@ -262,6 +362,23 @@ describe('auth.controller', () => {
           success: true,
           message: 'Đã đăng xuất khỏi tất cả thiết bị',
         }),
+      );
+    });
+
+    // issue #159
+    it('localizes the success message to English when req.lang is en', async () => {
+      const req: any = mockRequest();
+      req.lang = 'en';
+      req.user = { _id: 'user_id' };
+      const res = mockResponse();
+
+      (sessionRevocation.invalidateAllSessions as jest.Mock).mockResolvedValue(true);
+
+      await authLogoutAll(req, res, mockNext);
+
+      expect(formatReturn.formatReturn).toHaveBeenCalledWith(
+        res,
+        expect.objectContaining({ success: true, message: 'Logged out of all devices successfully' }),
       );
     });
 
