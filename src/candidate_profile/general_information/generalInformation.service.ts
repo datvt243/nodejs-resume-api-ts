@@ -15,7 +15,7 @@ const NAME = 'Thông tin chung';
 
 export const { handlerGet, handlerUpdate, handlerDelete } = createCrudService({ model: MODEL, name: NAME });
 
-export const handlerCreate = async (document: Record<string, any>, lang: string = DEFAULT_LANG) => {
+export const handlerCreate = async (document: Record<string, unknown>, lang: string = DEFAULT_LANG) => {
   /**
    * @return
    *  success: boolean,
@@ -29,10 +29,11 @@ export const handlerCreate = async (document: Record<string, any>, lang: string 
    * check candidate has any document,
    *  - is has: don't save
    */
+  const candidateId = typeof document?.candidateId === 'string' ? document.candidateId : undefined;
   const { success, data } = await withDBTimeout(
     baseFindDocument({
       model: MODEL,
-      fields: { candidateId: document?.candidateId },
+      fields: { candidateId },
     }),
   );
   if (success && !!data) {
@@ -53,22 +54,23 @@ export const handlerCreate = async (document: Record<string, any>, lang: string 
         name: NAME,
         lang,
         hookAfterSave: async (doc) => {
+          const savedCandidateId = typeof doc.candidateId === 'string' ? doc.candidateId : undefined;
           const { success, data: find } = await withDBTimeout(
             baseFindDocument({
               model: MODEL,
-              fields: { candidateId: doc.candidateId },
+              fields: { candidateId: savedCandidateId },
               findOne: false,
             }),
           );
           return success ? find : undefined;
         },
-        hookHasErrors: ({ err }) => {
+        hookHasErrors: () => {
           //
         },
       }),
     );
-  } catch (error: any) {
-    return { success: false, message: t('common.createFailed', lang), error: error.message };
+  } catch (error: unknown) {
+    return { success: false, message: t('common.createFailed', lang), error: error instanceof Error ? error.message : String(error) };
   }
 };
 

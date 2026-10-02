@@ -3,12 +3,40 @@
  * Date: `--/--`
  * Description:
  */
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import type { BaseReturn } from '@/types/base.type';
 import { getSelectFields } from '@/utils/helper';
 import { t, DEFAULT_LANG } from '@/utils/i18n';
-interface baseProp {
-  model: any;
+
+/**
+ * The minimal raw-document shape every CV-section model shares, at the
+ * level this generic CRUD core actually touches it (ownership check via
+ * `candidateId`, soft-delete via `deletedAt`). Deliberately NOT extending
+ * Mongoose's `Document` — `Model<T>`'s `T` type parameter is the RAW
+ * schema-inferred shape (before the `Document` instance-method wrapper
+ * Mongoose adds), so constraining `T` to `extends Document` would reject
+ * every real model (none of their raw inferred types carry `$`-prefixed
+ * Document instance methods themselves). Each `base*Document` function
+ * below is generic over `T`, inferred per call site from whichever
+ * concrete model is passed in — `Education`/`Experience`/etc. are NOT
+ * individually typed yet (`mongoose.model(name, schema)` infers a real
+ * per-field shape automatically, but that's still just a plain object
+ * shape, not a shared interface), so this only requires each real model
+ * to structurally satisfy these 2 optional fields, which all 9 already do.
+ */
+export interface CrudDocument {
+  candidateId?: Types.ObjectId | string;
+  deletedAt?: number | null;
+  // Only 3 of the 9 CV sections (Project/Certificate/Award) actually carry
+  // an `images` array, but `BaseController.ts`'s `baseUploadImages` is the
+  // one generic handler that touches it across whichever section the route
+  // wires it to — same shared-optional-field shape as `candidateId`/
+  // `deletedAt` above, not a claim every section has images.
+  images?: string[];
+}
+
+interface baseProp<T extends CrudDocument> {
+  model: Model<T>;
   fields: { _id?: string; candidateId?: string };
   findOne?: boolean;
   lang?: string;
@@ -43,7 +71,7 @@ export const formatReturnFailed = (props: string | BaseReturn) => {
   };
 };
 
-export const baseFindDocument = async (props: baseProp) => {
+export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T>) => {
   const { model: MODEL, fields = { _id: '' }, findOne = true, lang = DEFAULT_LANG, page, limit, sort } = props;
 
   if (!MODEL || !fields || !Object.keys(fields).length) return formatReturnFailed(t('common.notFoundData', lang));
@@ -98,7 +126,7 @@ export const baseFindDocument = async (props: baseProp) => {
   });
 };
 
-export const baseDeleteDocument = async (props: { model: any; _id: string; name: string; userID: string; lang?: string }) => {
+export const baseDeleteDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
   /**
@@ -137,7 +165,7 @@ export const baseDeleteDocument = async (props: { model: any; _id: string; name:
   });
 };
 
-export const baseRestoreDocument = async (props: { model: any; _id: string; name: string; userID: string; lang?: string }) => {
+export const baseRestoreDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
   /**
@@ -174,12 +202,12 @@ export const baseRestoreDocument = async (props: { model: any; _id: string; name
   });
 };
 
-export const baseUpdateDocument = async (props: {
-  document: Record<string, any>;
-  model: any;
+export const baseUpdateDocument = async <T extends CrudDocument>(props: {
+  document: Record<string, unknown> & { _id?: string };
+  model: Model<T>;
   userID?: string;
   lang?: string;
-  hookHasErrors?: (props: any) => void;
+  hookHasErrors?: (props: { err: unknown }) => void;
 }) => {
   /**
    * get values
@@ -253,13 +281,13 @@ export const baseUpdateDocument = async (props: {
   }
 };
 
-export const baseCreateDocument = async (props: {
-  document: Record<string, any>;
-  model: any;
+export const baseCreateDocument = async <T extends CrudDocument>(props: {
+  document: Record<string, unknown>;
+  model: Model<T>;
   name: string;
   lang?: string;
-  hookHasErrors?: (p: any) => Promise<void> | void;
-  hookAfterSave?: (document: any, prop: BaseReturn) => Promise<any> | any;
+  hookHasErrors?: (p: { err: unknown }) => Promise<void> | void;
+  hookAfterSave?: (document: Record<string, unknown>, prop: BaseReturn) => Promise<unknown> | unknown;
 }) => {
   const { document, model: MODEL, lang = DEFAULT_LANG } = props;
 
@@ -319,7 +347,11 @@ export const baseCreateDocument = async (props: {
   }
 };
 
-export const basePatchDocument = async (props: { document: Record<string, any>; model: any; lang?: string }) => {
+export const basePatchDocument = async <T extends CrudDocument>(props: {
+  document: Record<string, unknown> & { _id?: string };
+  model: Model<T>;
+  lang?: string;
+}) => {
   /**
    * get value
    */
@@ -363,7 +395,7 @@ export const basePatchDocument = async (props: { document: Record<string, any>; 
 
 const _baseHelper = () => {
   return {
-    getDocumentUpdated: async (_id: string, props: { model: any; select: string }) => {
+    getDocumentUpdated: async <T extends CrudDocument>(_id: string | undefined, props: { model: Model<T>; select: string }) => {
       const { model: MODEL, select = '' } = props;
       const find = MODEL.findById(_id);
       /* if (select) {
@@ -372,7 +404,7 @@ const _baseHelper = () => {
       const record = await find.exec();
       return record;
     },
-    modelValidate: async (model: any, value: any) => {
+    modelValidate: async <T extends CrudDocument>(model: Model<T>, value: Record<string, unknown>) => {
       let message = '',
         success = true;
       let errors: null | string[] = null;
@@ -383,7 +415,7 @@ const _baseHelper = () => {
         const errs = [];
         if (err instanceof mongoose.Error.ValidationError) {
           const { errors: _errs } = err;
-          for (const [k, v] of Object.entries(_errs)) {
+          for (const k of Object.keys(_errs)) {
             errs.push(k);
           }
         }
@@ -394,7 +426,7 @@ const _baseHelper = () => {
       }
       return { success, message, errors };
     },
-    handlerCatchError: (error: any) => {
+    handlerCatchError: (error: unknown) => {
       if (error instanceof ReferenceError) {
         return {
           message: 'ReferenceError',
@@ -407,17 +439,23 @@ const _baseHelper = () => {
         errors: {},
       };
     },
-    baseCheckDocumentById: async (
-      MODEL: any,
-      _id: string,
+    baseCheckDocumentById: async <T extends CrudDocument>(
+      MODEL: Model<T>,
+      _id: string | undefined,
       lang: string = DEFAULT_LANG,
       opts: { excludeDeleted?: boolean } = {},
     ) => {
-      let message = t('common.idNotFound', lang);
+      const message = t('common.idNotFound', lang);
 
-      if (!_id) return { isExist: false, message };
+      // A real discriminated union (literal `true`/`false` on `isExist`)
+      // instead of a shared `{isExist: boolean; document: T | null}` shape —
+      // callers' `if (!isExist) return ...;` guard now actually narrows
+      // `document` to non-null afterward. Before this generic pass, `MODEL`
+      // (and therefore `document`) was `any`, which silently hid that every
+      // caller was accessing `.candidateId`/`._id` on a value TS could not
+      // prove was non-null.
+      if (!_id) return { isExist: false as const, message, document: null };
 
-      let isExist = true;
       const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
       // Soft-delete (issue #121) excludes deletedAt-set docs from reads by
       // default (baseFindDocument), but this shared existence check was
@@ -427,13 +465,9 @@ const _baseHelper = () => {
       // document regardless of its deletedAt state.
       const baseQuery = opts.excludeDeleted ? { deletedAt: null } : {};
       const _find = await MODEL.findOne(idQuerySafe.safeQuery(baseQuery, { _id })).exec();
-      if (!_find) {
-        isExist = false;
-      } else {
-        isExist = true;
-        message = '';
-      }
-      return { isExist, message, document: _find };
+      if (!_find) return { isExist: false as const, message, document: null };
+
+      return { isExist: true as const, message: '', document: _find };
     },
   };
 };

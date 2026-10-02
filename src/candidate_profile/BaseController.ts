@@ -3,16 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import { Schema } from 'joi';
 import multer from 'multer';
 
+import type { Model } from 'mongoose';
 import { formatReturn, handleError, validateSchema } from '@/utils/index';
-import { baseDeleteDocument, baseFindDocument, baseRestoreDocument } from '@/services';
+import { baseDeleteDocument, baseFindDocument, baseRestoreDocument, CrudDocument } from '@/services';
 import * as MODELS from '@/models';
 import { t } from '@/utils/i18n';
 import { uploadImagesMiddleware } from '@/middlewares/uploadImages.middleware';
-interface baseProp {
-  model: any;
-  fields: { _id?: string; candidateId?: string };
-  findOne?: boolean;
-}
 
 // Field name used to sort by — no `$`, so this can't smuggle a Mongo
 // operator into `.sort()`, and it can only ever reorder rows, never widen
@@ -23,16 +19,34 @@ const SORT_FIELD_REGEX = /^-?[a-zA-Z0-9_.]+$/;
 // than this many entries regardless of what the client sends.
 const MAX_BULK_ITEMS = 100;
 
-const modelObject: { [key: string]: any } = {
-  generalInformation: MODELS.generalInformation,
-  experiences: MODELS.Experience,
-  educations: MODELS.Education,
-  references: MODELS.Reference,
-  projects: MODELS.Project,
-  certificates: MODELS.Certificate,
-  awards: MODELS.Award,
-  applications: MODELS.Application,
-  profiles: MODELS.Profile,
+// Dynamic lookup across all 9 CV-section models (keyed by the
+// `:collection` route param), accessed with a request-supplied string key
+// — this requires an index signature, and the only type every one of the
+// 9 differently-shaped concrete models can structurally satisfy there is
+// `CrudDocument` (see `services/index.ts`'s doc comment). Mongoose's
+// `Model<T>` is invariant in a way plain structural subtyping doesn't
+// reach, though: assigning a concrete `Model<ConcreteDoc>` directly into a
+// `Model<CrudDocument>`-typed slot fails (confirmed — tried it, `tsc`
+// reports real mismatches on fields like `schema.obj.candidateId`'s exact
+// inferred shape). A `Model<T>` genuinely needs `T` inferred fresh by a
+// generic function call, not assigned to a fixed variable type. Each cast
+// below is the one unavoidable, narrow exception that pattern has for a
+// dynamic per-collection lookup table — every USE of `modelObject[x]`
+// downstream (baseGetAll, baseDelete, ...) stays fully typed with zero
+// further casts, since it's passed straight into the generic
+// `base*Document` functions, which re-infer `T` themselves. Would go away
+// entirely if each model file exported its own document interface (a
+// bigger, separate follow-up — not required by this node's scope).
+const modelObject: { [key: string]: Model<CrudDocument> } = {
+  generalInformation: MODELS.generalInformation as unknown as Model<CrudDocument>,
+  experiences: MODELS.Experience as unknown as Model<CrudDocument>,
+  educations: MODELS.Education as unknown as Model<CrudDocument>,
+  references: MODELS.Reference as unknown as Model<CrudDocument>,
+  projects: MODELS.Project as unknown as Model<CrudDocument>,
+  certificates: MODELS.Certificate as unknown as Model<CrudDocument>,
+  awards: MODELS.Award as unknown as Model<CrudDocument>,
+  applications: MODELS.Application as unknown as Model<CrudDocument>,
+  profiles: MODELS.Profile as unknown as Model<CrudDocument>,
 };
 
 export const baseGetAll = async (req: Request, res: Response, next: NextFunction) => {
@@ -172,8 +186,8 @@ export const baseUploadImages = async (req: Request, res: Response, next: NextFu
 export const createCrudController = (props: {
   schema: Schema;
   service: {
-    handlerCreate: (item: Record<string, any>, lang?: string) => Promise<any>;
-    handlerUpdate: (item: Record<string, any>, userID?: string, lang?: string) => Promise<any>;
+    handlerCreate: (item: Record<string, unknown>, lang?: string) => Promise<{ success: boolean; [key: string]: unknown }>;
+    handlerUpdate: (item: Record<string, unknown>, userID?: string, lang?: string) => Promise<{ success: boolean; [key: string]: unknown }>;
   };
   booleanDefaultField?: string;
 }) => {
@@ -224,7 +238,7 @@ export const createCrudController = (props: {
     }
 
     try {
-      const results: Array<{ index: number; success: boolean; [key: string]: any }> = [];
+      const results: Array<{ index: number; success: boolean; [key: string]: unknown }> = [];
 
       for (let index = 0; index < items.length; index++) {
         const { isValidated, value = {}, errors, message } = validateSchema({

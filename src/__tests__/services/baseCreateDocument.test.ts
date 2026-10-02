@@ -9,13 +9,17 @@
  * value (`replacement`) as the new `_data` when it isn't undefined. Uses a
  * fake Mongoose-shaped model, same style as baseFindDocument.test.ts.
  */
-import { baseCreateDocument } from '@/services';
+import type { Model } from 'mongoose';
+import { baseCreateDocument, CrudDocument } from '@/services';
 
+// baseCreateDocument is generic over a real `Model<T>` (issue #181) — this
+// fake only implements the 2 methods it actually calls, so it's cast
+// through `unknown` (relaxed test policy, tracking issue #177).
 function createFakeModel(createdDoc: Record<string, any>) {
   return {
     validate: jest.fn().mockResolvedValue(undefined),
     create: jest.fn().mockResolvedValue(createdDoc),
-  };
+  } as unknown as Model<CrudDocument>;
 }
 
 describe('baseCreateDocument hookAfterSave propagation (issue #157)', () => {
