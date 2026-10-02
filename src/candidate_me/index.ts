@@ -45,7 +45,7 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
     // self-export path (fnExportPDF) calls handlerGetAboutMe directly
     // and is unaffected — a candidate can always see/export their own
     // data regardless of this flag.
-    if (_me.success && (_me.data as any)?.isPublic === false) {
+    if (_me.success && _me.data?.isPublic === false) {
       return formatReturn(res, formatReturnFailed('Email không tồn tại'));
     }
     return formatReturn(res, _me);

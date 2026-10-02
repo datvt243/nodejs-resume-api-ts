@@ -28,7 +28,7 @@ const _cleanup = setInterval(() => {
   }
 }, 60 * 1000);
 // do not keep node process alive for tests
-if (typeof (_cleanup as any).unref === 'function') (_cleanup as any).unref();
+_cleanup.unref();
 
 /**
  * Generate a single-use reset token for a candidate and store it
