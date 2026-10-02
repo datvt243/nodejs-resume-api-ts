@@ -30,7 +30,7 @@ const _cleanup = setInterval(() => {
     if (entry.expiresAt <= now) memoryStore.delete(token);
   }
 }, 60 * 1000);
-if (typeof (_cleanup as any).unref === 'function') (_cleanup as any).unref();
+_cleanup.unref();
 
 /**
  * Generate a single-use email-verification token for a candidate and

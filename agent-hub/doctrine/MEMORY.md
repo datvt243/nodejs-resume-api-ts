@@ -51,3 +51,70 @@ Never skip step 1 on a cold session, never skip step 3.
 - Monotonic ratchet: PENDING → IN_PROGRESS → SEALED, never demoted.
 - Verifier owns PM status; implementer never sets it.
 - `dist/` is build output, always gitignored, never hand-edited.
+
+## Multi-phase / multi-branch sessions — branch isolation
+[added 2026-10-01, after a real `ADHOC_WORK` REOPEN caused by this exact
+mistake on node `remove-req-as-any-casts`, GitHub issue #179]
+
+When a single session runs several `/todo`-style phases back-to-back
+(e.g. a tracking issue with N sub-issue phases), each phase gets its own
+branch, but they all share ONE working directory — there is no isolated
+worktree available (see the sandbox gotcha below), so switching branches
+mid-session is a real hazard:
+
+- **`git checkout <other-branch>` with uncommitted changes silently
+  carries those changes along** if the target branch's tracked files
+  don't conflict. This is the normal, correct git behavior — but it means
+  a diagram-node addition (or anything else) made while on `staging`
+  BEFORE branching into phase N's branch will ride along onto whichever
+  branch happens to be checked out next, not necessarily phase N's.
+- **`git stash` before switching branches is the fix** — but the same
+  hazard reappears if a stash is popped/left implicitly: always
+  `git stash push -u -m "<phase>-sealed-pending-ship"` (with a message
+  naming the phase) right after a phase is SEALED, before checking out
+  the next phase's branch fresh from `staging`. Never pop a stash "to
+  save time" onto a different branch than the one it was made on.
+- **Add each phase's own diagram PENDING node ON that phase's own
+  branch, immediately before implementing it — never batch-add several
+  phases' nodes while sitting on `staging`/a shared checkout.** A batch
+  addition done once, before branching per-phase, WILL get stashed away
+  with whichever phase happens to be isolated first, silently stranding
+  the node off every other phase's branch — exactly what happened here:
+  12 backlog nodes were added on `staging`, carried onto phase 1's branch
+  by the first `gh issue develop --checkout`, then `git stash`ed together
+  with phase 1's other changes when isolating phase 2 — phase 2's branch
+  was checked out fresh from `staging` and never saw any of the 12 rows,
+  including its own. The verifier caught it as `ADHOC_WORK` (correctly —
+  the mechanism worked as designed), but re-verification cost a full
+  extra round-trip. Adding the node fresh, per-phase, right before that
+  phase's own implementation work, makes this class of mistake
+  structurally impossible instead of relying on remembering to check.
+
+## Sandbox/tooling gotchas (this machine)
+[added 2026-10-01]
+
+- **`git worktree add <path>` OUTSIDE the primary working directory
+  fails silently on writes** — the Bash tool's sandbox scopes file writes
+  to the primary working directory tree; a worktree created as a sibling
+  directory (e.g. `../wt/<branch>`) will let `git worktree add` itself
+  succeed, but every subsequent `sed -i`/file-write into that worktree
+  fails with a confusing generic error (looked like a `sed` quoting bug,
+  wasn't). If real isolation between concurrent branches is needed within
+  one session, use `git stash` + branch switching in the primary working
+  directory instead (see above) — don't reach for `git worktree add` to a
+  sibling path.
+- **BSD/macOS `sed` (Darwin, this machine) does NOT support `\b` word
+  boundaries** — a pattern like `s/(req as any)\.t\b/req.t/g` silently
+  matches nothing (no error, just a no-op) instead of erroring or
+  matching. Use an explicit trailing character/space instead of `\b`
+  (e.g. `s/(req as any)\.t /req.t /g`), and always re-grep after a sed
+  pass to confirm zero remaining matches rather than trusting exit code 0
+  (BSD `sed` exits 0 even when a pattern matched nothing).
+- **A shell `for f in $files; do sed -i '' ... "$f"; done` loop failed**
+  in this Bash tool with a garbled "No such file" error naming the WHOLE
+  space-joined file list as one filename, even though `$files` was a
+  normal space-separated string and single-file `sed` calls worked fine
+  in isolation. Root cause not fully diagnosed (didn't reproduce outside
+  the loop) — the reliable workaround is one `sed` invocation per file as
+  a separate tool call, not a shell loop, when doing a mechanical
+  multi-file find/replace in this environment.

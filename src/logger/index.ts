@@ -3,8 +3,14 @@ import { Request } from 'express';
 
 export * from './winston';
 
+type LogLevel = 'info' | 'warn' | 'error';
+type LogEntry = { text?: unknown; type?: string; [key: string]: unknown };
+type LogPayload = string | unknown[] | LogEntry;
+
+const resolveLevel = (type: unknown): LogLevel => (type === 'error' ? 'error' : type === 'warn' || type === 'table' ? 'warn' : 'info');
+
 // Backward compatibility with existing _log calls
-export const _log = (props: any) => {
+export const _log = (props: LogPayload) => {
   if (!props) return;
 
   if (typeof props === 'string') {
@@ -12,14 +18,15 @@ export const _log = (props: any) => {
   }
 
   if (Array.isArray(props)) {
-    props.forEach((item) => logger.info(item));
+    props.forEach((item) => logger.info(typeof item === 'string' ? item : JSON.stringify(item)));
     return;
   }
 
-  const { text = '', type = 'info' } = typeof props === 'object' ? props : { text: props };
-  const level = ['warn', 'error', 'table'].includes(type) ? (type as 'warn' | 'error') : 'info';
+  const { text = '', type = 'info' } = props;
+  const level = resolveLevel(type);
+  const message = typeof text === 'string' ? text : JSON.stringify(text);
 
-  (logger as any)[level](text);
+  logger[level](message);
 };
 
 // Error logging helper
@@ -28,7 +35,7 @@ export const logCatchError = (err: Error) => {
 };
 
 // Request helper (adds req context)
-export const logRequest = (req: Request, message: string, extra: Record<string, any> = {}) => {
+export const logRequest = (req: Request, message: string, extra: Record<string, unknown> = {}) => {
   logger.info(message, {
     method: req.method,
     url: req.originalUrl,

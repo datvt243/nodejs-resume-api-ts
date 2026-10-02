@@ -26,7 +26,13 @@ export const fnGet = async (req: Request, res: Response, next: NextFunction) => 
     }
 
     // information trả về 1 object or null
-    const rawData = (_resultRaw as any).data;
+    // `_resultRaw`'s inferred type isn't a true discriminated union (neither
+    // branch's `success` is a literal type), so the `!_resultRaw.success`
+    // guard above doesn't narrow away `handlerGet`'s error-path shape (which
+    // has no `data` field at all) — see `fix-utils-real-any-casts`/#180's
+    // evidence note. Narrowing properly here instead of casting; a full fix
+    // belongs to `type-crud-core`/#181 (BaseService.ts's return shapes).
+    const rawData = 'data' in _resultRaw ? _resultRaw.data : undefined;
     const data = Array.isArray(rawData) ? (rawData.length ? rawData[0] : {}) : rawData;
 
     return formatReturn(res, {
