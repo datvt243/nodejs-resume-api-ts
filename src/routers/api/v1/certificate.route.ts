@@ -124,7 +124,7 @@ router.put('/update', fnUpdate);
 router.delete(
   '/delete/:id',
   (req: Request, res: Response, next: NextFunction) => {
-    req.params.collection = Collections.CERTIFICATE;
+    req.params['collection'] = Collections.CERTIFICATE;
     next();
   },
   baseDelete,
@@ -155,7 +155,7 @@ router.delete(
 router.post(
   '/restore/:id',
   (req: Request, res: Response, next: NextFunction) => {
-    req.params.collection = Collections.CERTIFICATE;
+    req.params['collection'] = Collections.CERTIFICATE;
     next();
   },
   baseRestore,
@@ -204,7 +204,7 @@ router.post(
 router.post(
   '/:id/images',
   (req: Request, res: Response, next: NextFunction) => {
-    req.params.collection = Collections.CERTIFICATE;
+    req.params['collection'] = Collections.CERTIFICATE;
     next();
   },
   baseUploadImages,

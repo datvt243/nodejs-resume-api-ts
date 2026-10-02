@@ -23,18 +23,18 @@ const resolveLocalizedText = (value: unknown, lang: string): string => {
   if (typeof value === 'string') return value; // defensive: pre-migration data shape
   if (!value || typeof value !== 'object') return '';
   const localized = value as Record<string, unknown>;
-  const resolved = localized[lang] ?? localized.vi ?? localized.en ?? '';
+  const resolved = localized[lang] ?? localized['vi'] ?? localized['en'] ?? '';
   return typeof resolved === 'string' ? resolved : '';
 };
 
 export const fnGetAboutMe = async (req: Request, res: Response, next: NextFunction) => {
   const { email } = req.params;
-  const lang = req.query.lang === 'en' ? 'en' : 'vi';
+  const lang = req.query['lang'] === 'en' ? 'en' : 'vi';
   // Optional CV profile filter (issue #133) — a named subset of the
   // candidate's own Education/Experience/Project/Certificate/Award/
   // Reference entries. Omitted -> unchanged behavior (everything), so
   // existing share-links keep working.
-  const profileId = typeof req.query.profile === 'string' ? req.query.profile : undefined;
+  const profileId = typeof req.query['profile'] === 'string' ? req.query['profile'] : undefined;
   if (!email) {
     res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Không tìm thấy Email'));
     return;
@@ -183,7 +183,7 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
   for (const key of ['educations', 'experiences', 'awards', 'certificates', 'projects']) {
     dataResult[key] = (dataResult[key] || []).map((item: Record<string, unknown>) => ({
       ...item,
-      description: resolveLocalizedText(item.description, lang),
+      description: resolveLocalizedText(item['description'], lang),
     }));
   }
   if (dataResult.generalInformation && Object.keys(dataResult.generalInformation).length) {
@@ -274,7 +274,7 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
   }
 
   try {
-    const lang = req.query.lang === 'en' ? 'en' : 'vi';
+    const lang = req.query['lang'] === 'en' ? 'en' : 'vi';
     const { success, message, data } = await handlerGetAboutMe(email, lang);
     if (!success) {
       res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Lấy thông tin ứng viên thất bại'));
@@ -283,14 +283,14 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
 
     // ?format=json reuses the same aggregated data already assembled for
     // the PDF path — no new dependency, no new data-fetch (issue #76).
-    if (req.query.format === 'json') {
+    if (req.query['format'] === 'json') {
       formatReturn(res, { success, message, data });
       return;
     }
 
     // ?format=docx (issue #76, remainder) — same aggregated data, packed
     // as a .docx instead of rendered to PDF.
-    if (req.query.format === 'docx') {
+    if (req.query['format'] === 'docx') {
       await createCVDocx(data, res);
       return;
     }

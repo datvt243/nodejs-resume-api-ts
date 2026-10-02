@@ -31,7 +31,7 @@ export const createCrudService = <T extends CrudDocument>(props: { model: Model<
           name,
           lang,
           hookAfterSave: async (doc) => {
-            const candidateId = typeof doc.candidateId === 'string' ? doc.candidateId : undefined;
+            const candidateId = typeof doc['candidateId'] === 'string' ? doc['candidateId'] : undefined;
             const { success, data: find } = await withDBTimeout(
               baseFindDocument({
                 model: MODEL,

@@ -132,7 +132,7 @@ router.put('/update', fnUpdate);
 router.delete(
   '/delete/:id',
   (req: Request, res: Response, next: NextFunction) => {
-    req.params.collection = Collections.PROFILE;
+    req.params['collection'] = Collections.PROFILE;
     next();
   },
   baseDelete,
@@ -163,7 +163,7 @@ router.delete(
 router.post(
   '/restore/:id',
   (req: Request, res: Response, next: NextFunction) => {
-    req.params.collection = Collections.PROFILE;
+    req.params['collection'] = Collections.PROFILE;
     next();
   },
   baseRestore,

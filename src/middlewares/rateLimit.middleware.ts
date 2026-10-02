@@ -10,8 +10,8 @@ type RateLimitOptions = {
 
 import { logger } from '@/logger';
 
-const DEFAULT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10); // 15 minutes
-const DEFAULT_MAX = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
+const DEFAULT_WINDOW = parseInt(process.env['RATE_LIMIT_WINDOW_MS'] || '900000', 10); // 15 minutes
+const DEFAULT_MAX = parseInt(process.env['RATE_LIMIT_MAX'] || '100', 10);
 
 type MemEntry = { count: number; reset: number };
 const memStore: Map<string, MemEntry> = new Map();

@@ -26,7 +26,7 @@ function createFakeEducationModel() {
       return saved;
     }),
     find: jest.fn((query: Record<string, any>) => ({
-      exec: jest.fn().mockResolvedValue(docs.filter((d) => d.candidateId === query.candidateId)),
+      exec: jest.fn().mockResolvedValue(docs.filter((d) => d['candidateId'] === query['candidateId'])),
     })),
   };
 }
