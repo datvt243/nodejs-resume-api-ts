@@ -4,7 +4,20 @@ import puppeteer from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
 import { Response } from 'express';
-import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
+import {
+  informationPersonal,
+  Skill,
+  Item,
+  Language,
+  Reference,
+  Certificate,
+  Award,
+  AggregatedCandidateData,
+  GeneralInformationData,
+  EducationData,
+  ExperienceData,
+  ProjectData,
+} from '@/types/candidate.type';
 
 // Anchored to __dirname, not a bare relative literal — resolves to
 // `src/public/pdf/` when running from source (ts-node, __dirname is
@@ -18,7 +31,7 @@ import { informationPersonal, Skill, Item, Language, Reference, Certificate, Awa
 // a compiled deploy).
 const PDF_OUTPUT_DIR = path.join(__dirname, '..', 'public', 'pdf');
 
-export const createCV = async (data: Record<string, any>, res: Response) => {
+export const createCV = async (data: AggregatedCandidateData, res: Response) => {
   try {
     if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
     const URL = `${PDF_OUTPUT_DIR}${path.sep}`;
@@ -81,7 +94,7 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
   }
 };
 
-export const pageRender = (RECORD: Record<string, any>) => {
+export const pageRender = (RECORD: AggregatedCandidateData) => {
   /**
    * get data format
    */
@@ -126,10 +139,10 @@ export const pageRender = (RECORD: Record<string, any>) => {
  * @param {*} RECORD
  * @returns
  */
-const getDataCandidate = (RECORD: Record<string, any>) => {
+const getDataCandidate = (RECORD: AggregatedCandidateData) => {
   // Thông tin cơ bản
   const candidate = (() => {
-    const { firstName, lastName, phone, email, address, introduction, socialMedia = {} } = RECORD;
+    const { firstName = '', lastName = '', phone = '', email = '', address = '', introduction = '', socialMedia = {} } = RECORD;
     const { github = '', linkedin = '', website = '' } = socialMedia;
     return {
       firstName,
@@ -145,13 +158,13 @@ const getDataCandidate = (RECORD: Record<string, any>) => {
   })();
 
   // Thông tin công việc
-  const generalInformation = ((el) => {
+  const generalInformation: GeneralInformationData = ((el) => {
     if (!el) return {};
     return Array.isArray(el) ? el?.[0] || {} : el;
   })(RECORD?.generalInformation || null);
 
   // ---
-  const { educations, experiences, projects, references = [], certificates = [], awards = [] } = RECORD;
+  const { educations = [], experiences = [], projects = [], references = [], certificates = [], awards = [] } = RECORD;
 
   return {
     candidate,
@@ -262,11 +275,7 @@ const _helper = () => {
 
       return _boxContent('Định hướng nghề nghiệp', _result);
     },
-    renderSkills: function (generalInformation: {
-      personalSkills: Skill[];
-      professionalSkills: Skill[];
-      professionalSkillsGroup: string[];
-    }) {
+    renderSkills: function (generalInformation: GeneralInformationData) {
       function getContent(title = '', skills: Skill[] = []) {
         if (!skills.length) return '';
         return `<li>${title}: ${skills.map((e) => e.name).join(', ')}</li>`;
@@ -305,7 +314,7 @@ const _helper = () => {
                 </ul>`,
       );
     },
-    renderEducation: function (list = []) {
+    renderEducation: function (list: EducationData[] = []) {
       if (!list.length) return '';
 
       const _content = list
@@ -317,7 +326,7 @@ const _helper = () => {
 
       return _boxContent('Học vấn', _content);
     },
-    renderExperience: function (list = []) {
+    renderExperience: function (list: ExperienceData[] = []) {
       if (!list.length) return '';
 
       const _content = list
@@ -337,7 +346,7 @@ const _helper = () => {
 
       return _boxContent('Kinh nghiệm làm việc', _content);
     },
-    renderProject: function (list = []) {
+    renderProject: function (list: ProjectData[] = []) {
       if (!list.length) return '';
 
       const _content = list

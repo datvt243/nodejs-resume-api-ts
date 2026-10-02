@@ -32,8 +32,6 @@ export enum Collections {
 /**
  * Global error handling middleware
  * Handles both custom AppError instances and unknown errors
- *
- * Note: asyncHandler is now available in @/utils/helper.ts
  */
 export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Response, next: NextFunction) => {
   // Check if error is a known operational error

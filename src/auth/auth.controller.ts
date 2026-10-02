@@ -5,7 +5,7 @@
  */
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { validateSchema, formatReturn, handleError, throwBadRequestError, setAuthCookies, clearAuthCookies } from '@/utils';
+import { validateSchema, formatReturn, handleError, setAuthCookies, clearAuthCookies } from '@/utils';
 
 import { schemaAuthRegister, schemaAuthLogin, schemaForgotPassword, schemaResetPassword } from './auth.validate';
 import { handlerRegister, handlerLogin, handlerForgotPassword, handlerResetPassword, handlerVerifyEmail } from './auth.service';

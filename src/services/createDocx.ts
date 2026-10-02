@@ -15,6 +15,7 @@
  */
 import { Response } from 'express';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
+import { AggregatedCandidateData, GeneralInformationData, Skill, EducationData, ExperienceData, ProjectData, Award, Certificate, Reference, Language } from '@/types/candidate.type';
 
 export interface DocxSection {
   heading: string;
@@ -49,7 +50,7 @@ const formatRange = (startDate: number, endDate: number | null, isCurrent: boole
  * `createPDF.ts`'s `getDataCandidate`/`pageRender` (the aggregated
  * candidate record `handlerGetAboutMe` produces).
  */
-export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent => {
+export const buildDocxContent = (RECORD: AggregatedCandidateData = {}): DocxContent => {
   const {
     firstName = '',
     lastName = '',
@@ -67,7 +68,9 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
     awards = [],
   } = RECORD;
 
-  const generalInformation = Array.isArray(generalInformationRaw) ? generalInformationRaw[0] || {} : generalInformationRaw || {};
+  const generalInformation: GeneralInformationData = Array.isArray(generalInformationRaw)
+    ? generalInformationRaw[0] || {}
+    : generalInformationRaw || {};
   const { github = '', linkedin = '', website = '' } = socialMedia;
 
   const contactLine = [address, email, phone].filter(Boolean).join(' - ');
@@ -86,8 +89,8 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   const { personalSkills = [], professionalSkills = [] } = generalInformation;
   if (personalSkills.length || professionalSkills.length) {
     const lines: string[] = [];
-    if (professionalSkills.length) lines.push(`Kỹ năng chuyên môn: ${professionalSkills.map((s: any) => s.name).join(', ')}`);
-    if (personalSkills.length) lines.push(`Kỹ năng cá nhân: ${personalSkills.map((s: any) => s.name).join(', ')}`);
+    if (professionalSkills.length) lines.push(`Kỹ năng chuyên môn: ${professionalSkills.map((s: Skill) => s.name).join(', ')}`);
+    if (personalSkills.length) lines.push(`Kỹ năng cá nhân: ${personalSkills.map((s: Skill) => s.name).join(', ')}`);
     sections.push({ heading: 'Kỹ năng', lines });
   }
 
@@ -95,7 +98,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (experiences.length) {
     sections.push({
       heading: 'Kinh nghiệm làm việc',
-      lines: experiences.map((e: any) => {
+      lines: experiences.map((e: ExperienceData) => {
         const range = formatRange(e.startDate, e.endDate, e.isCurrent);
         return `${e.position} — ${e.company} (${range})${e.description ? `: ${e.description}` : ''}`;
       }),
@@ -106,7 +109,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (projects.length) {
     sections.push({
       heading: 'Dự án',
-      lines: projects.map((p: any) => {
+      lines: projects.map((p: ProjectData) => {
         const range = formatRange(p.startDate, p.endDate, p.isWorking);
         return `${p.name} — ${p.position || ''} (${range})${p.description ? `: ${p.description}` : ''}`;
       }),
@@ -117,7 +120,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (educations.length) {
     sections.push({
       heading: 'Học vấn',
-      lines: educations.map((e: any) => {
+      lines: educations.map((e: EducationData) => {
         const range = formatRange(e.startDate, e.endDate, e.isCurrent);
         return `${e.major} — Trường: ${e.school} (${range})${e.description ? `: ${e.description}` : ''}`;
       }),
@@ -128,7 +131,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (awards.length) {
     sections.push({
       heading: 'Giải thưởng',
-      lines: awards.map((a: any) => `${a.name} — Đơn vị: ${a.organization} (${formatDate(a.issueDate)})${a.description ? `: ${a.description}` : ''}`),
+      lines: awards.map((a: Award) => `${a.name} — Đơn vị: ${a.organization} (${formatDate(a.issueDate)})${a.description ? `: ${a.description}` : ''}`),
     });
   }
 
@@ -136,7 +139,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (certificates.length) {
     sections.push({
       heading: 'Chứng chỉ',
-      lines: certificates.map((c: any) => {
+      lines: certificates.map((c: Certificate) => {
         const range = formatRange(c.startDate, c.endDate, c.isNoExpiration);
         return `${c.name} — Nơi cấp: ${c.organization} (${range})${c.description ? `: ${c.description}` : ''}`;
       }),
@@ -148,7 +151,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (foreignLanguages.length) {
     sections.push({
       heading: 'Ngoại ngữ',
-      lines: [foreignLanguages.map((l: any) => `${l.language} (${l.level})`).join(', ')],
+      lines: [foreignLanguages.map((l: Language) => `${l.language} (${l.level})`).join(', ')],
     });
   }
 
@@ -156,7 +159,7 @@ export const buildDocxContent = (RECORD: Record<string, any> = {}): DocxContent 
   if (references.length) {
     sections.push({
       heading: 'Người tham khảo',
-      lines: references.map((r: any) => `${r.fullName} — ${r.position} tại ${r.company} — Tel: ${r.phone}`),
+      lines: references.map((r: Reference) => `${r.fullName} — ${r.position} tại ${r.company} — Tel: ${r.phone}`),
     });
   }
 
@@ -195,7 +198,7 @@ export const renderDocxDocument = (content: DocxContent): Document => {
 };
 
 /** I/O wrapper: builds the content model, renders it, packs to a buffer, sends it. */
-export const createCVDocx = async (data: Record<string, any>, res: Response) => {
+export const createCVDocx = async (data: AggregatedCandidateData, res: Response) => {
   try {
     const content = buildDocxContent(data);
     const doc = renderDocxDocument(content);
