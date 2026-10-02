@@ -20,7 +20,10 @@ export interface Item {
   endDate: number | null;
   isCurrent: boolean;
   description: string;
-  skills?: string[];
+  // `| undefined` (issue #189, `exactOptionalPropertyTypes`): createPDF.ts's
+  // renderExperience/renderProject destructure ExperienceData.skills /
+  // ProjectData.technology (both legitimately optional) straight through.
+  skills?: string[] | undefined;
 }
 
 export interface Skill {

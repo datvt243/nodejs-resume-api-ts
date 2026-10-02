@@ -16,6 +16,7 @@
     "noPropertyAccessFromIndexSignature": true, // Bắt buộc dùng obj['prop'] thay vì obj.prop trên type có index signature
     "noUnusedLocals": true, // Báo lỗi biến/import khai báo nhưng không dùng
     "noUnusedParameters": true, // Báo lỗi tham số hàm khai báo nhưng không dùng (tiền tố `_` để bỏ qua có chủ đích)
+    "exactOptionalPropertyTypes": true, // Phân biệt rõ "thuộc tính vắng mặt" với "thuộc tính = undefined"
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

@@ -190,7 +190,11 @@ export const renderDocxDocument = (content: DocxContent): Document => {
       children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, text: section.heading.toUpperCase(), spacing: { before: 200 } }));
     }
     for (const line of section.lines) {
-      children.push(new Paragraph({ text: line, bullet: section.heading ? { level: 0 } : undefined }));
+      // `exactOptionalPropertyTypes` (issue #189): `docx`'s own
+      // `IParagraphOptions.bullet` is a third-party type we can't widen
+      // to accept an explicit `undefined` — omit the key entirely
+      // instead of passing `bullet: undefined` when there's no heading.
+      children.push(new Paragraph({ text: line, ...(section.heading ? { bullet: { level: 0 } } : {}) }));
     }
   }
 

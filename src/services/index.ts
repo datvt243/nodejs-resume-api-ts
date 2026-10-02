@@ -37,12 +37,22 @@ export interface CrudDocument {
 
 interface baseProp<T extends CrudDocument> {
   model: Model<T>;
-  fields: { _id?: string; candidateId?: string };
+  // `candidateId?: string | undefined` (issue #189): several callers (e.g.
+  // generalInformation.service.ts) narrow `document?.candidateId` with a
+  // `typeof x === 'string' ? x : undefined` guard before passing it here —
+  // a real, intentional "not a string" state, not an accidental omission.
+  fields: { _id?: string; candidateId?: string | undefined };
   findOne?: boolean;
-  lang?: string;
-  page?: number;
-  limit?: number;
-  sort?: string;
+  // `| undefined` added explicitly (issue #189, `exactOptionalPropertyTypes`):
+  // `BaseController.ts`'s `baseGetAll` passes each of these as
+  // `cond ? value : undefined` — a real, intentional "no value given"
+  // state, not an accidental omission — so a plain `?:` (which now means
+  // "may be omitted, but if present must be the real type, never
+  // `undefined` itself") no longer accepts it.
+  lang?: string | undefined;
+  page?: number | undefined;
+  limit?: number | undefined;
+  sort?: string | undefined;
 }
 
 // Pagination (issue #73) hard cap — a caller cannot request more than this
@@ -126,7 +136,9 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
   });
 };
 
-export const baseDeleteDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string }) => {
+// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`):
+// BaseController.ts passes `req.lang`, itself `string | undefined`.
+export const baseDeleteDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
   /**
@@ -165,7 +177,9 @@ export const baseDeleteDocument = async <T extends CrudDocument>(props: { model:
   });
 };
 
-export const baseRestoreDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string }) => {
+// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`):
+// BaseController.ts passes `req.lang`, itself `string | undefined`.
+export const baseRestoreDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
   /**
@@ -205,7 +219,11 @@ export const baseRestoreDocument = async <T extends CrudDocument>(props: { model
 export const baseUpdateDocument = async <T extends CrudDocument>(props: {
   document: Record<string, unknown> & { _id?: string };
   model: Model<T>;
-  userID?: string;
+  // `| undefined` (issue #189, `exactOptionalPropertyTypes`): `BaseService.ts`'s
+  // `handlerUpdate(item, userID?, lang)` forwards its own optional
+  // `userID` param straight through — when the caller omits it, that's a
+  // real, intentional `undefined`, not an accidental one.
+  userID?: string | undefined;
   lang?: string;
   hookHasErrors?: (props: { err: unknown }) => void;
 }) => {
