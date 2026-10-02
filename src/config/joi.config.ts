@@ -19,8 +19,6 @@ interface JoiProps {
   pattern?: string;
   title?: string;
 }
-type JoiMessages = Record<string, any>;
-
 // Định nghĩa một custom validator cho ObjectId của MongoDB
 const objectIdValidator = Joi.extend((joi) => ({
   type: 'objectId',
@@ -34,53 +32,11 @@ const objectIdValidator = Joi.extend((joi) => ({
   },
 }));
 
-export const settingJoiValidate = (props: JoiProps) => {
-  const { type = 'string', min = null, max = null, required = false, label = '', pattern = '' } = props;
-
-  const _messages: JoiMessages = {};
-  const _joi: any = Joi;
-
-  if (type) {
-    if (type === 'string') _joi.string();
-    if (type === 'number') _joi.number();
-    if (type === 'boolean') _joi.boolean();
-    _messages[`${type}.empty`] = 'Họ tên không được trống';
-  }
-
-  if (pattern) {
-    _joi.pattern(pattern);
-  }
-
-  if (min !== null) {
-    _joi.min(min);
-    _messages[`string.min`] = 'Field phải có ít nhất {#limit} ký tự';
-  }
-  if (max !== null) {
-    _joi.max(max);
-    _messages[`string.max`] = 'Field không được vượt quá {#limit} ký tự';
-  }
-
-  if (required) {
-    _joi.required();
-    _messages[`any.required`] = `{#label} là bắt buộc`;
-  }
-
-  _joi.trim().strict();
-
-  if (label) {
-    _joi.label(label);
-  }
-
-  _joi.messages(_messages);
-
-  return _joi;
-};
-
 export const _id = objectIdValidator.objectId().required();
 
 export const candidateId = Joi.string();
 
-export const getObject = (fields: Record<string, any>) => {
+export const getObject = (fields: Joi.SchemaMap) => {
   return Joi.object(fields);
 };
 
