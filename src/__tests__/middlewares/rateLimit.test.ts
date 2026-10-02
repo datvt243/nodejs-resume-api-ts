@@ -13,7 +13,12 @@ describe('rateLimit middleware (in-memory)', () => {
       socket: { remoteAddress: ip },
       path,
       user,
-    }) as Request;
+      // `exactOptionalPropertyTypes` (issue #189): this mock's inferred
+      // shape now carries an explicit `user: ... | undefined`, which no
+      // longer "sufficiently overlaps" `Request` for a direct `as` cast
+      // (TS's own suggested fix) — through `unknown` first, same as
+      // every other fake-request mock in this test suite.
+    }) as unknown as Request;
 
   const makeRes = () =>
     ({

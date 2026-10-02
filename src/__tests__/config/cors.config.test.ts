@@ -4,7 +4,11 @@
  */
 
 describe('corsConfig', () => {
-  const loadWith = (env: { CORS_ORIGIN?: string; NODE_ENV?: string }) => {
+  // `exactOptionalPropertyTypes` (issue #189): these tests deliberately
+  // pass `CORS_ORIGIN: undefined` to simulate the env var being unset —
+  // a real, intentional value (not an accidental omission) — so the
+  // param type needs `| undefined` added explicitly, not just `?:`.
+  const loadWith = (env: { CORS_ORIGIN?: string | undefined; NODE_ENV?: string }) => {
     jest.resetModules();
     jest.doMock('@/config/process.config', () => env);
     return require('@/config/cors.config').corsConfig;

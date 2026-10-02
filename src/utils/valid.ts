@@ -16,7 +16,10 @@ export const validateSchema = ({
 }: {
   schema: Schema;
   item: Partial<Record<string, unknown>>;
-  lang?: string;
+  // `| undefined` (issue #189, `exactOptionalPropertyTypes`): callers pass
+  // `req.lang`, which is itself `string | undefined` — a real, intentional
+  // "not resolved yet" state, not an accidental omission.
+  lang?: string | undefined;
 }) => {
   /**
    * @return
