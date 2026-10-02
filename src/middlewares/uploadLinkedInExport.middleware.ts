@@ -40,20 +40,20 @@ export const uploadLinkedInExportMiddleware = (req: Request, res: Response, next
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: t('linkedinImport.fileTooLarge', (req as any).lang),
+        message: t('linkedinImport.fileTooLarge', req.lang),
       });
     }
     if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: t('linkedinImport.invalidFileType', (req as any).lang),
+        message: t('linkedinImport.invalidFileType', req.lang),
       });
     }
     return formatReturn(res, {
       statusCode: StatusCodes.BAD_REQUEST,
       success: false,
-      message: t('linkedinImport.parseFailed', (req as any).lang),
+      message: t('linkedinImport.parseFailed', req.lang),
     });
   });
 };

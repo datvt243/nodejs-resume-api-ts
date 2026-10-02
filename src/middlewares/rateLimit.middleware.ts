@@ -56,7 +56,13 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
     }
 
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    const userId = (req as any).user?.id || 'anon'; // From verifyToken middleware
+    // BUG FIX (found removing the `any` cast here, issue #179): this read
+    // `.user?.id`, but `Express.Request.user` is declared `{ _id: string }`
+    // everywhere else in the codebase — `.id` never existed, so `userId`
+    // silently fell back to 'anon' for every authenticated request, and
+    // per-user rate limiting was never actually applying (bucket key was
+    // effectively IP-only). Fixed to the real property.
+    const userId = req.user?._id || 'anon'; // From verifyToken middleware
     const now = Date.now();
 
     if (isRedisAvailable()) {
@@ -68,18 +74,18 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
       // Retry logic for Redis operations (wrap in try-catch)
       try {
         const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
-          let lastError: any;
+          let lastError: unknown = new Error('withRetry: exhausted retries without a successful attempt');
           for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
               return await fn();
-            } catch (err: any) {
+            } catch (err: unknown) {
               lastError = err;
               if (attempt < maxRetries) {
                 await new Promise((resolve) => setTimeout(resolve, attempt * 100)); // Backoff
               }
             }
           }
-          throw lastError!;
+          throw lastError;
         };
 
         const current = (await withRetry(() => client.incr(key))) as number;

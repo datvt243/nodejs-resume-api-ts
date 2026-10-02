@@ -50,7 +50,7 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
     }
     return formatReturn(res, _me);
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -195,7 +195,7 @@ export const fnRecordVisit = async (req: Request, res: Response, next: NextFunct
     const _result = await handlerRecordVisit(email, req);
     return formatReturn(res, _result);
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -231,7 +231,7 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
 
   // Use the authenticated user's own id — never a client-supplied one,
   // or any authenticated user could export another candidate's PDF.
-  const _id = (req as any).user?._id;
+  const _id = req.user?._id;
   if (!_id) {
     res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('CandidateId not found'));
     return;
@@ -274,6 +274,6 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
 
     await createCV(data, res);
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };

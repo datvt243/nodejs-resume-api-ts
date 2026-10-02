@@ -33,7 +33,7 @@ export const logRequest = (req: Request, message: string, extra: Record<string, 
     method: req.method,
     url: req.originalUrl,
     ip: req.ip,
-    userAgent: (req as any).get ? (req as any).get('User-Agent') : 'unknown',
+    userAgent: req.get ? req.get('User-Agent') : 'unknown',
     ...extra,
   });
 };

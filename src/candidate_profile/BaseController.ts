@@ -39,7 +39,7 @@ export const baseGetAll = async (req: Request, res: Response, next: NextFunction
   const { candidateId, collection } = req.body;
 
   if (!candidateId || !collection || !modelObject[collection])
-    return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: t('common.notFoundData', (req as any).lang) });
+    return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: t('common.notFoundData', req.lang) });
 
   // Optional pagination/sort (issue #73). Omitting page/limit keeps the
   // pre-existing "return everything" behavior (`data` stays a plain
@@ -51,23 +51,23 @@ export const baseGetAll = async (req: Request, res: Response, next: NextFunction
       fields: { candidateId: candidateId },
       model: modelObject[collection],
       findOne: false,
-      lang: (req as any).lang,
+      lang: req.lang,
       page: page !== undefined ? parseInt(page, 10) : undefined,
       limit: limit !== undefined ? parseInt(limit, 10) : undefined,
       sort: sort && SORT_FIELD_REGEX.test(sort) ? sort : undefined,
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
 export const baseDelete = async (req: Request, res: Response, next: NextFunction) => {
   const { id, collection = '' } = req.params;
 
-  if (!id) return formatReturn(res, { success: false, message: t('common.notFoundId', (req as any).lang) });
+  if (!id) return formatReturn(res, { success: false, message: t('common.notFoundId', req.lang) });
   if (!(collection && modelObject[collection]))
-    return formatReturn(res, { success: false, message: t('common.cannotDelete', (req as any).lang) });
+    return formatReturn(res, { success: false, message: t('common.cannotDelete', req.lang) });
 
   /**
    * delete
@@ -78,21 +78,21 @@ export const baseDelete = async (req: Request, res: Response, next: NextFunction
       _id: id,
       userID: req.body.candidateId || '',
       name: '',
-      lang: (req as any).lang,
+      lang: req.lang,
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
     //
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
 export const baseRestore = async (req: Request, res: Response, next: NextFunction) => {
   const { id, collection = '' } = req.params;
 
-  if (!id) return formatReturn(res, { success: false, message: t('common.notFoundId', (req as any).lang) });
+  if (!id) return formatReturn(res, { success: false, message: t('common.notFoundId', req.lang) });
   if (!(collection && modelObject[collection]))
-    return formatReturn(res, { success: false, message: t('common.cannotRestore', (req as any).lang) });
+    return formatReturn(res, { success: false, message: t('common.cannotRestore', req.lang) });
 
   /**
    * restore (issue #121) — same ownership pattern as baseDelete: userID
@@ -105,22 +105,22 @@ export const baseRestore = async (req: Request, res: Response, next: NextFunctio
       _id: id,
       userID: req.body.candidateId || '',
       name: '',
-      lang: (req as any).lang,
+      lang: req.lang,
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
     //
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
 export const baseUploadImages = async (req: Request, res: Response, next: NextFunction) => {
   const { id, collection = '' } = req.params;
-  const candidateId = (req as any).user?._id;
+  const candidateId = req.user?._id;
 
-  if (!id) return formatReturn(res, { success: false, message: t('common.notFoundId', (req as any).lang) });
+  if (!id) return formatReturn(res, { success: false, message: t('common.notFoundId', req.lang) });
   if (!(collection && modelObject[collection]))
-    return formatReturn(res, { success: false, message: t('common.notFoundData', (req as any).lang) });
+    return formatReturn(res, { success: false, message: t('common.notFoundData', req.lang) });
 
   const MODEL = modelObject[collection];
 
@@ -131,9 +131,9 @@ export const baseUploadImages = async (req: Request, res: Response, next: NextFu
     // that bug, not fixed here, out of this task's scope). Always
     // cross-check the real owner against the authenticated req.user._id.
     const document = await MODEL.findById(id);
-    if (!document) return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, success: false, message: t('common.notFoundId', (req as any).lang) });
+    if (!document) return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, success: false, message: t('common.notFoundId', req.lang) });
     if (!document.candidateId || document.candidateId.toString() !== candidateId) {
-      return formatReturn(res, { statusCode: StatusCodes.FORBIDDEN, success: false, message: t('common.updateNotYours', (req as any).lang) });
+      return formatReturn(res, { statusCode: StatusCodes.FORBIDDEN, success: false, message: t('common.updateNotYours', req.lang) });
     }
 
     // Only now safe to parse the multipart body and write files to disk.
@@ -141,27 +141,31 @@ export const baseUploadImages = async (req: Request, res: Response, next: NextFu
       uploadImagesMiddleware(req, res, (err: unknown) => (err ? reject(err) : resolve()));
     });
 
-    const files = ((req as any).files || []) as Express.Multer.File[];
+    // `req.files` is typed as `File[] | { [field]: File[] } | undefined` since
+    // multer supports both `.array()` and `.fields()` configs; `uploadImagesMiddleware`
+    // (uploadImages.middleware.ts) always uses `.array('images', ...)`, so this
+    // specific call site is genuinely always `File[] | undefined` — narrowing here.
+    const files = (req.files || []) as Express.Multer.File[];
     if (!files.length) {
-      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.noFilesUploaded', (req as any).lang) });
+      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.noFilesUploaded', req.lang) });
     }
 
     const newUrls = files.map((f) => `/uploads/images/${f.filename}`);
     const images = [...(document.images || []), ...newUrls];
     await MODEL.updateOne({ _id: id }, { images });
 
-    return formatReturn(res, { success: true, message: t('images.uploadSuccess', (req as any).lang), data: { images } });
+    return formatReturn(res, { success: true, message: t('images.uploadSuccess', req.lang), data: { images } });
   } catch (err) {
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.fileTooLarge', (req as any).lang) });
+      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.fileTooLarge', req.lang) });
     }
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_COUNT') {
-      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.tooManyFiles', (req as any).lang) });
+      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.tooManyFiles', req.lang) });
     }
     if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
-      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.invalidFileType', (req as any).lang) });
+      return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.invalidFileType', req.lang) });
     }
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -176,28 +180,28 @@ export const createCrudController = (props: {
   const { schema, service, booleanDefaultField } = props;
 
   const fnCreate = async (req: Request, res: Response, next: NextFunction) => {
-    const { isValidated, value = {}, errors, message } = validateSchema({ schema, item: { ...req.body }, lang: (req as any).lang });
+    const { isValidated, value = {}, errors, message } = validateSchema({ schema, item: { ...req.body }, lang: req.lang });
     if (!isValidated) return formatReturn(res, { success: false, message, errors });
 
     try {
       if (booleanDefaultField && !value[booleanDefaultField]) value[booleanDefaultField] = false;
-      const _result = await service.handlerCreate(value, (req as any).lang);
+      const _result = await service.handlerCreate(value, req.lang);
       return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
     } catch (err) {
-      handleError(err, next, (req as any).lang);
+      handleError(err, next, req.lang);
     }
   };
 
   const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
-    const { isValidated, value = {}, errors, message } = validateSchema({ schema, item: { ...req.body }, lang: (req as any).lang });
+    const { isValidated, value = {}, errors, message } = validateSchema({ schema, item: { ...req.body }, lang: req.lang });
     if (!isValidated) return formatReturn(res, { success: false, message, errors });
 
     try {
       if (booleanDefaultField && !value[booleanDefaultField]) value[booleanDefaultField] = false;
-      const _result = await service.handlerUpdate(value, (req as any).user?._id, (req as any).lang);
+      const _result = await service.handlerUpdate(value, req.user?._id, req.lang);
       return formatReturn(res, { ..._result });
     } catch (err) {
-      handleError(err, next, (req as any).lang);
+      handleError(err, next, req.lang);
     }
   };
 
@@ -205,11 +209,11 @@ export const createCrudController = (props: {
   // item (a bad entry doesn't block the rest) — pairs with the stateless
   // LinkedIn-export-parse flow (#141): parse -> review client-side -> bulk-save.
   const fnBulkCreate = async (req: Request, res: Response, next: NextFunction) => {
-    const lang = (req as any).lang;
+    const lang = req.lang;
     // Same IDOR-safe pattern as every other write path, but applied per
     // array item: verifyToken only forces req.body.candidateId at the top
     // level, never touching entries nested inside req.body.items.
-    const candidateId = (req as any).user?._id;
+    const candidateId = req.user?._id;
     const items = Array.isArray(req.body.items) ? req.body.items : null;
 
     if (!items || !items.length) {
