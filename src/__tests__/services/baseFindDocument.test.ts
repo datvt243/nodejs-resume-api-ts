@@ -4,7 +4,15 @@
  * model instead of jest.mock('@/utils/querySafe') since QuerySafe has no
  * side effects worth mocking out.
  */
-import { baseFindDocument } from '@/services';
+import type { Model } from 'mongoose';
+import { baseFindDocument, CrudDocument } from '@/services';
+
+// baseFindDocument is generic over a real `Model<T>` (issue #181) — this
+// fake only implements the 3 methods it actually calls, so it's cast
+// through `unknown` at the call site rather than satisfying the full
+// `Model<T>` interface structurally (relaxed test policy, tracking issue
+// #177: tests may cast, production code must not).
+const asModel = (m: ReturnType<typeof createFakeModel>) => m as unknown as Model<CrudDocument>;
 
 function createFakeModel(docs: Record<string, any>[]) {
   const query: any = {
@@ -29,14 +37,14 @@ function createFakeModel(docs: Record<string, any>[]) {
 describe('baseFindDocument', () => {
   it('fails fast when fields is empty', async () => {
     const model = createFakeModel([]);
-    const result = await baseFindDocument({ model, fields: {}, findOne: false });
+    const result = await baseFindDocument({ model: asModel(model), fields: {}, findOne: false });
     expect(result.success).toBe(false);
     expect(model.find).not.toHaveBeenCalled();
   });
 
   it('findOne: true returns a single document via MODEL.findOne, untouched by pagination', async () => {
     const model = createFakeModel([{ _id: '1', candidateId: 'c1' }]);
-    const result = await baseFindDocument({ model, fields: { candidateId: 'c1' }, findOne: true });
+    const result = await baseFindDocument({ model: asModel(model), fields: { candidateId: 'c1' }, findOne: true });
 
     // deletedAt: null is the soft-delete exclusion filter (issue #121), added
     // to every query by baseFindDocument regardless of caller-supplied fields.
@@ -48,7 +56,7 @@ describe('baseFindDocument', () => {
     const docs = [{ _id: '1' }, { _id: '2' }];
     const model = createFakeModel(docs);
 
-    const result = await baseFindDocument({ model, fields: { candidateId: 'c1' }, findOne: false });
+    const result = await baseFindDocument({ model: asModel(model), fields: { candidateId: 'c1' }, findOne: false });
 
     // deletedAt: null is the soft-delete exclusion filter (issue #121).
     expect(model.find).toHaveBeenCalledWith({ deletedAt: null, candidateId: 'c1' });
@@ -62,7 +70,7 @@ describe('baseFindDocument', () => {
     const docs = [{ _id: '1' }, { _id: '2' }];
     const model = createFakeModel(docs);
 
-    const result = await baseFindDocument({ model, fields: { candidateId: 'c1' }, findOne: false, page: 2, limit: 2 });
+    const result = await baseFindDocument({ model: asModel(model), fields: { candidateId: 'c1' }, findOne: false, page: 2, limit: 2 });
 
     expect(model.__query.skip).toHaveBeenCalledWith(2); // (page 2 - 1) * limit 2
     expect(model.__query.limit).toHaveBeenCalledWith(2);
@@ -76,21 +84,21 @@ describe('baseFindDocument', () => {
 
   it('clamps limit to the max page size', async () => {
     const model = createFakeModel([]);
-    await baseFindDocument({ model, fields: { candidateId: 'c1' }, findOne: false, limit: 9999 });
+    await baseFindDocument({ model: asModel(model), fields: { candidateId: 'c1' }, findOne: false, limit: 9999 });
 
     expect(model.__query.limit).toHaveBeenCalledWith(100);
   });
 
   it('defaults page to 1 when page is missing or invalid', async () => {
     const model = createFakeModel([]);
-    await baseFindDocument({ model, fields: { candidateId: 'c1' }, findOne: false, limit: 10, page: 0 });
+    await baseFindDocument({ model: asModel(model), fields: { candidateId: 'c1' }, findOne: false, limit: 10, page: 0 });
 
     expect(model.__query.skip).toHaveBeenCalledWith(0);
   });
 
   it('applies sort when given, with or without pagination', async () => {
     const model = createFakeModel([]);
-    await baseFindDocument({ model, fields: { candidateId: 'c1' }, findOne: false, sort: '-createdAt' });
+    await baseFindDocument({ model: asModel(model), fields: { candidateId: 'c1' }, findOne: false, sort: '-createdAt' });
 
     expect(model.__query.sort).toHaveBeenCalledWith('-createdAt');
   });
