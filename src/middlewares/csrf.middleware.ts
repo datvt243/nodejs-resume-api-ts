@@ -11,7 +11,7 @@ import { extractTokenWithSource } from '@/utils/helper-auth';
 import { requiresCsrfCheck, isCsrfTokenValid } from '@/utils/csrf';
 import { ErrorCode, AuthorizationError } from '@/errors';
 
-export const verifyCsrf = (fieldName = 'token') => (req: Request, res: Response, next: NextFunction) => {
+export const verifyCsrf = (fieldName = 'token') => (req: Request, _res: Response, next: NextFunction) => {
   const { source } = extractTokenWithSource(req, fieldName);
 
   if (requiresCsrfCheck(req, source) && !isCsrfTokenValid(req)) {

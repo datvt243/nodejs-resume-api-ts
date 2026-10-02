@@ -16,6 +16,5 @@ if (env === 'production') {
   const _path = getPath(path.join(__dirname, 'dist'), 'dist');
   moduleAlias.addAlias('@', _path);
 } else {
-  const _path = getPath(path.join(__dirname, 'src'), 'src');
   moduleAlias.addAlias('@', path.join(__dirname, ''));
 }

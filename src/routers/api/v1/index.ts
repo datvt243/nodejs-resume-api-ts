@@ -4,7 +4,6 @@
  * Description:
  */
 
-import path, { dirname } from 'path';
 import express from 'express';
 import { verifyToken, verifyTokenByQuery } from '@/middlewares/verifyToken.middleware';
 
@@ -84,7 +83,7 @@ router.use('/profile', verifyToken, routeProfile);
  */
 router.get('/download-pdf', verifyTokenByQuery, fnExportPDF);
 
-router.get('/*', (req, res) => {
+router.get('/*', (_req, res) => {
   res.status(404).json({
     success: false,
     message: 'Page not found',

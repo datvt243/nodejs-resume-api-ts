@@ -200,9 +200,17 @@ const _helper = () => {
       return `${_start} - ${_end}`;
     })(startDate, endDate, isCurrent);
 
-    const getSkills = ((skills = []) => {
-      return !skills.length ? `<div class="skills">${skills.join(', ')}</div>` : '';
-    })();
+    // BUG FIX (found removing an unused-variable warning, issue #188): this
+    // IIFE was called with no arguments, so its own `skills = []` default
+    // always shadowed the real `skills` destructured from `props` above —
+    // the skills list was never actually read. The condition was also
+    // inverted (`!skills.length` rendered the div, i.e. exactly when
+    // there were NO skills) — combined, the rendered PDF never showed an
+    // item's skills, regardless of whether it had any. Fixed both: pass
+    // the real value in, and render only when it's non-empty.
+    const getSkills = ((skillsList: string[]) => {
+      return skillsList.length ? `<div class="skills">${skillsList.join(', ')}</div>` : '';
+    })(skills);
     return `
             <div class="item">
                 <div class="header">
