@@ -7,7 +7,7 @@ require('module-alias/register');
 require('./alias');
 import dotenv from 'dotenv';
 
-import path, { dirname } from 'path';
+import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -83,7 +83,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
    *                   type: number
    */
   // Health check endpoint (exempt from rate limiting)
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -95,7 +95,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
    * API documentation (Swagger UI) - exempt from rate limiting
    */
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.get('/api-docs.json', (req, res) => {
+  app.get('/api-docs.json', (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });

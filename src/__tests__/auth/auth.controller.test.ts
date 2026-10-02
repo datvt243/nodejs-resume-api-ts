@@ -7,7 +7,6 @@ import { StatusCodes } from 'http-status-codes';
 import { authRegister, authLogin, authRefreshToken, authLogout, authLogoutAll, authCreateRefreshToken } from '@/auth/auth.controller';
 import * as validateSchema from '@/utils';
 import * as formatReturn from '@/utils';
-import * as handleError from '@/utils';
 import * as tokenBlacklist from '@/utils/tokenBlacklist';
 import * as jwt from '@/utils';
 import * as helperAuth from '@/utils/helper-auth';

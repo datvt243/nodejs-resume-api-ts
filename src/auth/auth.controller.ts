@@ -170,7 +170,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
 /**
  * Chức năng Tạo mới refreshToken
  */
-export const authCreateRefreshToken = async (req: Request, res: Response) => {
+export const authCreateRefreshToken = async (_req: Request, _res: Response) => {
   // coming soon
 };
 

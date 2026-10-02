@@ -396,7 +396,7 @@ export const basePatchDocument = async <T extends CrudDocument>(props: {
 const _baseHelper = () => {
   return {
     getDocumentUpdated: async <T extends CrudDocument>(_id: string | undefined, props: { model: Model<T>; select: string }) => {
-      const { model: MODEL, select = '' } = props;
+      const { model: MODEL } = props;
       const find = MODEL.findById(_id);
       /* if (select) {
                 find.select(select);

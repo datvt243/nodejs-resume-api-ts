@@ -1,7 +1,5 @@
 import Joi from 'joi';
-import { passwordRegex } from '@/config/regex.config';
-import { PASSWORD_MIN_LENGTH } from '@/config/joi.config';
-import { validateSchema, formatValidateError } from '@/utils/valid';
+import { validateSchema } from '@/utils/valid';
 
 // Mock formatValidateError để tránh lỗi khi không có implement thật
 jest.mock('@/utils', () => ({

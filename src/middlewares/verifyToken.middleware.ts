@@ -4,7 +4,6 @@
  * Description: JWT Token verification middleware
  */
 import { Request, Response, NextFunction } from 'express';
-import { StatusCodes } from 'http-status-codes';
 import { TOKEN_SECRET } from '@/config/process.config';
 import { jwtVerify } from '@/utils/jwt';
 import { isBlacklisted } from '@/utils/tokenBlacklist';
@@ -14,7 +13,7 @@ import { ErrorCode, TokenExpiredError, TokenRevokedError, InvalidTokenError, Aut
 import { extractTokenWithSource } from '@/utils/helper-auth';
 import { requiresCsrfCheck, isCsrfTokenValid } from '@/utils/csrf';
 
-export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyToken = async (req: Request, _res: Response, next: NextFunction) => {
   const { token, source } = extractTokenWithSource(req);
 
   if (!token) {

@@ -40,7 +40,7 @@ const router = express.Router();
  */
 router.get(
   '/',
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, _res: Response, next: NextFunction) => {
     req.body.collection = Collections.EDUCATION;
     next();
   },
@@ -171,7 +171,7 @@ router.put('/update', fnUpdate);
  */
 router.delete(
   '/delete/:id',
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, _res: Response, next: NextFunction) => {
     req.params['collection'] = Collections.EDUCATION;
     next();
   },
@@ -202,7 +202,7 @@ router.delete(
  */
 router.post(
   '/restore/:id',
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, _res: Response, next: NextFunction) => {
     req.params['collection'] = Collections.EDUCATION;
     next();
   },

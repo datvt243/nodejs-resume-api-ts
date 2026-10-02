@@ -43,7 +43,7 @@ const router = express.Router();
  */
 router.get(
   '/',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, _res: Response, next: NextFunction) => {
     req.body.collection = Collections.PROFILE;
     try {
       await ensureDefaultProfile(req.body.candidateId);
@@ -131,7 +131,7 @@ router.put('/update', fnUpdate);
  */
 router.delete(
   '/delete/:id',
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, _res: Response, next: NextFunction) => {
     req.params['collection'] = Collections.PROFILE;
     next();
   },
@@ -162,7 +162,7 @@ router.delete(
  */
 router.post(
   '/restore/:id',
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, _res: Response, next: NextFunction) => {
     req.params['collection'] = Collections.PROFILE;
     next();
   },

@@ -92,7 +92,7 @@ router.post('/api/me/:email/visit', fnRecordVisit);
 /**
  * 404
  */
-router.get('/api/*', (req: Request, res: Response) => {
+router.get('/api/*', (_req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: 'Page not found',
@@ -107,7 +107,7 @@ router.get('/api/*', (req: Request, res: Response) => {
 /* router.get('/', (req: Request, res: Response) => {
     res.render('render', { data: null });
 }); */
-router.get('/*', (req: Request, res: Response) => {
+router.get('/*', (_req: Request, res: Response) => {
   res.send(
     `<div style="text-align: center; padding: 50px">
             <h1 style="font-size: 8vw; text-transform: uppercase; letter-spacing: .1em;">Hello World!</h1> 

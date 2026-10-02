@@ -77,7 +77,7 @@ export const handlerUpdate = async (item: Record<string, any>, lang: string = DE
   /**
    * update
    */
-  const res = await MODEL.updateOne({ _id: value['_id'] || '' }, value).exec();
+  await MODEL.updateOne({ _id: value['_id'] || '' }, value).exec();
 
   /**
    * lấy thông tin vừa update (SAFE SELECT)

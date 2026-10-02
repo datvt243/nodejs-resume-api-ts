@@ -22,8 +22,6 @@ const isDuplicateKeyError = (err: unknown): err is { code: 11000; keyValue?: Rec
 
 interface formatReturn extends BaseReturn {
   statusCode?: null | number;
-  statusCodeSuccess?: string;
-  statusCodeFailed?: string;
 }
 
 /**
@@ -123,8 +121,6 @@ export const formatReturn = (res: Response, props: formatReturn) => {
     errors = null,
     data = null,
     statusCode = null,
-    statusCodeSuccess = 'OK',
-    statusCodeFailed = 'BAD_REQUEST',
   } = props;
 
   const _statusCode: number = (() => {

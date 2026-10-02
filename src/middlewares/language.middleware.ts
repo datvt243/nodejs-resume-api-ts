@@ -18,7 +18,7 @@ const resolveLang = (acceptLanguage: string | undefined): SupportedLang => {
   return (SUPPORTED_LANGS as readonly string[]).includes(primary) ? (primary as SupportedLang) : DEFAULT_LANG;
 };
 
-export const languageMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const languageMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const lang = resolveLang(req.headers['accept-language']);
   req.lang = lang;
   req.t = (key: string) => t(key, lang);
