@@ -10,6 +10,9 @@
     "forceConsistentCasingInFileNames": true, // Bắt buộc phân biệt chữ hoa chữ thường trong tên file
     "strict": true, // Bật tất cả các kiểm tra chặt chẽ
     "skipLibCheck": true, // Bỏ qua kiểm tra các file định nghĩa thư viện (.d.ts)
+    "noFallthroughCasesInSwitch": true, // Bắt lỗi case trong switch thiếu break/return
+    "noImplicitOverride": true, // Bắt buộc dùng `override` khi ghi đè method/property của lớp cha
+    "noUncheckedIndexedAccess": true, // Truy cập mảng/object qua index trả về thêm `| undefined`
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

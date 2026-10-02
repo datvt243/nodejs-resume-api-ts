@@ -57,7 +57,7 @@ export interface IErrorOptionsWithStatus extends IErrorOptions {
  */
 export class AppError extends Error {
   public readonly statusCode: number;
-  public readonly message: string;
+  public override readonly message: string;
   public readonly errorCode: ErrorCode;
   public readonly isOperational: boolean;
   public readonly errors?: AppErrorDetails;

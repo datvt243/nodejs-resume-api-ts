@@ -49,7 +49,7 @@ export const handlerRegister = async (item: Auth, lang: string = DEFAULT_LANG) =
   // Vanity slug (issue #120) — auto-generated here since no name is
   // collected at register time, only email/password; base comes from the
   // email's local-part.
-  const slug = await generateUniqueCandidateSlug(email.split('@')[0]);
+  const slug = await generateUniqueCandidateSlug(email.split('@')[0] ?? email);
   await CandidateModel.create({
     _id: null,
     email: email,
