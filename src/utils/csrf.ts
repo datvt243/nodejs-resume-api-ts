@@ -48,7 +48,7 @@ export const requiresCsrfCheck = (req: Request, tokenSource: TokenSource): boole
   tokenSource === 'cookie' && !SAFE_METHODS.includes(req.method);
 
 export const isCsrfTokenValid = (req: Request): boolean => {
-  const cookieToken = (req as any).cookies?.[CSRF_COOKIE_NAME];
+  const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
   const headerToken = req.header(CSRF_HEADER_NAME);
   return !!cookieToken && !!headerToken && cookieToken === headerToken;
 };

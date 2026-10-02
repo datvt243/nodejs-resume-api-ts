@@ -49,7 +49,7 @@ router.get(
       await ensureDefaultProfile(req.body.candidateId);
       next();
     } catch (err) {
-      handleError(err, next, (req as any).lang);
+      handleError(err, next, req.lang);
     }
   },
   baseGetAll,

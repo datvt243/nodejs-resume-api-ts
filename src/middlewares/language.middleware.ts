@@ -17,7 +17,7 @@ const resolveLang = (acceptLanguage: string | undefined): SupportedLang => {
 
 export const languageMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const lang = resolveLang(req.headers['accept-language']);
-  (req as any).lang = lang;
-  (req as any).t = (key: string) => t(key, lang);
+  req.lang = lang;
+  req.t = (key: string) => t(key, lang);
   next();
 };

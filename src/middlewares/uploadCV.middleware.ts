@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
     // client-supplied original filename (path traversal / collision
     // risk) — matches candidateId, which every other CV-section model
     // already trusts as the ownership key.
-    const candidateId = (req as any).user?._id;
+    const candidateId = req.user?._id;
     cb(null, `${candidateId}-cv.pdf`);
   },
 });
@@ -72,20 +72,20 @@ export const uploadCVMiddleware = (req: Request, res: Response, next: NextFuncti
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: t('candidate.cvFileTooLarge', (req as any).lang),
+        message: t('candidate.cvFileTooLarge', req.lang),
       });
     }
     if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: t('candidate.cvInvalidFileType', (req as any).lang),
+        message: t('candidate.cvInvalidFileType', req.lang),
       });
     }
     return formatReturn(res, {
       statusCode: StatusCodes.BAD_REQUEST,
       success: false,
-      message: t('candidate.cvUploadFailed', (req as any).lang),
+      message: t('candidate.cvUploadFailed', req.lang),
     });
   });
 };

@@ -58,7 +58,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     // trusts req.body.candidateId as the acting user, so leaving it
     // client-controlled let any authenticated user read/write/delete any
     // other user's data by supplying a different candidateId in the body.
-    (req as any).user = { _id };
+    req.user = { _id };
     if (!req.body || typeof req.body !== 'object') req.body = {};
     req.body.candidateId = _id;
     return next();
