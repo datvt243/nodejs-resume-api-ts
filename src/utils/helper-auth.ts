@@ -14,7 +14,8 @@ export const extractTokenWithSource = (req: Request, fieldName = 'token'): { tok
   const authHeader = req.header('Authorization') || req.header('authorization') || '';
   if (authHeader) {
     const parts = authHeader.split(' ');
-    if (parts.length === 2 && /bearer/i.test(parts[0])) return { token: parts[1].trim(), source: 'header' };
+    const [scheme, value] = parts;
+    if (parts.length === 2 && scheme !== undefined && value !== undefined && /bearer/i.test(scheme)) return { token: value.trim(), source: 'header' };
     return { token: authHeader.trim(), source: 'header' };
   }
 

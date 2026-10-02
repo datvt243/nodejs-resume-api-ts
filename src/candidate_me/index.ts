@@ -35,7 +35,10 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
   // Reference entries. Omitted -> unchanged behavior (everything), so
   // existing share-links keep working.
   const profileId = typeof req.query.profile === 'string' ? req.query.profile : undefined;
-  if (!email) res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Không tìm thấy Email'));
+  if (!email) {
+    res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Không tìm thấy Email'));
+    return;
+  }
 
   /**
    * get data
@@ -151,7 +154,7 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
     // document type has no string index signature (its fields are named
     // explicitly in the schema), but `profileIdsField` is only known at
     // runtime. Narrowed to exactly the shape read here.
-    const profileIds = profileDoc ? (profileDoc as unknown as Record<string, unknown[]>)[profileIdsField] : undefined;
+    const profileIds = profileDoc && profileIdsField ? (profileDoc as unknown as Record<string, unknown[]>)[profileIdsField] : undefined;
     const sectionQuery = profileDoc && profileIdsField ? { ...safeCandidateQuery, _id: { $in: profileIds || [] } } : safeCandidateQuery;
     // Real hydrated Mongoose documents — immediately flattened via
     // JSON.parse(JSON.stringify(...)) below, so the exact document shape
