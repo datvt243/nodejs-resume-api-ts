@@ -4,8 +4,8 @@
  * Description:
  */
 
-import mongoose, { Model } from 'mongoose';
-import { Schema } from 'joi';
+import mongoose from 'mongoose';
+import { Schema, ValidationError, ValidationErrorItem } from 'joi';
 import { _log } from '@/utils';
 import { t, tErrorType, DEFAULT_LANG } from '@/utils/i18n';
 
@@ -15,7 +15,7 @@ export const validateSchema = ({
   lang = DEFAULT_LANG,
 }: {
   schema: Schema;
-  item: Partial<Record<string, any>>;
+  item: Partial<Record<string, unknown>>;
   lang?: string;
 }) => {
   /**
@@ -46,33 +46,33 @@ export const validateSchema = ({
  * type isn't in our template dictionary (better a real message in the
  * wrong language than nothing).
  */
-const translateJoiDetail = (detail: any, lang: string): string => {
+const translateJoiDetail = (detail: ValidationErrorItem, lang: string): string => {
   const template = tErrorType(detail.type, lang);
   if (template === undefined) return detail.message;
 
   const fieldKey = detail?.context?.key ?? detail?.path?.[detail.path.length - 1];
-  const labelKey = `fieldLabels.${fieldKey}`;
+  const labelKey = `fieldLabels.${String(fieldKey)}`;
   const translatedLabel = t(labelKey, lang);
   const label = translatedLabel === labelKey ? detail?.context?.label || fieldKey : translatedLabel;
 
-  return template.replace('{{label}}', label).replace('{{limit}}', String(detail?.context?.limit ?? ''));
+  return template.replace('{{label}}', String(label)).replace('{{limit}}', String(detail?.context?.limit ?? ''));
 };
 
-export const formatValidateError = (error: any, lang: string = DEFAULT_LANG) => {
+export const formatValidateError = (error: ValidationError, lang: string = DEFAULT_LANG) => {
   const { details = [] } = error;
 
-  const messages: Record<string, any> = {};
+  const messages: Record<string, string> = {};
 
   for (const detail of details) {
     const _field = detail?.path[0];
     if (!_field) continue;
-    messages[_field] = translateJoiDetail(detail, lang);
+    messages[String(_field)] = translateJoiDetail(detail, lang);
   }
   return messages;
 };
 
-export const validateModel = async (model: any, value: Record<string, any>) => {
-  var valid = true,
+export const validateModel = async (model: { validate: (doc: unknown) => Promise<void> }, value: Record<string, unknown>) => {
+  let valid = true,
     message = '',
     errors: string[] = [];
 
@@ -83,7 +83,7 @@ export const validateModel = async (model: any, value: Record<string, any>) => {
     if (err instanceof mongoose.Error.ValidationError) {
       const { message: _mes, errors: _errs } = err;
       message = _mes;
-      for (const [k, v] of Object.entries(_errs)) {
+      for (const k of Object.keys(_errs)) {
         errors.push(k);
       }
     } else {
