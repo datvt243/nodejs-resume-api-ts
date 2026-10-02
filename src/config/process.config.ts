@@ -35,7 +35,7 @@ const {
 // No dedicated env var for refresh-token lifetime; default it to
 // meaningfully outlive the access token (TOKEN_EXP_IN) so the refresh
 // flow (get a new access token once the old one expires) stays usable.
-const TOKEN_REFRESH_EXP_IN = process.env.TOKEN_REFRESH_EXP_IN || '7d';
+const TOKEN_REFRESH_EXP_IN = process.env['TOKEN_REFRESH_EXP_IN'] || '7d';
 
 export {
   NODE_ENV,

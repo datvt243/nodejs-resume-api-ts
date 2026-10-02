@@ -85,16 +85,16 @@ function createFakeRes() {
 }
 
 describe('createCV executablePath resolution (issue #154)', () => {
-  const ORIGINAL_ENV = process.env.PUPPETEER_EXECUTABLE_PATH;
+  const ORIGINAL_ENV = process.env['PUPPETEER_EXECUTABLE_PATH'];
 
   afterEach(() => {
-    if (ORIGINAL_ENV === undefined) delete process.env.PUPPETEER_EXECUTABLE_PATH;
-    else process.env.PUPPETEER_EXECUTABLE_PATH = ORIGINAL_ENV;
+    if (ORIGINAL_ENV === undefined) delete process.env['PUPPETEER_EXECUTABLE_PATH'];
+    else process.env['PUPPETEER_EXECUTABLE_PATH'] = ORIGINAL_ENV;
     jest.clearAllMocks();
   });
 
   it('launches with no hardcoded executablePath when PUPPETEER_EXECUTABLE_PATH is unset (Puppeteer resolves its own bundled Chromium)', async () => {
-    delete process.env.PUPPETEER_EXECUTABLE_PATH;
+    delete process.env['PUPPETEER_EXECUTABLE_PATH'];
     (puppeteer.launch as jest.Mock).mockResolvedValue(createFakeBrowser());
 
     await createCV({ email: 'a@b.com' }, createFakeRes() as any);
@@ -103,7 +103,7 @@ describe('createCV executablePath resolution (issue #154)', () => {
   });
 
   it('launches with the given executablePath when PUPPETEER_EXECUTABLE_PATH is set (CI/Docker override)', async () => {
-    process.env.PUPPETEER_EXECUTABLE_PATH = '/usr/bin/chromium';
+    process.env['PUPPETEER_EXECUTABLE_PATH'] = '/usr/bin/chromium';
     (puppeteer.launch as jest.Mock).mockResolvedValue(createFakeBrowser());
 
     await createCV({ email: 'a@b.com' }, createFakeRes() as any);

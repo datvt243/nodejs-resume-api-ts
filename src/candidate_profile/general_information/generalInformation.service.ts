@@ -29,7 +29,7 @@ export const handlerCreate = async (document: Record<string, unknown>, lang: str
    * check candidate has any document,
    *  - is has: don't save
    */
-  const candidateId = typeof document?.candidateId === 'string' ? document.candidateId : undefined;
+  const candidateId = typeof document?.['candidateId'] === 'string' ? document['candidateId'] : undefined;
   const { success, data } = await withDBTimeout(
     baseFindDocument({
       model: MODEL,
@@ -54,7 +54,7 @@ export const handlerCreate = async (document: Record<string, unknown>, lang: str
         name: NAME,
         lang,
         hookAfterSave: async (doc) => {
-          const savedCandidateId = typeof doc.candidateId === 'string' ? doc.candidateId : undefined;
+          const savedCandidateId = typeof doc['candidateId'] === 'string' ? doc['candidateId'] : undefined;
           const { success, data: find } = await withDBTimeout(
             baseFindDocument({
               model: MODEL,

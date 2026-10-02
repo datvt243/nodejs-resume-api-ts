@@ -38,7 +38,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
 
     // Optional override for CI/Docker where a specific Chrome/Chromium must be pinned.
     // Unset: puppeteer resolves its own bundled Chromium automatically.
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    const executablePath = process.env['PUPPETEER_EXECUTABLE_PATH'];
 
     const otp = {
       ...(executablePath ? { executablePath } : {}),
@@ -161,7 +161,7 @@ const getDataCandidate = (RECORD: AggregatedCandidateData) => {
   const generalInformation: GeneralInformationData = ((el) => {
     if (!el) return {};
     return Array.isArray(el) ? el?.[0] || {} : el;
-  })(RECORD?.generalInformation || null);
+  })(RECORD?.['generalInformation'] || null);
 
   // ---
   const { educations = [], experiences = [], projects = [], references = [], certificates = [], awards = [] } = RECORD;

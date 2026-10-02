@@ -24,6 +24,18 @@
 script in `package.json` despite `.eslintrc.cjs` existing — don't assume
 `npm run lint` is real, it isn't (re-checked 2026-09-18).
 
+**`npx tsc --noEmit` does NOT cover everything `npm test` type-checks.**
+[added 2026-10-02, `enable-no-property-access-index-signature`/#187] `tsc`
+only checks files matched by `tsconfig.json`'s `include` (`src/**/*.ts`) —
+but `jest.config.ts`'s `setupFiles: ['<rootDir>/jest.setup.ts']` means
+`ts-jest` also type-checks `jest.setup.ts`, a root-level file OUTSIDE
+`src/`, under the same compiler options. A new strict flag can pass a
+clean `tsc --noEmit` and then fail every single test suite at once
+(`jest.setup.ts` errors abort the whole run) because that one file was
+never in `tsc`'s own scope. When adding/changing a compiler flag, always
+run the real `npm test` too — don't stop at a clean `tsc --noEmit` and
+assume test files (or their setup files) are covered.
+
 ## Stack
 | Thing | Value |
 |---|---|

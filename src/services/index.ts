@@ -294,12 +294,12 @@ export const baseCreateDocument = async <T extends CrudDocument>(props: {
   /**
    * remove _id nếu có
    */
-  delete document._id;
+  delete document['_id'];
 
   /**
    * Nếu không có candidateId thì trả về thất bại
    */
-  if (!document.candidateId) return formatReturnFailed(t('common.createFailed', lang));
+  if (!document['candidateId']) return formatReturnFailed(t('common.createFailed', lang));
 
   /**
    * validate ở mongoose model

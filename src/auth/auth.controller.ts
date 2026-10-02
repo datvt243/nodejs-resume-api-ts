@@ -179,7 +179,7 @@ export const authCreateRefreshToken = async (req: Request, res: Response) => {
  * đánh dấu emailVerified = true. Không chặn login (issue #71).
  */
 export const authVerifyEmail = async (req: Request, res: Response, next: NextFunction) => {
-  const token = typeof req.query.token === 'string' ? req.query.token : '';
+  const token = typeof req.query['token'] === 'string' ? req.query['token'] : '';
 
   try {
     const { success, message } = await handlerVerifyEmail(token, req.lang);

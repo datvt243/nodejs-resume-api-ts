@@ -18,7 +18,7 @@ const asModel = (m: ReturnType<typeof createFakeModel>) => m as unknown as Model
 function createFakeModel(doc: Record<string, any> | null) {
   return {
     findOne: jest.fn((query: any = {}) => ({
-      exec: jest.fn().mockResolvedValue(query.deletedAt === null && doc?.deletedAt ? null : doc),
+      exec: jest.fn().mockResolvedValue(query.deletedAt === null && doc?.['deletedAt'] ? null : doc),
     })),
     findById: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(doc) }),
     updateOne: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue({ modifiedCount: 1 }) }),

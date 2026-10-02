@@ -13,6 +13,7 @@
     "noFallthroughCasesInSwitch": true, // Bắt lỗi case trong switch thiếu break/return
     "noImplicitOverride": true, // Bắt buộc dùng `override` khi ghi đè method/property của lớp cha
     "noUncheckedIndexedAccess": true, // Truy cập mảng/object qua index trả về thêm `| undefined`
+    "noPropertyAccessFromIndexSignature": true, // Bắt buộc dùng obj['prop'] thay vì obj.prop trên type có index signature
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

@@ -15,7 +15,7 @@ function createMocks() {
     }),
   };
   const next = jest.fn();
-  return { req, res, next, finish: () => handlers.finish?.() };
+  return { req, res, next, finish: () => handlers['finish']?.() };
 }
 
 describe('requestLogger middleware', () => {

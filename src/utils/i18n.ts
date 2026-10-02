@@ -44,5 +44,5 @@ export const t = (key: string, lang: string = DEFAULT_LANG): string => {
  * distinguish "no template for this error type" from a real translation.
  */
 export const tErrorType = (type: string, lang: string = DEFAULT_LANG): string | undefined => {
-  return locales[lang as SupportedLang]?.joiErrors?.[type] ?? locales[DEFAULT_LANG]?.joiErrors?.[type];
+  return locales[lang as SupportedLang]?.['joiErrors']?.[type] ?? locales[DEFAULT_LANG]?.['joiErrors']?.[type];
 };

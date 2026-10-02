@@ -55,7 +55,7 @@ const translateJoiDetail = (detail: ValidationErrorItem, lang: string): string =
   const translatedLabel = t(labelKey, lang);
   const label = translatedLabel === labelKey ? detail?.context?.label || fieldKey : translatedLabel;
 
-  return template.replace('{{label}}', String(label)).replace('{{limit}}', String(detail?.context?.limit ?? ''));
+  return template.replace('{{label}}', String(label)).replace('{{limit}}', String(detail?.context?.['limit'] ?? ''));
 };
 
 export const formatValidateError = (error: ValidationError, lang: string = DEFAULT_LANG) => {

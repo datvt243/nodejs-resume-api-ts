@@ -62,7 +62,7 @@ export const handlerUpdate = async (item: Record<string, any>, lang: string = DE
    *
    */
 
-  if (!(await MODEL.findById(item._id))) {
+  if (!(await MODEL.findById(item['_id']))) {
     return { success: false, message: t('common.idNotFound', lang) };
   }
 
@@ -77,13 +77,13 @@ export const handlerUpdate = async (item: Record<string, any>, lang: string = DE
   /**
    * update
    */
-  const res = await MODEL.updateOne({ _id: value._id || '' }, value).exec();
+  const res = await MODEL.updateOne({ _id: value['_id'] || '' }, value).exec();
 
   /**
    * lấy thông tin vừa update (SAFE SELECT)
    */
   const safeSelect = candidateQuerySafe.whitelistSelect(Object.keys(value));
-  const _find = await handlerGetInformationById(value._id, { select: safeSelect });
+  const _find = await handlerGetInformationById(value['_id'], { select: safeSelect });
   /**
    * return
    */
