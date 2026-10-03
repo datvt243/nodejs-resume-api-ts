@@ -20,6 +20,7 @@ import routeCertificate from './certificate.route';
 import routeAward from './award.route';
 import routeApplication from './application.route';
 import routeProfile from './profile.route';
+import routeCv from './cv.route';
 import { fnExportPDF } from '@/candidate_me/index';
 
 router.use('/auth', routeAuth);
@@ -33,6 +34,7 @@ router.use('/project', verifyToken, routeProject);
 router.use('/certificate', verifyToken, routeCertificate);
 router.use('/application', verifyToken, routeApplication);
 router.use('/profile', verifyToken, routeProfile);
+router.use('/cv', verifyToken, routeCv);
 
 /**
  * @swagger
@@ -65,6 +67,14 @@ router.use('/profile', verifyToken, routeProfile);
  *           enum: [pdf, json, docx]
  *           default: pdf
  *         description: Response format. `json` returns the same aggregated candidate data used to render the PDF, as JSON. `docx` returns the same data as an editable Word document, instead of a PDF file.
+ *       - in: query
+ *         name: template
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [classic, ats]
+ *           default: classic
+ *         description: PDF template. `classic` is the pre-existing visual template (unchanged). `ats` is a single-column, no-letter-spacing template optimized for ATS text extraction (see doctrine/standards/pdf-export-standard.md). Ignored when `format` is `json`/`docx`.
  *     responses:
  *       200:
  *         description: PDF file stream, the candidate's aggregated data as JSON when `format=json`, or a .docx file when `format=docx`
