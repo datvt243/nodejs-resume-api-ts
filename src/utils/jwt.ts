@@ -7,9 +7,11 @@
 import jwt from 'jsonwebtoken';
 
 export const jwtSign = (
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   secretKey: string | undefined,
-  props: { expiresIn: string; [key: string]: any } = { expiresIn: '1h' },
+  // Every real caller only ever passes `expiresIn` — confirmed via
+  // grep, no other sign option is used anywhere in the codebase.
+  props: { expiresIn: string } = { expiresIn: '1h' },
 ) => {
   if (!secretKey) {
     throw new Error('JWT secret key is missing. Check TOKEN_SECRET in .env file');

@@ -161,13 +161,13 @@ export const baseDeleteDocument = async <T extends CrudDocument>(props: { model:
    */
   let success = false,
     message = t('common.deleteFailed', lang),
-    error = null;
+    error: string | null = null;
   try {
     const { modifiedCount = 0 } = await MODEL.updateOne({ _id }, { deletedAt: Date.now() }).exec();
     success = !!modifiedCount;
     message = t('common.deleteSuccess', lang);
   } catch (err) {
-    error = err;
+    error = err instanceof Error ? err.message : String(err);
   }
 
   return formatReturn({
@@ -200,13 +200,13 @@ export const baseRestoreDocument = async <T extends CrudDocument>(props: { model
 
   let success = false,
     message = t('common.restoreFailed', lang),
-    error = null;
+    error: string | null = null;
   try {
     const { modifiedCount = 0 } = await MODEL.updateOne({ _id }, { deletedAt: null }).exec();
     success = !!modifiedCount;
     message = t('common.restoreSuccess', lang);
   } catch (err) {
-    error = err;
+    error = err instanceof Error ? err.message : String(err);
   }
 
   return formatReturn({
