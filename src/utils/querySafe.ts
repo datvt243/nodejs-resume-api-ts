@@ -11,18 +11,18 @@ export class QuerySafe {
     this.allowedFields = allowedFields;
   }
 
-  safeQuery(baseQuery: Record<string, any> = {}, userInput: Record<string, any> = {}): Record<string, any> {
-    const sanitized: Record<string, any> = { ...baseQuery };
+  safeQuery(baseQuery: Record<string, unknown> = {}, userInput: Record<string, unknown> = {}): Record<string, unknown> {
+    const sanitized: Record<string, unknown> = { ...baseQuery };
 
     for (const [key, value] of Object.entries(userInput)) {
       if (
-        this.allowedFields.includes(key as string) &&
+        this.allowedFields.includes(key) &&
         typeof value === 'string' &&
         !value.includes('$') &&
         !value.includes('javascript:') &&
         value.trim().length > 0
       ) {
-        sanitized[key as string] = value.trim();
+        sanitized[key] = value.trim();
       }
     }
     return sanitized;

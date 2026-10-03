@@ -6,33 +6,44 @@
 
 import fs from 'fs';
 import path from 'path';
+import { Model } from 'mongoose';
 import * as MODELS from '@/models';
 import { validateModel } from '@/utils';
 import { candidateQuerySafe } from '@/utils/querySafe';
 import { t, DEFAULT_LANG } from '@/utils/i18n';
 import { CV_UPLOAD_DIR } from '@/middlewares/uploadCV.middleware';
 import { IMAGE_UPLOAD_DIR } from '@/middlewares/uploadImages.middleware';
+import { CrudDocument } from '@/services';
 
 const MODEL = MODELS.Candidate;
 
 // CV section models keyed by candidateId — deleted alongside the
 // candidate document itself so a self-delete doesn't leave orphaned data.
-const CV_SECTION_MODELS: any[] = [
-  MODELS.generalInformation,
-  MODELS.Experience,
-  MODELS.Education,
-  MODELS.Reference,
-  MODELS.Project,
-  MODELS.Certificate,
-  MODELS.Award,
-  MODELS.Application,
-  MODELS.Profile,
+// `Model<CrudDocument>` + a narrow per-entry cast, same justified pattern
+// `type-crud-core`/#181 established for `BaseController.ts`'s
+// `modelObject` — Mongoose's `Model<T>` is invariant, so no concrete
+// model can be assigned to a fixed, differently-parameterized
+// `Model<CrudDocument>` slot without one.
+const CV_SECTION_MODELS: Model<CrudDocument>[] = [
+  MODELS.generalInformation as unknown as Model<CrudDocument>,
+  MODELS.Experience as unknown as Model<CrudDocument>,
+  MODELS.Education as unknown as Model<CrudDocument>,
+  MODELS.Reference as unknown as Model<CrudDocument>,
+  MODELS.Project as unknown as Model<CrudDocument>,
+  MODELS.Certificate as unknown as Model<CrudDocument>,
+  MODELS.Award as unknown as Model<CrudDocument>,
+  MODELS.Application as unknown as Model<CrudDocument>,
+  MODELS.Profile as unknown as Model<CrudDocument>,
 ];
 
 // Only these 3 have an images[] field (issue #72) — same on-disk-file
 // cleanup concern as CV_UPLOAD_DIR below, just spread across N documents
 // instead of one deterministic filename.
-const IMAGE_SECTION_MODELS: any[] = [MODELS.Project, MODELS.Certificate, MODELS.Award];
+const IMAGE_SECTION_MODELS: Model<CrudDocument>[] = [
+  MODELS.Project as unknown as Model<CrudDocument>,
+  MODELS.Certificate as unknown as Model<CrudDocument>,
+  MODELS.Award as unknown as Model<CrudDocument>,
+];
 
 export const handlerGetInformationById = async (id: string, props: { select: string } = { select: '' }) => {
   const { select = '' } = props;
@@ -52,7 +63,7 @@ export const handlerGetInformationByEmail = async (email: string) => {
   return find;
 };
 
-export const handlerUpdate = async (item: Record<string, any>, lang: string = DEFAULT_LANG) => {
+export const handlerUpdate = async (item: Record<string, unknown>, lang: string = DEFAULT_LANG) => {
   /**
    * @return
    *  success: boolean,
@@ -62,7 +73,9 @@ export const handlerUpdate = async (item: Record<string, any>, lang: string = DE
    *
    */
 
-  if (!(await MODEL.findById(item['_id']))) {
+  const id = typeof item['_id'] === 'string' ? item['_id'] : undefined;
+
+  if (!id || !(await MODEL.findById(id))) {
     return { success: false, message: t('common.idNotFound', lang) };
   }
 
@@ -77,13 +90,13 @@ export const handlerUpdate = async (item: Record<string, any>, lang: string = DE
   /**
    * update
    */
-  await MODEL.updateOne({ _id: value['_id'] || '' }, value).exec();
+  await MODEL.updateOne({ _id: id }, value).exec();
 
   /**
    * lấy thông tin vừa update (SAFE SELECT)
    */
   const safeSelect = candidateQuerySafe.whitelistSelect(Object.keys(value));
-  const _find = await handlerGetInformationById(value['_id'], { select: safeSelect });
+  const _find = await handlerGetInformationById(id, { select: safeSelect });
   /**
    * return
    */
@@ -127,8 +140,8 @@ export const handlerDelete = async (_id: string, lang: string = DEFAULT_LANG) =>
   const imageDocsPerModel = await Promise.all(IMAGE_SECTION_MODELS.map((model) => model.find({ candidateId: _id }, { images: 1 })));
   const imageFilenames = imageDocsPerModel
     .flat()
-    .flatMap((doc: any) => doc.images || [])
-    .map((url: string) => path.basename(url));
+    .flatMap((doc) => doc.images || [])
+    .map((url) => path.basename(url));
 
   await Promise.all(CV_SECTION_MODELS.map((model) => model.deleteMany({ candidateId: _id })));
   await MODEL.deleteOne({ _id }).exec();
