@@ -26,6 +26,24 @@ const options: swaggerJsdoc.Options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+          description: 'The JWT access token issued by POST /auth/login (same token as everywhere else in this API), sent as `Authorization: Bearer <token>`. Also accepted via an httpOnly cookie on routes that support it — see each route\'s own description.',
+        },
+        // Same JWT access token as bearerAuth, just read from a query
+        // string field instead of a header — exists ONLY for
+        // GET /api/v1/download-pdf, where a browser-navigated download
+        // (<a href>, new tab, <iframe>) can't attach a custom
+        // Authorization header. Goes through the exact same verifyToken
+        // middleware (blacklist + session-revocation checks included) as
+        // every bearerAuth-only route; it's a different transport for
+        // the same credential, not a weaker one. Caveat: a token in the
+        // URL ends up in server access logs and browser history, which
+        // is why every other authenticated route still requires the
+        // header/cookie instead.
+        queryTokenAuth: {
+          type: 'apiKey',
+          in: 'query',
+          name: 'token',
+          description: 'Same JWT access token as `bearerAuth`, passed as `?token=` instead of an Authorization header — used only by GET /api/v1/download-pdf, for direct-link/browser-navigated downloads that cannot set a custom header. Goes through the identical verifyToken checks (signature, blacklist, session-revocation). Caveat: a token in the URL is exposed in access logs and browser history.',
         },
       },
       parameters: {
