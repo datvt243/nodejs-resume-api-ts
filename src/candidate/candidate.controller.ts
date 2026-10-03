@@ -8,6 +8,7 @@ import path from 'path';
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { formatReturn, validateSchema, handleError } from '@/utils';
+import { AuthenticationError } from '@/errors';
 import { schemaCandidate, schemaCandidatePatch } from '@/candidate/candidate.validate';
 import {
   handlerUpdate,
@@ -27,26 +28,26 @@ export const fnGetInformationById = async (req: Request, res: Response) => {
   const doc = await handlerGetInformationById(id);
 
   const _flag = !!doc;
-  return formatReturn(res, { success: _flag, message: _flag ? '' : t('candidate.userNotFound', (req as any).lang), data: doc });
+  return formatReturn(res, { success: _flag, message: _flag ? '' : t('candidate.userNotFound', req.lang), data: doc });
 };
 
 export const fnGetInformationByEmail = async (req: Request, res: Response) => {
   const { email = '' } = req.params;
   const doc = await handlerGetInformationByEmail(email);
   const _flag = !!doc;
-  return formatReturn(res, { success: _flag, message: _flag ? '' : t('candidate.userNotFound', (req as any).lang), data: doc });
+  return formatReturn(res, { success: _flag, message: _flag ? '' : t('candidate.userNotFound', req.lang), data: doc });
 };
 
 export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * validate data come from req.body
    */
-  const { isValidated, value, errors } = validateSchema({ schema: schemaCandidate, item: { ...req.body }, lang: (req as any).lang });
+  const { isValidated, value, errors } = validateSchema({ schema: schemaCandidate, item: { ...req.body }, lang: req.lang });
   if (!isValidated)
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,
       success: false,
-      message: t('validation.hasErrors', (req as any).lang),
+      message: t('validation.hasErrors', req.lang),
       errors,
     });
 
@@ -57,10 +58,10 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
    * candidate's profile.
    */
   try {
-    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id }, (req as any).lang);
+    const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -70,16 +71,17 @@ export const fnUploadCV = async (req: Request, res: Response, next: NextFunction
    * (PDF only, <= 5 MB) and saved it to disk as `<candidateId>-cv.pdf`
    * before this handler runs — only the DB record is left to write.
    */
-  const file = (req as any).file as Express.Multer.File | undefined;
+  const file = req.file;
   if (!file) {
-    return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('candidate.cvUploadFailed', (req as any).lang) });
+    return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('candidate.cvUploadFailed', req.lang) });
   }
 
   try {
-    const _result = await handlerUploadCV((req as any).user?._id, file.originalname, (req as any).lang);
+    if (!req.user?._id) throw new AuthenticationError();
+    const _result = await handlerUploadCV(req.user._id, file.originalname, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -91,20 +93,21 @@ export const fnDownloadCV = async (req: Request, res: Response, next: NextFuncti
    * static/public URL, so a CV can't be fetched by guessing a path.
    */
   try {
-    const candidateId = (req as any).user?._id;
+    if (!req.user?._id) throw new AuthenticationError();
+    const candidateId = req.user._id;
     const cvFile = await handlerGetCVFile(candidateId);
     if (!cvFile) {
       return formatReturn(res, {
         statusCode: StatusCodes.NOT_FOUND,
         success: false,
-        message: t('candidate.cvFileNotFound', (req as any).lang),
+        message: t('candidate.cvFileNotFound', req.lang),
       });
     }
 
     const filePath = path.join(CV_UPLOAD_DIR, `${candidateId}-cv.pdf`);
     return res.download(filePath, cvFile.originalName || 'CV.pdf');
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -116,27 +119,27 @@ export const fnParseLinkedInExport = async (req: Request, res: Response, next: N
    * parse-and-return (issue #141): the frontend maps the result into its
    * existing create forms for the user to review/edit before saving.
    */
-  const file = (req as any).file as Express.Multer.File | undefined;
+  const file = req.file;
   if (!file) {
     return formatReturn(res, {
       statusCode: StatusCodes.BAD_REQUEST,
       success: false,
-      message: t('linkedinImport.noFileUploaded', (req as any).lang),
+      message: t('linkedinImport.noFileUploaded', req.lang),
     });
   }
 
   try {
     const data = parseLinkedInExportZip(file.buffer);
-    return formatReturn(res, { success: true, message: t('linkedinImport.parseSuccess', (req as any).lang), data });
+    return formatReturn(res, { success: true, message: t('linkedinImport.parseSuccess', req.lang), data });
   } catch (err) {
     if (err instanceof Error && err.message === 'INVALID_ZIP') {
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: t('linkedinImport.invalidZip', (req as any).lang),
+        message: t('linkedinImport.invalidZip', req.lang),
       });
     }
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -147,10 +150,11 @@ export const fnGetVisits = async (req: Request, res: Response, next: NextFunctio
    * one, so a candidate can only ever see their own visit stats.
    */
   try {
-    const _result = await handlerGetVisits((req as any).user?._id, (req as any).lang);
+    if (!req.user?._id) throw new AuthenticationError();
+    const _result = await handlerGetVisits(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -160,10 +164,11 @@ export const fnDelete = async (req: Request, res: Response, next: NextFunction) 
    * client-supplied one (see fnUpdate for the same IDOR-safety pattern).
    */
   try {
-    const _result = await handlerDelete((req as any).user?._id, (req as any).lang);
+    if (!req.user?._id) throw new AuthenticationError();
+    const _result = await handlerDelete(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -174,13 +179,13 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
   const { isValidated, value, errors } = validateSchema({
     schema: schemaCandidatePatch,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated)
     return formatReturn(res, {
       statusCode: StatusCodes.UNAUTHORIZED,
       success: false,
-      message: t('validation.hasErrors', (req as any).lang),
+      message: t('validation.hasErrors', req.lang),
       errors,
     });
 
@@ -188,9 +193,9 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
    * update data — force _id to the authenticated user (see fnUpdate)
    */
   try {
-    const _result = await handlerUpdate({ ...value, _id: (req as any).user?._id }, (req as any).lang);
+    const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };

@@ -2,7 +2,7 @@
 
 Node.js/TypeScript REST API for managing candidate CVs/resumes with auth, PDF export, Redis caching, and Winston logging.
 
-**Version**: 1.7.0 | **Author**: DatVT | **License**: ISC
+**Version**: 1.8.1 | **Author**: DatVT | **License**: ISC
 
 ---
 
@@ -19,6 +19,15 @@ Node.js/TypeScript REST API for managing candidate CVs/resumes with auth, PDF ex
 | PDF | Puppeteer 22.13 + PDFKit 0.15 + Pug 3.0 |
 | Logging | Winston 3.19 + daily-rotate-file |
 | Testing | Jest 29 + ts-jest |
+| Linting | ESLint 9 (flat config, type-aware via `typescript-eslint`) |
+
+TypeScript runs with `strict` plus `noUncheckedIndexedAccess`,
+`noPropertyAccessFromIndexSignature`, `exactOptionalPropertyTypes`,
+`noUnusedLocals`/`noUnusedParameters`, `noImplicitOverride`, and
+`noFallthroughCasesInSwitch` — no `any`, `!` non-null assertions, or
+`@ts-ignore` in `src/` outside test mocks (enforced by
+`eslint.config.mjs`'s `no-explicit-any`/`no-non-null-assertion`/
+`no-unsafe-*` rules, relaxed only for `src/__tests__/**`).
 
 ---
 
@@ -29,6 +38,8 @@ npm run dev          # ts-node + nodemon hot reload
 npm run build        # tsc + copy views/public → dist/
 npm start            # build + NODE_ENV=production node dist/server.js
 npm test             # jest --passWithNoTests
+npm run lint         # eslint .
+npm run lint:fix     # eslint . --fix
 
 npm run env:setup    # cp .env.example .env
 npm run env:dev      # cp .env.development .env
@@ -145,7 +156,7 @@ src/
 │   ├── i18n.ts                # t(key, lang), SUPPORTED_LANGS, DEFAULT_LANG (vi/en)
 │   ├── emailVerification.ts   # Email-verification token issue/check (stub, logged not emailed)
 │   ├── passwordReset.ts       # Forgot/reset-password token issue/check (stub, logged not emailed)
-│   ├── helper.ts              # asyncHandler, throwError, formatReturn, response helpers
+│   ├── helper.ts              # handleError, formatReturn, formatResponse, getSelectFields
 │   ├── helper-auth.ts         # extractTokenFromRequest()/extractTokenWithSource() (header/body/query/cookie)
 │   ├── valid.ts               # validateSchema() (Joi), validateModel() (Mongoose)
 │   ├── querySafe.ts           # QuerySafe: blocks $ and javascript: to prevent NoSQL injection
@@ -155,11 +166,10 @@ src/
 │   └── index.ts               # AppError hierarchy (see Errors section)
 ├── types/
 │   ├── base.type.ts           # BaseReturn interface, Collections enum
-│   ├── candidate.type.ts      # Types for PDF rendering
+│   ├── candidate.type.ts      # AggregatedCandidateData + section data types, shared by PDF/DOCX export
 │   └── express.d.ts           # Extends Express Request: user?: { _id: string }
 ├── logger/                    # Winston setup: console + combined + error logs; JSON in prod
 ├── constant/                  # App-wide constants
-├── plugins/joi/               # Custom Joi plugins
 ├── views/                     # Pug templates for PDF
 └── public/                    # Static assets + generated PDFs
 ```
@@ -234,7 +244,10 @@ Sections: `education`, `experience`, `award`, `certificate`, `project`, `referen
 `generalInformation` also has `PATCH /update`. `profile` (see `profile.model.ts`)
 holds named subsets of the other sections' ids for tailoring a public share
 link; `GET /` synthesizes a default "Tổng hợp" (All) profile on first read if
-the candidate has none yet (`ensureDefaultProfile`).
+the candidate has none yet (`ensureDefaultProfile`). `education` and
+`experience` also have `POST /bulk` (`{ items: [...] }`, up to 100 items,
+best-effort — each item validated/created independently via the same
+`fnBulkCreate` path as `/create`; response `data: { results, summary }`).
 
 ### Other
 
@@ -352,16 +365,22 @@ npm test                         # run all tests
 | auth/auth.service.test.ts | register, login, email check (mocks: CandidateModel, bcrypt, JWT) |
 | auth/auth.controller.test.ts | controller layer |
 | auth/refreshToken.test.ts | token rotation |
+| auth/tokenExpiry.test.ts | real `jwtSign`/`jwtVerify` — access vs refresh `TOKEN_EXP_IN`/`TOKEN_REFRESH_EXP_IN` wiring |
+| auth/v2AuthRoute.test.ts | v2 auth route wiring (register/login only) |
 | candidate/candidate.controller.test.ts | candidate controller (upload/download CV, visits, etc.) |
+| candidate/candidate.service.test.ts | password field exclusion + `handlerDelete` cascade/file cleanup |
 | candidate/parseLinkedInExport.service.test.ts | LinkedIn export ZIP/CSV parsing |
 | candidate_me/index.test.ts | public profile aggregation, visit recording, export |
 | candidate_profile/BaseController.test.ts | shared getAll/delete/restore/upload-images controller |
+| candidate_profile/BaseService.test.ts | `createCrudService().handlerCreate` real CV-section create flow |
 | candidate_profile/profile.service.test.ts | CV profile CRUD + default-profile synthesis |
 | config/cors.config.test.ts | CORS allow-list behavior |
 | middlewares/verifyToken.test.ts | token extraction + blacklist + session-revocation + CSRF check |
 | middlewares/csrf.test.ts | CSRF middleware |
 | middlewares/rateLimit.test.ts | rate limiting logic |
 | middlewares/requestLogger.test.ts | request logging |
+| middlewares/language.test.ts | `Accept-Language` → `req.lang`/`req.t()` resolution |
+| services/baseCreateDocument.test.ts | `hookAfterSave` propagation on create |
 | services/baseFindDocument.test.ts | query/pagination/sort |
 | services/baseSoftDelete.test.ts | soft-delete behavior |
 | services/baseUpdatePatchSoftDelete.test.ts | update/patch interaction with soft-delete |
@@ -372,6 +391,7 @@ npm test                         # run all tests
 | utils/bcrypt.test.ts | hash + compare |
 | utils/valid.test.ts | Joi + Mongoose validation |
 | utils/helper.test.ts | response/format helpers |
+| utils/i18n.test.ts | `t()`/`tErrorType()` lookup, `SUPPORTED_LANGS`/`DEFAULT_LANG` |
 | database/mongo.db.ts | DB connection |
 
 ---

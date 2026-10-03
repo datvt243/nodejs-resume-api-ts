@@ -28,6 +28,17 @@ real instead of assumed. Still writes an evidence note; see
 `.claude/skills/worker/SKILL.md` and `.claude/skills/todo/SKILL.md` for the
 dispatch mechanics.
 
+**Scoping a multi-phase, measured-by-count initiative** (lint rules, type
+coverage, dependency upgrades, security findings — anything framed as "N
+problems to fix") is a special case of the default loop: before writing
+the first phase description, measure exhaustively (`--format json` or
+equivalent, grouped by rule/category AND file) — never by grep sampling
+or a single un-decomposed total. After the LAST phase, re-run that SAME
+full measurement and diff the before/after counts, instead of trusting
+each phase's own narrower `tsc`/test/build check to stand in for the
+initiative's own stated goal. See `doctrine/standards/initiative-scoping.md`
+(the #177→#204 case study that made this a rule).
+
 ## Forbidden states (Cost = KILL — stop immediately, don't self-continue)
 | State | Means |
 |---|---|

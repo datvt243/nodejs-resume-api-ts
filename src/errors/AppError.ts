@@ -28,12 +28,21 @@ export enum ErrorCode {
 }
 
 /**
+ * The real shapes `errors` is constructed with across the codebase: a
+ * single message (e.g. a Mongoose CastError's `.message`), a list of
+ * per-field translated messages (Joi/Mongoose validation, one string per
+ * failing field), a field-name-keyed map (`formatValidateError`'s return
+ * shape), or absent entirely.
+ */
+export type AppErrorDetails = string | string[] | Record<string, string> | null | undefined;
+
+/**
  * Interface for error constructor options
  */
 export interface IErrorOptions {
   message?: string;
   errorCode?: ErrorCode;
-  errors?: any;
+  errors?: AppErrorDetails;
 }
 
 /**
@@ -48,19 +57,19 @@ export interface IErrorOptionsWithStatus extends IErrorOptions {
  */
 export class AppError extends Error {
   public readonly statusCode: number;
-  public readonly message: string;
+  public override readonly message: string;
   public readonly errorCode: ErrorCode;
   public readonly isOperational: boolean;
-  public readonly errors?: any;
+  public readonly errors?: AppErrorDetails;
 
   constructor(options: IErrorOptionsWithStatus);
-  constructor(message: string, statusCode?: number, errorCode?: ErrorCode, errors?: any);
-  constructor(messageOrOptions: string | IErrorOptionsWithStatus, statusCode?: number, errorCode?: ErrorCode, errors?: any) {
+  constructor(message: string, statusCode?: number, errorCode?: ErrorCode, errors?: AppErrorDetails);
+  constructor(messageOrOptions: string | IErrorOptionsWithStatus, statusCode?: number, errorCode?: ErrorCode, errors?: AppErrorDetails) {
     // Handle constructor overloading
     let message: string;
     let finalStatusCode: number;
     let finalErrorCode: ErrorCode;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       // Called with options object: new AppError({ message, errorCode, errors })
@@ -95,10 +104,10 @@ export class AppError extends Error {
  */
 export class ValidationError extends AppError {
   constructor(options?: IErrorOptions);
-  constructor(message?: string, errors?: any);
-  constructor(messageOrOptions?: string | IErrorOptions, errors?: any) {
+  constructor(message?: string, errors?: AppErrorDetails);
+  constructor(messageOrOptions?: string | IErrorOptions, errors?: AppErrorDetails) {
     let message: string;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       message = messageOrOptions?.message || 'Validation failed';
@@ -117,11 +126,11 @@ export class ValidationError extends AppError {
  */
 export class AuthenticationError extends AppError {
   constructor(options?: IErrorOptions);
-  constructor(message?: string, errorCode?: ErrorCode, errors?: any);
-  constructor(messageOrOptions?: string | IErrorOptions, errorCode?: ErrorCode, errors?: any) {
+  constructor(message?: string, errorCode?: ErrorCode, errors?: AppErrorDetails);
+  constructor(messageOrOptions?: string | IErrorOptions, errorCode?: ErrorCode, errors?: AppErrorDetails) {
     let message: string;
     let finalErrorCode: ErrorCode;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       message = messageOrOptions?.message || 'Authentication failed';
@@ -142,11 +151,11 @@ export class AuthenticationError extends AppError {
  */
 export class AuthorizationError extends AppError {
   constructor(options?: IErrorOptions);
-  constructor(message?: string, errorCode?: ErrorCode, errors?: any);
-  constructor(messageOrOptions?: string | IErrorOptions, errorCode?: ErrorCode, errors?: any) {
+  constructor(message?: string, errorCode?: ErrorCode, errors?: AppErrorDetails);
+  constructor(messageOrOptions?: string | IErrorOptions, errorCode?: ErrorCode, errors?: AppErrorDetails) {
     let message: string;
     let finalErrorCode: ErrorCode;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       message = messageOrOptions?.message || 'Access denied';
@@ -167,10 +176,10 @@ export class AuthorizationError extends AppError {
  */
 export class NotFoundError extends AppError {
   constructor(options?: IErrorOptions);
-  constructor(message?: string, errors?: any);
-  constructor(messageOrOptions?: string | IErrorOptions, errors?: any) {
+  constructor(message?: string, errors?: AppErrorDetails);
+  constructor(messageOrOptions?: string | IErrorOptions, errors?: AppErrorDetails) {
     let message: string;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       message = messageOrOptions?.message || 'Resource not found';
@@ -189,10 +198,10 @@ export class NotFoundError extends AppError {
  */
 export class ConflictError extends AppError {
   constructor(options?: IErrorOptions);
-  constructor(message?: string, errors?: any);
-  constructor(messageOrOptions?: string | IErrorOptions, errors?: any) {
+  constructor(message?: string, errors?: AppErrorDetails);
+  constructor(messageOrOptions?: string | IErrorOptions, errors?: AppErrorDetails) {
     let message: string;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       message = messageOrOptions?.message || 'Resource already exists';
@@ -211,10 +220,10 @@ export class ConflictError extends AppError {
  */
 export class BadRequestError extends AppError {
   constructor(options?: IErrorOptions);
-  constructor(message?: string, errors?: any);
-  constructor(messageOrOptions?: string | IErrorOptions, errors?: any) {
+  constructor(message?: string, errors?: AppErrorDetails);
+  constructor(messageOrOptions?: string | IErrorOptions, errors?: AppErrorDetails) {
     let message: string;
-    let finalErrors: any;
+    let finalErrors: AppErrorDetails;
 
     if (typeof messageOrOptions === 'object') {
       message = messageOrOptions?.message || 'Bad request';

@@ -17,16 +17,22 @@ const VALIDATE_SCHEMA_PATCH = schemaGeneralInformationPatch;
 export const fnGet = async (req: Request, res: Response, next: NextFunction) => {
   const candidateId = req.body.candidateId || '';
   if (!candidateId)
-    return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: t('common.notFoundData', (req as any).lang) });
+    return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: t('common.notFoundData', req.lang) });
   try {
-    const _resultRaw = await handlerGet(candidateId, (req as any).lang);
+    const _resultRaw = await handlerGet(candidateId, req.lang);
 
     if (!_resultRaw.success) {
       return formatReturn(res, _resultRaw);
     }
 
     // information trả về 1 object or null
-    const rawData = (_resultRaw as any).data;
+    // `_resultRaw`'s inferred type isn't a true discriminated union (neither
+    // branch's `success` is a literal type), so the `!_resultRaw.success`
+    // guard above doesn't narrow away `handlerGet`'s error-path shape (which
+    // has no `data` field at all) — see `fix-utils-real-any-casts`/#180's
+    // evidence note. Narrowing properly here instead of casting; a full fix
+    // belongs to `type-crud-core`/#181 (BaseService.ts's return shapes).
+    const rawData = 'data' in _resultRaw ? _resultRaw.data : undefined;
     const data = Array.isArray(rawData) ? (rawData.length ? rawData[0] : {}) : rawData;
 
     return formatReturn(res, {
@@ -35,7 +41,7 @@ export const fnGet = async (req: Request, res: Response, next: NextFunction) => 
       data,
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -46,7 +52,7 @@ export const fnCreate = async (req: Request, res: Response, next: NextFunction) 
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: VALIDATE_SCHEMA,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) return formatReturn(res, { success: false, message, errors });
 
@@ -54,10 +60,10 @@ export const fnCreate = async (req: Request, res: Response, next: NextFunction) 
    * save mới document
    */
   try {
-    const _result = await handlerCreate(value, (req as any).lang);
+    const _result = await handlerCreate(value, req.lang);
     return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -68,7 +74,7 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
   const { isValidated, value, errors, message } = validateSchema({
     schema: req.method === 'PUT' ? VALIDATE_SCHEMA : VALIDATE_SCHEMA_PATCH,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message, errors });
 
@@ -77,10 +83,10 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
    */
 
   try {
-    const _result = await handlerUpdate(value, (req as any).user?._id, (req as any).lang);
+    const _result = await handlerUpdate(value, req.user?._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -91,7 +97,7 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
   const { isValidated, value, errors, message } = validateSchema({
     schema: VALIDATE_SCHEMA_PATCH,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message, errors });
 
@@ -100,9 +106,9 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
    */
 
   try {
-    const _result = await handlerUpdate(value, (req as any).user?._id, (req as any).lang);
+    const _result = await handlerUpdate(value, req.user?._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };

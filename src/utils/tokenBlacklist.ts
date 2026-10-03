@@ -21,12 +21,12 @@ const _cleanup = setInterval(() => {
   }
 }, 60 * 1000);
 // do not keep node process alive for tests
-if (typeof (_cleanup as any).unref === 'function') (_cleanup as any).unref();
+_cleanup.unref();
 
 export const addToBlacklist = async (token: string): Promise<boolean> => {
   try {
-    const decoded = jwt.decode(token) as any;
-    const exp = decoded?.exp as number | undefined;
+    const decoded = jwt.decode(token);
+    const exp = decoded && typeof decoded === 'object' ? decoded.exp : undefined;
     const expiresAt = exp || Math.floor(Date.now() / 1000) + 60 * 60; // default 1h
     const ttl = Math.max(expiresAt - Math.floor(Date.now() / 1000), 0);
 

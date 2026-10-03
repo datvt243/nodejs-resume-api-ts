@@ -14,21 +14,21 @@
  */
 
 describe('access vs refresh token expiry — real TOKEN_EXP_IN/TOKEN_REFRESH_EXP_IN wiring (issue #155)', () => {
-  const ORIGINAL_EXP_IN = process.env.TOKEN_EXP_IN;
-  const ORIGINAL_REFRESH_EXP_IN = process.env.TOKEN_REFRESH_EXP_IN;
+  const ORIGINAL_EXP_IN = process.env['TOKEN_EXP_IN'];
+  const ORIGINAL_REFRESH_EXP_IN = process.env['TOKEN_REFRESH_EXP_IN'];
 
   afterEach(() => {
-    if (ORIGINAL_EXP_IN === undefined) delete process.env.TOKEN_EXP_IN;
-    else process.env.TOKEN_EXP_IN = ORIGINAL_EXP_IN;
-    if (ORIGINAL_REFRESH_EXP_IN === undefined) delete process.env.TOKEN_REFRESH_EXP_IN;
-    else process.env.TOKEN_REFRESH_EXP_IN = ORIGINAL_REFRESH_EXP_IN;
+    if (ORIGINAL_EXP_IN === undefined) delete process.env['TOKEN_EXP_IN'];
+    else process.env['TOKEN_EXP_IN'] = ORIGINAL_EXP_IN;
+    if (ORIGINAL_REFRESH_EXP_IN === undefined) delete process.env['TOKEN_REFRESH_EXP_IN'];
+    else process.env['TOKEN_REFRESH_EXP_IN'] = ORIGINAL_REFRESH_EXP_IN;
     jest.resetModules();
   });
 
   it('signs the access token per TOKEN_EXP_IN and the refresh token per a distinct, longer TOKEN_REFRESH_EXP_IN', () => {
     jest.resetModules();
-    process.env.TOKEN_EXP_IN = '2h';
-    process.env.TOKEN_REFRESH_EXP_IN = '14d';
+    process.env['TOKEN_EXP_IN'] = '2h';
+    process.env['TOKEN_REFRESH_EXP_IN'] = '14d';
 
     // Re-require AFTER setting env vars, so config picks up the new values
     // (process.config.ts reads process.env at module-load time).
@@ -53,8 +53,8 @@ describe('access vs refresh token expiry — real TOKEN_EXP_IN/TOKEN_REFRESH_EXP
 
   it('falls back to a 1h access token when TOKEN_EXP_IN is unset (regression check on the || \'1h\' default)', () => {
     jest.resetModules();
-    delete process.env.TOKEN_EXP_IN;
-    process.env.TOKEN_REFRESH_EXP_IN = '7d';
+    delete process.env['TOKEN_EXP_IN'];
+    process.env['TOKEN_REFRESH_EXP_IN'] = '7d';
 
     const { jwtSign, jwtVerify } = require('@/utils/jwt');
     const { TOKEN_SECRET, TOKEN_EXP_IN } = require('@/config/process.config');
@@ -67,7 +67,7 @@ describe('access vs refresh token expiry — real TOKEN_EXP_IN/TOKEN_REFRESH_EXP
 
   it('TOKEN_REFRESH_EXP_IN itself defaults to 7d when unset (existing default, regression check)', () => {
     jest.resetModules();
-    delete process.env.TOKEN_REFRESH_EXP_IN;
+    delete process.env['TOKEN_REFRESH_EXP_IN'];
 
     const { TOKEN_REFRESH_EXP_IN } = require('@/config/process.config');
 

@@ -13,10 +13,17 @@ export const SUPPORTED_LANGS = ['vi', 'en'] as const;
 export type SupportedLang = (typeof SUPPORTED_LANGS)[number];
 export const DEFAULT_LANG: SupportedLang = 'vi';
 
-const locales: Record<SupportedLang, Record<string, any>> = { vi, en };
+const locales: Record<SupportedLang, Record<string, unknown>> = { vi, en };
 
-const getNested = (obj: Record<string, any> | undefined, path: string): string | undefined => {
-  return path.split('.').reduce<any>((acc, part) => (acc && typeof acc === 'object' ? acc[part] : undefined), obj);
+const getNested = (obj: Record<string, unknown> | undefined, path: string): string | undefined => {
+  const result = path.split('.').reduce<unknown>((acc, part) => {
+    // Narrowed to `object` by the typeof guard, but `object` itself has
+    // no index signature — the cast just lets us read the next level of
+    // a genuinely arbitrary-depth nested locale structure.
+    if (acc && typeof acc === 'object') return (acc as Record<string, unknown>)[part];
+    return undefined;
+  }, obj);
+  return typeof result === 'string' ? result : undefined;
 };
 
 /**
@@ -44,5 +51,10 @@ export const t = (key: string, lang: string = DEFAULT_LANG): string => {
  * distinguish "no template for this error type" from a real translation.
  */
 export const tErrorType = (type: string, lang: string = DEFAULT_LANG): string | undefined => {
-  return locales[lang as SupportedLang]?.joiErrors?.[type] ?? locales[DEFAULT_LANG]?.joiErrors?.[type];
+  const lookup = (localeKey: SupportedLang): string | undefined => {
+    const joiErrors = locales[localeKey]?.['joiErrors'];
+    const value = joiErrors && typeof joiErrors === 'object' ? (joiErrors as Record<string, unknown>)[type] : undefined;
+    return typeof value === 'string' ? value : undefined;
+  };
+  return lookup(lang as SupportedLang) ?? lookup(DEFAULT_LANG);
 };

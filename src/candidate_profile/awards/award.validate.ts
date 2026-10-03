@@ -4,7 +4,6 @@
  * Description:
  */
 
-// @ts-ignore
 import Joi from 'joi';
 import { _id, _arrayString, candidateId, _stringDefault, description } from '@/config/joi.config';
 

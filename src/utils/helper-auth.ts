@@ -10,16 +10,17 @@ export type TokenSource = 'header' | 'body' | 'query' | 'cookie' | null;
  * explicit body/query value can't be forged onto the browser's behalf the
  * way an auto-attached cookie can.
  */
-export const extractTokenWithSource = (req: any, fieldName = 'token'): { token: string | null; source: TokenSource } => {
+export const extractTokenWithSource = (req: Request, fieldName = 'token'): { token: string | null; source: TokenSource } => {
   const authHeader = req.header('Authorization') || req.header('authorization') || '';
   if (authHeader) {
     const parts = authHeader.split(' ');
-    if (parts.length === 2 && /bearer/i.test(parts[0])) return { token: parts[1].trim(), source: 'header' };
+    const [scheme, value] = parts;
+    if (parts.length === 2 && scheme !== undefined && value !== undefined && /bearer/i.test(scheme)) return { token: value.trim(), source: 'header' };
     return { token: authHeader.trim(), source: 'header' };
   }
 
   if (req.body && req.body[fieldName]) return { token: String(req.body[fieldName]), source: 'body' };
-  if (req.query && (req.query as any)[fieldName]) return { token: String((req.query as any)[fieldName]), source: 'query' };
+  if (req.query && req.query[fieldName]) return { token: String(req.query[fieldName]), source: 'query' };
   if (req.cookies && req.cookies[fieldName]) return { token: req.cookies[fieldName], source: 'cookie' };
 
   return { token: null, source: null };
@@ -28,7 +29,7 @@ export const extractTokenWithSource = (req: any, fieldName = 'token'): { token: 
 /**
  * Extract a token out of various request locations.
  *
- * @param req Express request (any type accepted for flexibility)
+ * @param req Express request
  * @param fieldName field to look for in body/query/cookies (defaults to "token")
  */
-export const extractTokenFromRequest = (req: any, fieldName = 'token'): string | null => extractTokenWithSource(req, fieldName).token;
+export const extractTokenFromRequest = (req: Request, fieldName = 'token'): string | null => extractTokenWithSource(req, fieldName).token;

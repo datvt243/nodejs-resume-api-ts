@@ -4,7 +4,7 @@
  * Description: JWT Token verification middleware
  */
 import { Request, Response, NextFunction } from 'express';
-import { StatusCodes } from 'http-status-codes';
+import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '@/config/process.config';
 import { jwtVerify } from '@/utils/jwt';
 import { isBlacklisted } from '@/utils/tokenBlacklist';
@@ -14,7 +14,7 @@ import { ErrorCode, TokenExpiredError, TokenRevokedError, InvalidTokenError, Aut
 import { extractTokenWithSource } from '@/utils/helper-auth';
 import { requiresCsrfCheck, isCsrfTokenValid } from '@/utils/csrf';
 
-export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyToken = async (req: Request, _res: Response, next: NextFunction) => {
   const { token, source } = extractTokenWithSource(req);
 
   if (!token) {
@@ -58,15 +58,21 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     // trusts req.body.candidateId as the acting user, so leaving it
     // client-controlled let any authenticated user read/write/delete any
     // other user's data by supplying a different candidateId in the body.
-    (req as any).user = { _id };
+    req.user = { _id };
     if (!req.body || typeof req.body !== 'object') req.body = {};
-    req.body.candidateId = _id;
+    // Express's own `Request.body` type is `any` by design (its real
+    // shape depends entirely on which body-parser ran) — narrow cast
+    // justified here since this line is the one place establishing the
+    // `candidateId` key on it for every downstream handler.
+    (req.body as Record<string, unknown>)['candidateId'] = _id;
     return next();
-  } catch (err: any) {
-    if (err?.name === 'TokenExpiredError' || err?.name === 'JsonWebTokenError') {
+  } catch (err) {
+    // jsonwebtoken's own real exported error classes, replacing a
+    // duck-typed `err?.name === 'X'` check.
+    if (err instanceof jwt.TokenExpiredError || err instanceof jwt.JsonWebTokenError) {
       return next(new TokenExpiredError('Token expired.'));
     }
-    return next(new InvalidTokenError(err?.message || 'Invalid token.'));
+    return next(new InvalidTokenError(err instanceof Error ? err.message : 'Invalid token.'));
   }
 };
 

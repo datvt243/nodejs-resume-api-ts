@@ -2,7 +2,7 @@
 
 Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứng viên (CV/Resume)** với **JWT (cookie + Bearer)**, **CSRF protection**, **Redis rate limiting**, **token blacklist**, **CV profiles (multi-version)**, **job application tracker**, **LinkedIn export import**, **PDF/DOCX export**, **i18n (vi/en)**, **Winston logging**, và **Jest testing**.
 
-**Version**: 1.7.0 | **Author**: DatVT | **License**: ISC
+**Version**: 1.8.1 | **Author**: DatVT | **License**: ISC
 
 ---
 
@@ -33,7 +33,8 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 | --------- | -------------------------- |
 | Runtime   | Node.js `>=20.19.0 <23.0.0`|
 | Framework | Express 4.19.2             |
-| Language  | TypeScript 5.5.4           |
+| Language  | TypeScript 5.5.4 (strict + `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, etc.) |
+| Linting   | ESLint 9 (flat config, type-aware) |
 
 ### Database & Cache
 
@@ -188,7 +189,8 @@ in-memory store when `REDIS_URL` is unset.
 
 `generalInformation` also has `PATCH /update`. `profile` also synthesizes
 a default "Tổng hợp" (All) profile on first `GET /` if the candidate has
-none yet.
+none yet. `education`/`experience` also have `POST /bulk` for a
+best-effort bulk create (up to 100 items per request).
 
 **Header**: `Authorization: Bearer <token>` (or httpOnly JWT cookie)
 
@@ -222,8 +224,9 @@ none yet.
 - `npm run dev` - Hot reload
 - `npm run build` - Compile + copy assets
 - `npm run test` - Jest
+- `npm run lint` - ESLint (type-aware)
 
-**Tests (~20 files)**: auth.service/controller, middlewares (rateLimit/logger/verify), utils (bcrypt/valid), database/mongo
+**Tests (31 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language), utils (bcrypt/valid/i18n/csrf), database/mongo
 
 ---
 

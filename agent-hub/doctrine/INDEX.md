@@ -11,6 +11,7 @@
 | `domains/PROJECT.md` | Project-specific ground truth | Before implementing |
 | `standards/edit-verification.md` | Rule: never claim what you haven't observed | Before reporting "done" |
 | `standards/recipes.md` | What a recipe is, when to write one | When repeating a procedure a second time |
+| `standards/initiative-scoping.md` | Rule: measure exhaustively by rule+file before/after a multi-phase count-based initiative | Before carving up any "clean up X across the codebase" effort into phases |
 
 ## The three kinds of knowledge here
 | Kind | Home | Example |

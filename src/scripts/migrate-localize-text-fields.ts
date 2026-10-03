@@ -18,24 +18,32 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import { Model } from 'mongoose';
 import connectMongo, { MongoDBConnection } from '@/database/mongo.db';
 import * as MODELS from '@/models';
+import { CrudDocument } from '@/services';
 
 // { model, field } pairs — matches the scope decided for issue #79:
 // only free-text description/introduction-style fields, never
 // proper-noun/label fields (school, company, position title, etc).
-const TARGETS: { name: string; model: any; field: string }[] = [
-  { name: 'Candidate.introduction', model: MODELS.Candidate, field: 'introduction' },
-  { name: 'Education.description', model: MODELS.Education, field: 'description' },
-  { name: 'Experience.description', model: MODELS.Experience, field: 'description' },
-  { name: 'Award.description', model: MODELS.Award, field: 'description' },
-  { name: 'Certificate.description', model: MODELS.Certificate, field: 'description' },
-  { name: 'Project.description', model: MODELS.Project, field: 'description' },
-  { name: 'generalInformation.career', model: MODELS.generalInformation, field: 'career' },
-  { name: 'generalInformation.careerGoal', model: MODELS.generalInformation, field: 'careerGoal' },
+// `Model<CrudDocument>` + a narrow, justified cast per entry — same
+// Mongoose `Model<T>` invariance pattern `type-crud-core`/#181
+// established. `CrudDocument`'s own fields are irrelevant here (this
+// script only ever calls `.updateMany()` with raw field-name strings,
+// never typed field access), it's just the minimal real `Model<T>`
+// shape available to reuse instead of a one-off local interface.
+const TARGETS: { name: string; model: Model<CrudDocument>; field: string }[] = [
+  { name: 'Candidate.introduction', model: MODELS.Candidate as unknown as Model<CrudDocument>, field: 'introduction' },
+  { name: 'Education.description', model: MODELS.Education as unknown as Model<CrudDocument>, field: 'description' },
+  { name: 'Experience.description', model: MODELS.Experience as unknown as Model<CrudDocument>, field: 'description' },
+  { name: 'Award.description', model: MODELS.Award as unknown as Model<CrudDocument>, field: 'description' },
+  { name: 'Certificate.description', model: MODELS.Certificate as unknown as Model<CrudDocument>, field: 'description' },
+  { name: 'Project.description', model: MODELS.Project as unknown as Model<CrudDocument>, field: 'description' },
+  { name: 'generalInformation.career', model: MODELS.generalInformation as unknown as Model<CrudDocument>, field: 'career' },
+  { name: 'generalInformation.careerGoal', model: MODELS.generalInformation as unknown as Model<CrudDocument>, field: 'careerGoal' },
 ];
 
-const migrateField = async (model: any, field: string) => {
+const migrateField = async (model: Model<CrudDocument>, field: string) => {
   const result = await model.updateMany({ $expr: { $eq: [{ $type: `$${field}` }, 'string'] } }, [
     { $set: { [field]: { vi: `$${field}`, en: '' } } },
   ]);

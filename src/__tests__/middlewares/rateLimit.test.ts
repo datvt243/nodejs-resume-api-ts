@@ -7,13 +7,18 @@ jest.mock('@/services/redis', () => ({
 }));
 
 describe('rateLimit middleware (in-memory)', () => {
-  const makeReq = (ip: string = '1.2.3.4', path: string = '/test', user?: { id: string }) =>
+  const makeReq = (ip: string = '1.2.3.4', path: string = '/test', user?: { _id: string }) =>
     ({
       ip,
       socket: { remoteAddress: ip },
       path,
       user,
-    }) as Request;
+      // `exactOptionalPropertyTypes` (issue #189): this mock's inferred
+      // shape now carries an explicit `user: ... | undefined`, which no
+      // longer "sufficiently overlaps" `Request` for a direct `as` cast
+      // (TS's own suggested fix) — through `unknown` first, same as
+      // every other fake-request mock in this test suite.
+    }) as unknown as Request;
 
   const makeRes = () =>
     ({
@@ -52,11 +57,11 @@ describe('rateLimit middleware (in-memory)', () => {
     const limiter = createRateLimiter({ max: 1, windowMs: 60 * 60 * 1000, keyPrefix: 'test-rl' });
     const res = makeRes();
 
-    const req1 = makeReq('a', undefined, { id: 'user1' });
+    const req1 = makeReq('a', undefined, { _id: 'user1' });
     await limiter(req1, res, next);
     expect(next).toHaveBeenCalledTimes(1);
 
-    const req2 = makeReq('a', undefined, { id: 'user2' });
+    const req2 = makeReq('a', undefined, { _id: 'user2' });
     await limiter(req2, res, next);
     expect(next).toHaveBeenCalledTimes(2); // Different userId
 

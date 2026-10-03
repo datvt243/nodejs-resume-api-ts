@@ -1,8 +1,10 @@
 /**
  * Tests for candidate_profile/BaseController.ts's baseGetAll — specifically
- * the page/limit/sort query-string parsing added for issue #73.
+ * the page/limit/sort query-string parsing added for issue #73. Also covers
+ * createCrudController's fnBulkCreate (issue #161).
  */
-import { baseGetAll } from '@/candidate_profile/BaseController';
+import Joi from 'joi';
+import { baseGetAll, createCrudController } from '@/candidate_profile/BaseController';
 import * as services from '@/services';
 
 jest.mock('@/services');
@@ -53,5 +55,89 @@ describe('baseGetAll', () => {
     await baseGetAll(req, res, next);
 
     expect(mockedBaseFindDocument).toHaveBeenCalledWith(expect.objectContaining({ sort: '-startDate' }));
+  });
+});
+
+describe('createCrudController -> fnBulkCreate (issue #161)', () => {
+  const schema = Joi.object({
+    _id: Joi.string().optional(),
+    name: Joi.string().min(2).required(),
+    candidateId: Joi.string().required(),
+  });
+
+  function createBulkMocks(body: Record<string, any>, userId = 'user-1') {
+    const req: any = { body, user: { _id: userId }, lang: 'en' };
+    const json = jest.fn();
+    const res: any = { status: jest.fn().mockReturnValue({ json }), json };
+    const next = jest.fn();
+    return { req, res, next, json };
+  }
+
+  it('rejects with 400 when items is missing or not an array', async () => {
+    const handlerCreate = jest.fn();
+    const { fnBulkCreate } = createCrudController({ schema, service: { handlerCreate, handlerUpdate: jest.fn() } });
+    const { req, res, next, json } = createBulkMocks({});
+
+    await fnBulkCreate(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+    expect(handlerCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects with 400 when items exceeds the 100-item cap', async () => {
+    const handlerCreate = jest.fn();
+    const { fnBulkCreate } = createCrudController({ schema, service: { handlerCreate, handlerUpdate: jest.fn() } });
+    const items = Array.from({ length: 101 }, (_, i) => ({ name: `item-${i}` }));
+    const { req, res, next } = createBulkMocks({ items });
+
+    await fnBulkCreate(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(handlerCreate).not.toHaveBeenCalled();
+  });
+
+  it('forces candidateId from the authenticated user onto every item, ignoring a client-supplied value (IDOR-safe)', async () => {
+    const handlerCreate = jest.fn().mockResolvedValue({ success: true, message: 'ok', data: { _id: 'new1' } });
+    const { fnBulkCreate } = createCrudController({ schema, service: { handlerCreate, handlerUpdate: jest.fn() } });
+    const { req, res, next } = createBulkMocks({ items: [{ name: 'Valid Name', candidateId: 'someone-elses-id' }] }, 'real-user');
+
+    await fnBulkCreate(req, res, next);
+
+    expect(handlerCreate).toHaveBeenCalledWith(expect.objectContaining({ candidateId: 'real-user' }), 'en');
+  });
+
+  it('is best-effort: one invalid item does not block the others, and results/summary are still returned on partial failure', async () => {
+    const handlerCreate = jest.fn().mockResolvedValue({ success: true, message: 'ok', data: { _id: 'created' } });
+    const { fnBulkCreate } = createCrudController({ schema, service: { handlerCreate, handlerUpdate: jest.fn() } });
+    const items = [{ name: 'Valid Name' }, { name: 'x' }]; // 'x' fails min(2)
+    const { req, res, next, json } = createBulkMocks({ items });
+
+    await fnBulkCreate(req, res, next);
+
+    expect(handlerCreate).toHaveBeenCalledTimes(1); // only the valid item reaches the service
+    expect(res.status).toHaveBeenCalledWith(201);
+    const payload = json.mock.calls[0][0];
+    // Envelope success stays true on partial failure so `data` isn't nulled
+    // out by formatResponse() (utils/helper.ts) — see the comment on
+    // fnBulkCreate itself for why.
+    expect(payload.success).toBe(true);
+    expect(payload.data.summary).toEqual({ total: 2, succeeded: 1, failed: 1 });
+    expect(payload.data.results[0]).toEqual(expect.objectContaining({ index: 0, success: true }));
+    expect(payload.data.results[1]).toEqual(expect.objectContaining({ index: 1, success: false }));
+  });
+
+  it('reports summary.failed: 0 when every item succeeds', async () => {
+    const handlerCreate = jest.fn().mockResolvedValue({ success: true, message: 'ok', data: { _id: 'created' } });
+    const { fnBulkCreate } = createCrudController({ schema, service: { handlerCreate, handlerUpdate: jest.fn() } });
+    const items = [{ name: 'Alpha' }, { name: 'Beta' }];
+    const { req, res, next, json } = createBulkMocks({ items });
+
+    await fnBulkCreate(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    const payload = json.mock.calls[0][0];
+    expect(payload.success).toBe(true);
+    expect(payload.data.summary).toEqual({ total: 2, succeeded: 2, failed: 0 });
   });
 });

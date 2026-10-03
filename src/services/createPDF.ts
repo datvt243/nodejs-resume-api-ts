@@ -4,7 +4,20 @@ import puppeteer from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
 import { Response } from 'express';
-import { informationPersonal, Skill, Item, Language, Reference, Certificate, Award } from '@/types/candidate.type';
+import {
+  informationPersonal,
+  Skill,
+  Item,
+  Language,
+  Reference,
+  Certificate,
+  Award,
+  AggregatedCandidateData,
+  GeneralInformationData,
+  EducationData,
+  ExperienceData,
+  ProjectData,
+} from '@/types/candidate.type';
 
 // Anchored to __dirname, not a bare relative literal — resolves to
 // `src/public/pdf/` when running from source (ts-node, __dirname is
@@ -18,14 +31,14 @@ import { informationPersonal, Skill, Item, Language, Reference, Certificate, Awa
 // a compiled deploy).
 const PDF_OUTPUT_DIR = path.join(__dirname, '..', 'public', 'pdf');
 
-export const createCV = async (data: Record<string, any>, res: Response) => {
+export const createCV = async (data: AggregatedCandidateData, res: Response) => {
   try {
     if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
     const URL = `${PDF_OUTPUT_DIR}${path.sep}`;
 
     // Optional override for CI/Docker where a specific Chrome/Chromium must be pinned.
     // Unset: puppeteer resolves its own bundled Chromium automatically.
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    const executablePath = process.env['PUPPETEER_EXECUTABLE_PATH'];
 
     const otp = {
       ...(executablePath ? { executablePath } : {}),
@@ -81,7 +94,7 @@ export const createCV = async (data: Record<string, any>, res: Response) => {
   }
 };
 
-export const pageRender = (RECORD: Record<string, any>) => {
+export const pageRender = (RECORD: AggregatedCandidateData) => {
   /**
    * get data format
    */
@@ -126,10 +139,10 @@ export const pageRender = (RECORD: Record<string, any>) => {
  * @param {*} RECORD
  * @returns
  */
-const getDataCandidate = (RECORD: Record<string, any>) => {
+const getDataCandidate = (RECORD: AggregatedCandidateData) => {
   // Thông tin cơ bản
   const candidate = (() => {
-    const { firstName, lastName, phone, email, address, introduction, socialMedia = {} } = RECORD;
+    const { firstName = '', lastName = '', phone = '', email = '', address = '', introduction = '', socialMedia = {} } = RECORD;
     const { github = '', linkedin = '', website = '' } = socialMedia;
     return {
       firstName,
@@ -145,13 +158,13 @@ const getDataCandidate = (RECORD: Record<string, any>) => {
   })();
 
   // Thông tin công việc
-  const generalInformation = ((el) => {
+  const generalInformation: GeneralInformationData = ((el) => {
     if (!el) return {};
     return Array.isArray(el) ? el?.[0] || {} : el;
-  })(RECORD?.generalInformation || null);
+  })(RECORD?.['generalInformation'] || null);
 
   // ---
-  const { educations, experiences, projects, references = [], certificates = [], awards = [] } = RECORD;
+  const { educations = [], experiences = [], projects = [], references = [], certificates = [], awards = [] } = RECORD;
 
   return {
     candidate,
@@ -187,9 +200,17 @@ const _helper = () => {
       return `${_start} - ${_end}`;
     })(startDate, endDate, isCurrent);
 
-    const getSkills = ((skills = []) => {
-      return !skills.length ? `<div class="skills">${skills.join(', ')}</div>` : '';
-    })();
+    // BUG FIX (found removing an unused-variable warning, issue #188): this
+    // IIFE was called with no arguments, so its own `skills = []` default
+    // always shadowed the real `skills` destructured from `props` above —
+    // the skills list was never actually read. The condition was also
+    // inverted (`!skills.length` rendered the div, i.e. exactly when
+    // there were NO skills) — combined, the rendered PDF never showed an
+    // item's skills, regardless of whether it had any. Fixed both: pass
+    // the real value in, and render only when it's non-empty.
+    const getSkills = ((skillsList: string[]) => {
+      return skillsList.length ? `<div class="skills">${skillsList.join(', ')}</div>` : '';
+    })(skills);
     return `
             <div class="item">
                 <div class="header">
@@ -262,11 +283,7 @@ const _helper = () => {
 
       return _boxContent('Định hướng nghề nghiệp', _result);
     },
-    renderSkills: function (generalInformation: {
-      personalSkills: Skill[];
-      professionalSkills: Skill[];
-      professionalSkillsGroup: string[];
-    }) {
+    renderSkills: function (generalInformation: GeneralInformationData) {
       function getContent(title = '', skills: Skill[] = []) {
         if (!skills.length) return '';
         return `<li>${title}: ${skills.map((e) => e.name).join(', ')}</li>`;
@@ -305,7 +322,7 @@ const _helper = () => {
                 </ul>`,
       );
     },
-    renderEducation: function (list = []) {
+    renderEducation: function (list: EducationData[] = []) {
       if (!list.length) return '';
 
       const _content = list
@@ -317,7 +334,7 @@ const _helper = () => {
 
       return _boxContent('Học vấn', _content);
     },
-    renderExperience: function (list = []) {
+    renderExperience: function (list: ExperienceData[] = []) {
       if (!list.length) return '';
 
       const _content = list
@@ -337,7 +354,7 @@ const _helper = () => {
 
       return _boxContent('Kinh nghiệm làm việc', _content);
     },
-    renderProject: function (list = []) {
+    renderProject: function (list: ProjectData[] = []) {
       if (!list.length) return '';
 
       const _content = list

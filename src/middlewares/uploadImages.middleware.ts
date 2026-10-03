@@ -41,7 +41,7 @@ const storage = multer.diskStorage({
     // the CV upload's deterministic name, images are additive, not
     // replace-in-place) and never derived from the client-supplied
     // original filename (path traversal risk).
-    const recordId = (req.params as Record<string, string>)?.id || 'unknown';
+    const recordId = (req.params as Record<string, string>)?.['id'] || 'unknown';
     const ext = path.extname(file.originalname).toLowerCase();
     const unique = crypto.randomBytes(6).toString('hex');
     cb(null, `${recordId}-${Date.now()}-${unique}${ext}`);

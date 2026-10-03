@@ -6,8 +6,13 @@
  * (e.g. education). Only the Mongoose model itself is faked. Confirms the
  * response's data._id is the real persisted id, not null.
  */
+import type { Model } from 'mongoose';
 import { createCrudService } from '@/candidate_profile/BaseService';
+import { CrudDocument } from '@/services';
 
+// createCrudService is generic over a real `Model<T>` (issue #181) — this
+// fake only implements the methods it actually calls, so it's cast through
+// `unknown` (relaxed test policy, tracking issue #177).
 function createFakeEducationModel() {
   const docs: Record<string, any>[] = [];
   return {
@@ -21,7 +26,7 @@ function createFakeEducationModel() {
       return saved;
     }),
     find: jest.fn((query: Record<string, any>) => ({
-      exec: jest.fn().mockResolvedValue(docs.filter((d) => d.candidateId === query.candidateId)),
+      exec: jest.fn().mockResolvedValue(docs.filter((d) => d['candidateId'] === query['candidateId'])),
     })),
   };
 }
@@ -29,7 +34,7 @@ function createFakeEducationModel() {
 describe('createCrudService handlerCreate — real CV section create flow (issue #157)', () => {
   it('returns the real persisted _id in data, not null, for a section like education', async () => {
     const model = createFakeEducationModel();
-    const { handlerCreate } = createCrudService({ model, name: 'education' });
+    const { handlerCreate } = createCrudService({ model: model as unknown as Model<CrudDocument>, name: 'education' });
 
     const result: any = await handlerCreate({ candidateId: 'c1', school: 'MIT' });
 

@@ -5,7 +5,7 @@
  */
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { validateSchema, formatReturn, handleError, throwBadRequestError, setAuthCookies, clearAuthCookies } from '@/utils';
+import { validateSchema, formatReturn, handleError, setAuthCookies, clearAuthCookies } from '@/utils';
 
 import { schemaAuthRegister, schemaAuthLogin, schemaForgotPassword, schemaResetPassword } from './auth.validate';
 import { handlerRegister, handlerLogin, handlerForgotPassword, handlerResetPassword, handlerVerifyEmail } from './auth.service';
@@ -27,7 +27,7 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: schemaAuthRegister,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) {
     return formatReturn(res, {
@@ -42,16 +42,16 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
    * save mới document
    */
   try {
-    const { success, message } = await handlerRegister({ _id: null, ...value }, (req as any).lang);
+    const { success, message } = await handlerRegister({ _id: null, ...value }, req.lang);
     return formatReturn(res, {
       statusCode: StatusCodes[success ? 'OK' : 'UNAUTHORIZED'],
       success: success,
-      message: message || t('auth.registerSuccess', (req as any).lang),
+      message: message || t('auth.registerSuccess', req.lang),
       errors: null,
       data: null,
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -65,7 +65,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
   const { isValidated, value = {}, message, errors } = validateSchema({
     schema: schemaAuthLogin,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) {
     return formatReturn(res, {
@@ -80,7 +80,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
    * tiến hành Login
    */
   try {
-    const _result = await handlerLogin({ email: value.email, password: value.password }, (req as any).lang);
+    const _result = await handlerLogin({ email: value.email, password: value.password }, req.lang);
 
     // issue #119: also set httpOnly cookies so the frontend can migrate off
     // localStorage — kept alongside the existing response-body tokens
@@ -92,12 +92,12 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
     return formatReturn(res, {
       statusCode: StatusCodes[_result?.success ? 'OK' : 'UNAUTHORIZED'],
       success: _result?.success || false,
-      message: _result?.message || t('auth.loginFailed', (req as any).lang),
+      message: _result?.message || t('auth.loginFailed', req.lang),
       errors: _result?.errors || [],
       data: _result?.data || null,
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -113,7 +113,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.UNAUTHORIZED,
         success: false,
-        message: t('auth.noRefreshToken', (req as any).lang),
+        message: t('auth.noRefreshToken', req.lang),
       });
     }
 
@@ -121,7 +121,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.FORBIDDEN,
         success: false,
-        message: t('auth.refreshTokenRevoked', (req as any).lang),
+        message: t('auth.refreshTokenRevoked', req.lang),
       });
     }
 
@@ -132,7 +132,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.UNAUTHORIZED,
         success: false,
-        message: t('auth.invalidRefreshPayload', (req as any).lang),
+        message: t('auth.invalidRefreshPayload', req.lang),
       });
 
     // "Log out of all devices" (issue #74): a refresh token issued before
@@ -142,7 +142,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       return formatReturn(res, {
         statusCode: StatusCodes.FORBIDDEN,
         success: false,
-        message: t('auth.refreshTokenRevoked', (req as any).lang),
+        message: t('auth.refreshTokenRevoked', req.lang),
       });
     }
 
@@ -159,18 +159,18 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     return formatReturn(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: t('auth.tokenRefreshed', (req as any).lang),
+      message: t('auth.tokenRefreshed', req.lang),
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
 /**
  * Chức năng Tạo mới refreshToken
  */
-export const authCreateRefreshToken = async (req: Request, res: Response) => {
+export const authCreateRefreshToken = async (_req: Request, _res: Response) => {
   // coming soon
 };
 
@@ -179,10 +179,10 @@ export const authCreateRefreshToken = async (req: Request, res: Response) => {
  * đánh dấu emailVerified = true. Không chặn login (issue #71).
  */
 export const authVerifyEmail = async (req: Request, res: Response, next: NextFunction) => {
-  const token = typeof req.query.token === 'string' ? req.query.token : '';
+  const token = typeof req.query['token'] === 'string' ? req.query['token'] : '';
 
   try {
-    const { success, message } = await handlerVerifyEmail(token, (req as any).lang);
+    const { success, message } = await handlerVerifyEmail(token, req.lang);
     return formatReturn(res, {
       statusCode: StatusCodes[success ? 'OK' : 'BAD_REQUEST'],
       success,
@@ -190,7 +190,7 @@ export const authVerifyEmail = async (req: Request, res: Response, next: NextFun
       data: null,
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -201,7 +201,7 @@ export const authForgotPassword = async (req: Request, res: Response, next: Next
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: schemaForgotPassword,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) {
     return formatReturn(res, {
@@ -213,7 +213,7 @@ export const authForgotPassword = async (req: Request, res: Response, next: Next
   }
 
   try {
-    const { success, message } = await handlerForgotPassword(value.email, (req as any).lang);
+    const { success, message } = await handlerForgotPassword(value.email, req.lang);
     return formatReturn(res, {
       statusCode: StatusCodes.OK,
       success,
@@ -221,7 +221,7 @@ export const authForgotPassword = async (req: Request, res: Response, next: Next
       data: null,
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -232,7 +232,7 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: schemaResetPassword,
     item: { ...req.body },
-    lang: (req as any).lang,
+    lang: req.lang,
   });
   if (!isValidated) {
     return formatReturn(res, {
@@ -244,7 +244,7 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
   }
 
   try {
-    const { success, message } = await handlerResetPassword({ token: value.token, password: value.password }, (req as any).lang);
+    const { success, message } = await handlerResetPassword({ token: value.token, password: value.password }, req.lang);
     return formatReturn(res, {
       statusCode: StatusCodes[success ? 'OK' : 'BAD_REQUEST'],
       success,
@@ -252,7 +252,7 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
       data: null,
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -268,7 +268,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
       return formatReturn(res, {
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
-        message: t('auth.noTokenToLogout', (req as any).lang),
+        message: t('auth.noTokenToLogout', req.lang),
       });
     }
 
@@ -280,10 +280,10 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
     return formatReturn(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: t('auth.logoutSuccess', (req as any).lang),
+      message: t('auth.logoutSuccess', req.lang),
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };
 
@@ -295,13 +295,13 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
  */
 export const authLogoutAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const candidateId = (req as any).user?._id;
+    const candidateId = req.user?._id;
 
     if (!candidateId) {
       return formatReturn(res, {
         statusCode: StatusCodes.UNAUTHORIZED,
         success: false,
-        message: t('auth.noTokenToLogout', (req as any).lang),
+        message: t('auth.noTokenToLogout', req.lang),
       });
     }
 
@@ -313,9 +313,9 @@ export const authLogoutAll = async (req: Request, res: Response, next: NextFunct
     return formatReturn(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: t('auth.logoutAllSuccess', (req as any).lang),
+      message: t('auth.logoutAllSuccess', req.lang),
     });
   } catch (err) {
-    handleError(err, next, (req as any).lang);
+    handleError(err, next, req.lang);
   }
 };

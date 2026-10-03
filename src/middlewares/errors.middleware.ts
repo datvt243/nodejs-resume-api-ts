@@ -11,31 +11,11 @@ import { AppError, ErrorCode } from '@/errors/AppError';
 
 type ErrorMid = Error | ReferenceError | TypeError;
 
-export interface BaseReturn {
-  type?: string;
-  success?: boolean;
-  message?: string;
-  errors?: any;
-  data?: Record<string, any>[] | Record<string, any> | null;
-}
-
-export enum Collections {
-  INFORMATION = 'generalInformation',
-  EXPERIENCE = 'experiences',
-  EDUCATION = 'educations',
-  REFERENCE = 'references',
-  PROJECT = 'projects',
-  CERTIFICATE = 'certificates',
-  AWARD = 'awards',
-}
-
 /**
  * Global error handling middleware
  * Handles both custom AppError instances and unknown errors
- *
- * Note: asyncHandler is now available in @/utils/helper.ts
  */
-export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Response, next: NextFunction) => {
+export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Response, _next: NextFunction) => {
   // Check if error is a known operational error
   if (err instanceof AppError) {
     logger.error(`ERROR [${err.errorCode}]: ${err.message}`, {
@@ -76,7 +56,7 @@ export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Re
 /**
  * Middleware to handle 404 - Route not found
  */
-export const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
+export const notFoundHandler = (req: Request, _res: Response, next: NextFunction) => {
   const error = new AppError(`Route ${req.originalUrl} not found`, StatusCodes.NOT_FOUND, ErrorCode.NOT_FOUND);
   next(error);
 };

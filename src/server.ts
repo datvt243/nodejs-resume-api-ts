@@ -7,7 +7,7 @@ require('module-alias/register');
 require('./alias');
 import dotenv from 'dotenv';
 
-import path, { dirname } from 'path';
+import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -83,7 +83,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
    *                   type: number
    */
   // Health check endpoint (exempt from rate limiting)
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -95,7 +95,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
    * API documentation (Swagger UI) - exempt from rate limiting
    */
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  app.get('/api-docs.json', (req, res) => {
+  app.get('/api-docs.json', (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });
@@ -129,7 +129,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
   /**
    * listen app
    */
-  const _env = process.env.NODE_ENV || 'development';
+  const _env = process.env['NODE_ENV'] || 'development';
   // Respect LOCAL_PORT whenever it's actually set, in every environment —
   // it used to be silently ignored in production (always forced to 3008
   // regardless of LOCAL_PORT), which broke docker-compose.prod.yml's
@@ -138,7 +138,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
   // Only fall back to the env-specific default (3001 dev / 3008 prod,
   // same as before) when LOCAL_PORT is unset, so an existing deploy that
   // never set LOCAL_PORT keeps its current port unchanged.
-  const _portNumber = process.env.LOCAL_PORT ? portNumber : _env !== 'production' ? portNumber : 3008;
+  const _portNumber = process.env['LOCAL_PORT'] ? portNumber : _env !== 'production' ? portNumber : 3008;
 
   // Initialize Redis for token blacklist (non-blocking)
   await initRedis();

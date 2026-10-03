@@ -44,6 +44,8 @@ export default {
     updateSuccess: 'Updated successfully',
     updateFailed: 'Update failed',
     updateNotYours: 'You cannot update information that is not yours',
+    bulkNoItems: 'No items provided',
+    bulkTooManyItems: 'Too many items in one request (max 100)',
   },
   candidate: {
     userNotFound: 'User not found',
