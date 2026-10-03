@@ -2,7 +2,7 @@
   "name": "resume-nodejs-api",
   "main": "src/server.ts",
   "private": true,
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Resume API backend with rate limiting and Redis support",
   "scripts": {
     "dev-node": "ts-node -r tsconfig-paths/register src/server.ts",
@@ -54,6 +54,8 @@
     "mongoose": "^8.4.0",
     "multer": "^2.3.0",
     "open": "^10.1.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.4",
     "pdfkit": "^0.15.0",
     "pug": "^3.0.2",
     "puppeteer": "^22.13.1",
@@ -61,7 +63,8 @@
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "xss": "^1.0.15"
   },
   "devDependencies": {
     "@babel/cli": "^7.22.10",
@@ -83,6 +86,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^2.2.0",
     "@types/node": "^20.14.12",
+    "@types/pdf-parse": "^1.1.5",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/winston": "^2.4.4",

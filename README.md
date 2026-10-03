@@ -2,7 +2,7 @@
 
 Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứng viên (CV/Resume)** với **JWT (cookie + Bearer)**, **CSRF protection**, **Redis rate limiting**, **token blacklist**, **CV profiles (multi-version)**, **job application tracker**, **LinkedIn export import**, **PDF/DOCX export**, **i18n (vi/en)**, **Winston logging**, và **Jest testing**.
 
-**Version**: 1.8.1 | **Author**: DatVT | **License**: ISC
+**Version**: 1.9.0 | **Author**: DatVT | **License**: ISC
 
 ---
 
@@ -19,6 +19,7 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 - 🗑️ **Soft Delete + Restore**: recoverable deletes across all CV sections
 - 🌐 **i18n**: Vietnamese/English via `Accept-Language`, localized free-text fields (career, descriptions, introduction)
 - 📄 **PDF/JSON/DOCX Export** (Pug + PDFKit/Puppeteer/docx)
+- 🤖 **ATS-Optimized PDF + Self-Check**: single-column, no-letter-spacing export template built for Applicant Tracking Systems, plus a self-check endpoint that extracts the PDF's own text and scores it against 10 ATS-safety checks + optional job-description keyword matching
 - 🛡️ **Rate Limiting** (Redis/mem fallback)
 - 📊 **Logging** (Winston daily)
 - 🧪 **Tests** (Jest: auth/middlewares/utils/DB)
@@ -60,6 +61,7 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 | Joi                                | 17.13.1         | Validation                      |
 | PDFKit / Puppeteer / Pug          | 0.15/22.13/3.0  | PDF                              |
 | docx                               | 9.7.1           | DOCX export                     |
+| pdf-lib / pdf-parse / xss         | 1.17/1.1/1.0    | ATS PDF metadata, text extraction, HTML sanitization |
 | multer                             | 2.3.0           | File uploads (CV, images)       |
 | adm-zip / csv-parse               | 0.6.1 / 7.0.2   | LinkedIn export ZIP/CSV parsing |
 | Winston                           | 3.19.0          | Logging                         |
@@ -80,8 +82,8 @@ backend/
 │   ├── routers/api/v1/ (CRUD routes) + api/v2/ (auth WIP)
 │   ├── candidate/  (profile + upload-cv + LinkedIn import)
 │   ├── candidate_profile/ (controllers/services per section, incl. application/profile)
-│   ├── candidate_me/ (public profile, visits, PDF/JSON/DOCX export)
-│   ├── services/   (PDF/Redis/base DB ops)
+│   ├── candidate_me/ (public profile, visits, PDF/JSON/DOCX export, ATS self-check)
+│   ├── services/   (PDF classic + ATS/Redis/base DB ops)
 │   ├── utils/      (JWT/bcrypt/blacklist/i18n/csrf)
 │   ├── views/      (Pug)
 │   ├── public/     (assets/pdf)
@@ -201,7 +203,8 @@ best-effort bulk create (up to 100 items per request).
 | GET    | `/health`                  | None | Health check                                                 |
 | GET    | `/api/me/:email`           | None | Public profile by vanity slug or email, optional `?profile=` filter |
 | POST   | `/api/me/:email/visit`     | None | Record a visit (count/timestamp/IP/geo)                      |
-| GET    | `/api/v1/download-pdf`     | Token via query | Export own CV as `pdf` (default), `json`, or `docx` |
+| GET    | `/api/v1/download-pdf`     | Token via query | Export own CV as `pdf` (default), `json`, or `docx`; `?template=classic\|ats` picks the visual (default) or ATS-optimized template |
+| POST   | `/api/v1/cv/ats-check`     | Bearer/cookie | Render own CV in memory, extract its text, score 10 ATS-safety checks + optional JD keyword match |
 | GET    | `/api-docs`                | None | Swagger UI (OpenAPI docs)                                    |
 | GET    | `/api-docs.json`           | None | Raw OpenAPI spec (JSON)                                      |
 
@@ -226,7 +229,7 @@ best-effort bulk create (up to 100 items per request).
 - `npm run test` - Jest
 - `npm run lint` - ESLint (type-aware)
 
-**Tests (31 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language), utils (bcrypt/valid/i18n/csrf), database/mongo
+**Tests (35 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
 
 ---
 
@@ -255,7 +258,7 @@ thiết kế của từng phần.
 - **CORS**: `CORS_ORIGIN` (comma-separated allow-list) required for the httpOnly cookie flow — `credentials: true` cannot combine with a wildcard origin
 - **Logs**: Winston daily rotation
 - **Static**: public/ (CSS/JS/fonts/img/PDFs)
-- **PDF/DOCX**: services/createPDF.ts + views/
+- **PDF/DOCX**: services/createPDF.ts (classic) + services/createPDF.ats.ts (ATS) + views/
 
 ---
 

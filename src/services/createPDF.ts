@@ -94,6 +94,30 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
   }
 };
 
+/**
+ * Same classic-template render as `createCV`, minus the disk write and
+ * HTTP response — used only by the ATS self-check endpoint
+ * (`candidate_me/ats-check.ts`, `template=classic`) to diagnose the
+ * classic template's own text-extraction quality. Does not change what
+ * `createCV`/`GET /download-pdf` produce or how.
+ */
+export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Buffer> => {
+  const executablePath = process.env['PUPPETEER_EXECUTABLE_PATH'];
+  const browser = await puppeteer.launch({
+    ...(executablePath ? { executablePath } : {}),
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+  const page = await browser.newPage();
+  const { html: contentHTML } = pageRender(data);
+  await page.setContent(contentHTML, { waitUntil: 'domcontentloaded' });
+
+  const mm = '5mm';
+  const pdfBuffer = await page.pdf({ format: 'A4', margin: { top: mm, right: mm, bottom: mm, left: mm } });
+  await browser.close();
+  return Buffer.from(pdfBuffer);
+};
+
 export const pageRender = (RECORD: AggregatedCandidateData) => {
   /**
    * get data format
@@ -185,9 +209,9 @@ const _helper = () => {
     const formatDate = (val: number | null) => {
       if (!val) return '';
       const date = new Date(val);
-      let m = date.getMonth() + 1,
+      const m = date.getMonth() + 1,
         y = date.getFullYear();
-      return `${m < 9 ? `0${m}` : m}/${y}`;
+      return `${String(m).padStart(2, '0')}/${y}`;
     };
 
     const getTime = ((startDate, endDate, isCurrent) => {

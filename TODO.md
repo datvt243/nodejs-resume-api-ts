@@ -68,6 +68,8 @@
 | 4.2 | Download PDF endpoint | `routers/index.ts` + `candidate_me/index.ts` | ✅ done | Auth via query token |
 | 4.3 | Hardcoded Chrome executable path | `services/createPDF.ts:14-25` | 🐛 bug/risk | Breaks if Chrome not at expected path (CI/Docker) — use `puppeteer.executablePath()` or env var |
 | 4.4 | PDF template coverage | `services/createPDF.ts` + `views/` | 🔄 in-progress | All sections rendered but styling/layout not verified on all data variations |
+| 4.5 | ATS-optimized PDF template | `services/createPDF.ats.ts` | ✅ done | Issue #211 — `?template=ats` on `download-pdf` (default stays `classic`, unchanged). Single column, no letter-spacing, system font stack, sanitized free-text, localized standard headings, real PDF metadata. See `doctrine/standards/pdf-export-standard.md`. |
+| 4.6 | ATS self-check endpoint | `candidate_me/ats-check.ts`, `services/atsChecks.ts`, `services/keywordMatcher.ts` | ✅ done | Issue #211 — `POST /api/v1/cv/ats-check`: renders either template in memory, extracts text (`pdf-parse`), scores 10 ATS checks, optional JD keyword-coverage matcher (`constant/atsKeywords.ts`) |
 
 ---
 

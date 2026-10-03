@@ -22,6 +22,7 @@
 | `doctrine/standards/edit-verification.md` | Rule: never claim what you haven't observed |
 | `doctrine/standards/recipes.md` | What a recipe is, required format |
 | `doctrine/standards/initiative-scoping.md` | Rule: measure exhaustively by rule+file before/after a multi-phase count-based initiative |
+| `doctrine/standards/pdf-export-standard.md` | Rule: 10 invariants binding on any PDF/DOCX export fix or feature |
 
 ## haven/ — memory + convention (NEVER contains code)
 | File | Purpose |

@@ -2,7 +2,7 @@
 
 Node.js/TypeScript REST API for managing candidate CVs/resumes with auth, PDF export, Redis caching, and Winston logging.
 
-**Version**: 1.8.1 | **Author**: DatVT | **License**: ISC
+**Version**: 1.9.0 | **Author**: DatVT | **License**: ISC
 
 ---
 
@@ -16,7 +16,7 @@ Node.js/TypeScript REST API for managing candidate CVs/resumes with auth, PDF ex
 | Cache / Blacklist | Redis 4.6 (in-memory fallback) |
 | Auth | JWT (access + refresh), Bcrypt (12 rounds) |
 | Validation | Joi 17.13 |
-| PDF | Puppeteer 22.13 + PDFKit 0.15 + Pug 3.0 |
+| PDF | Puppeteer 22.13 + PDFKit 0.15 + Pug 3.0 (classic template); `pdf-lib` (PDF metadata) + `pdf-parse` (ATS text extraction) + `xss` (sanitization) for the ATS template |
 | Logging | Winston 3.19 + daily-rotate-file |
 | Testing | Jest 29 + ts-jest |
 | Linting | ESLint 9 (flat config, type-aware via `typescript-eslint`) |
@@ -113,7 +113,7 @@ src/
 │   ├── visit.model.ts         # One doc per public-profile visit (ip + geo, no soft-delete)
 │   └── part/index.ts          # Reusable sub-schemas (skills, languages, socialMedia, localizedText)
 ├── routers/
-│   ├── api/v1/                # All active routes (see API section)
+│   ├── api/v1/                # All active routes (see API section), incl. cv.route.ts (ATS self-check)
 │   └── api/v2/                # Auth v2 (WIP: register/login only)
 ├── auth/
 │   ├── auth.controller.ts
@@ -136,14 +136,22 @@ src/
 │   ├── BaseController.ts      # baseGetAll()/baseDelete()/baseRestore()/baseUploadImages() shared
 │   └── BaseService.ts         # createCrudService() factory shared across section services
 ├── candidate_me/
-│   └── index.ts               # Public profile aggregation (slug/email, i18n, ?profile= filter),
-│                               # visit recording, PDF/JSON/DOCX export
+│   ├── index.ts               # Public profile aggregation (slug/email, i18n, ?profile= filter),
+│   │                           # visit recording, PDF/JSON/DOCX export
+│   └── ats-check.ts           # POST /cv/ats-check: renders either PDF template in memory,
+│                               # extracts text, scores the 10 ATS checks + optional JD keyword match
 ├── services/
 │   ├── index.ts               # Core DB ops: baseFindDocument, baseCreateDocument,
 │   │                           # baseUpdateDocument, basePatchDocument, baseDeleteDocument
 │   │                           # (soft-delete), baseRestoreDocument
 │   ├── redis.ts               # Redis client singleton (init/get/close/isAvailable)
-│   ├── createPDF.ts           # Puppeteer PDF generation (createCV, pageRender)
+│   ├── createPDF.ts           # Puppeteer PDF generation (createCV, pageRender — classic template)
+│   ├── createPDF.ats.ts       # ATS-optimized template (pageRenderAts, createCVAts, renderAtsPdfBuffer) —
+│   │                           # single column, no letter-spacing, sanitized text, localized headings
+│   ├── pdfMetadata.ts         # Sets PDF Title/Author/Subject/Keywords/Language via pdf-lib
+│   ├── atsExtract.ts          # extractPdfText() — pdf-parse wrapper for the ATS self-check
+│   ├── atsChecks.ts           # The 10 ATS-safety check functions + weighted scoreChecks()
+│   ├── keywordMatcher.ts      # Job-description keyword matcher (alias-aware, e.g. vue/vuejs/vue.js)
 │   └── createDocx.ts          # docx-based Word export (same aggregated data as PDF)
 ├── utils/
 │   ├── jwt.ts                 # jwtSign(), jwtVerify()
@@ -169,7 +177,7 @@ src/
 │   ├── candidate.type.ts      # AggregatedCandidateData + section data types, shared by PDF/DOCX export
 │   └── express.d.ts           # Extends Express Request: user?: { _id: string }
 ├── logger/                    # Winston setup: console + combined + error logs; JSON in prod
-├── constant/                  # App-wide constants
+├── constant/                  # App-wide constants, incl. atsKeywords.ts (ATS keyword dictionary)
 ├── views/                     # Pug templates for PDF
 └── public/                    # Static assets + generated PDFs
 ```
@@ -256,7 +264,8 @@ best-effort — each item validated/created independently via the same
 | GET | `/health` | None | Health check |
 | GET | `/api/me/:email` | None | Public profile by vanity slug (checked first) or email; `?lang=vi\|en` and `?profile=<id>` (filters sections to that CV profile) |
 | POST | `/api/me/:email/visit` | None | Record a visit (count, timestamp, IP, geo via `geoip-lite`) |
-| GET | `/api/v1/download-pdf` | Token via query | Export own CV; `?format=pdf\|json\|docx` (default `pdf`), `?lang=vi\|en` |
+| GET | `/api/v1/download-pdf` | Token via query | Export own CV; `?format=pdf\|json\|docx` (default `pdf`), `?lang=vi\|en`, `?template=classic\|ats` (default `classic`; `ats` is the ATS-optimized single-column template, ignored for `format=json\|docx`) |
+| POST | `/api/v1/cv/ats-check` | Bearer/cookie | Renders the candidate's own CV in memory (`template`/`lang` default `ats`/`vi`), extracts its text (`pdf-parse`), and scores it against 10 ATS-safety checks; optional `jobDescription` body field adds a keyword-coverage report |
 | GET | `/api-docs` | None | Swagger UI (OpenAPI docs) |
 | GET | `/api-docs.json` | None | Raw OpenAPI spec (JSON) |
 
@@ -384,8 +393,12 @@ npm test                         # run all tests
 | services/baseFindDocument.test.ts | query/pagination/sort |
 | services/baseSoftDelete.test.ts | soft-delete behavior |
 | services/baseUpdatePatchSoftDelete.test.ts | update/patch interaction with soft-delete |
-| services/createPDF.test.ts | PDF export |
+| services/createPDF.test.ts | PDF export (classic template) + `formatDate`/`getSkills` regressions |
 | services/createDocx.test.ts | DOCX export |
+| services/createPDF.ats.test.ts | ATS template HTML — no letter-spacing/images/flex-grid, localized headings, sanitized description |
+| services/atsChecks.test.ts | Each of the 10 ATS check functions, passing + failing fixtures |
+| services/keywordMatcher.test.ts | JD keyword matcher — alias handling, case-insensitivity, Vietnamese diacritics |
+| services/atsPdfIntegration.test.ts | Real Puppeteer + `pdf-parse` end-to-end: renders a fixture CV, extracts text, asserts the full ATS check suite passes (skipped via `CI_NO_CHROME`) |
 | utils/authCookies.test.ts | httpOnly cookie set/clear |
 | utils/csrf.test.ts | double-submit CSRF token validation |
 | utils/bcrypt.test.ts | hash + compare |
