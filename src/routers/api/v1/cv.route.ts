@@ -14,6 +14,12 @@ import { fnAtsCheck } from '@/candidate_me/ats-check';
  *   post:
  *     tags: [CV]
  *     summary: Render the authenticated candidate's CV in memory and score it against ATS-safety checks
+ *     description: >
+ *       Authenticates via `Authorization: Bearer` header or the httpOnly
+ *       auth cookie only — unlike `GET /download-pdf`, this endpoint does
+ *       NOT accept a `?token=` query parameter, since it's a normal JSON
+ *       API call (made via fetch/axios, which can set headers), not a
+ *       browser-navigated download.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
