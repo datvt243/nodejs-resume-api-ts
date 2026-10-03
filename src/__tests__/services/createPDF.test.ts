@@ -64,6 +64,94 @@ describe('pageRender', () => {
   });
 });
 
+describe('formatDate padding regression (doctrine/standards/pdf-export-standard.md rule 4)', () => {
+  it('zero-pads September (month 9) as "09/YYYY", not "9/YYYY"', () => {
+    const septemberStart = new Date(2024, 8, 1).getTime(); // month index 8 = September
+    const { html } = pageRender({
+      email: 'test@example.com',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      experiences: [
+        {
+          company: 'Acme',
+          position: 'Engineer',
+          startDate: septemberStart,
+          endDate: null,
+          isCurrent: true,
+          description: '',
+        },
+      ],
+    });
+
+    expect(html).toContain('<div class="time">09/2024</div>');
+  });
+
+  it('still renders double-digit months correctly (e.g. December)', () => {
+    const decemberStart = new Date(2024, 11, 1).getTime();
+    const { html } = pageRender({
+      email: 'test@example.com',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      experiences: [
+        {
+          company: 'Acme',
+          position: 'Engineer',
+          startDate: decemberStart,
+          endDate: null,
+          isCurrent: true,
+          description: '',
+        },
+      ],
+    });
+
+    expect(html).toContain('<div class="time">12/2024</div>');
+  });
+});
+
+describe('getSkills rendering regression (issue #188)', () => {
+  it("renders an experience entry's skills when present", () => {
+    const { html } = pageRender({
+      email: 'test@example.com',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      experiences: [
+        {
+          company: 'Acme',
+          position: 'Engineer',
+          startDate: new Date(2023, 0, 1).getTime(),
+          endDate: null,
+          isCurrent: true,
+          description: '',
+          skills: ['Node.js', 'TypeScript'],
+        },
+      ],
+    });
+
+    expect(html).toContain('<div class="skills">Node.js, TypeScript</div>');
+  });
+
+  it('renders no skills div when the entry has no skills', () => {
+    const { html } = pageRender({
+      email: 'test@example.com',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      experiences: [
+        {
+          company: 'Acme',
+          position: 'Engineer',
+          startDate: new Date(2023, 0, 1).getTime(),
+          endDate: null,
+          isCurrent: true,
+          description: '',
+          skills: [],
+        },
+      ],
+    });
+
+    expect(html).not.toContain('class="skills"');
+  });
+});
+
 // Puppeteer's own `launch()` is mocked out entirely — no real browser is
 // spawned, keeping this fast/safe to run anywhere (no Chrome install
 // required in the test environment). Only the executablePath resolution

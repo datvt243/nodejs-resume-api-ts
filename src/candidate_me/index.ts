@@ -12,6 +12,7 @@ import geoip from 'geoip-lite';
 import { formatReturn, handleError } from '@/utils';
 import { formatReturnFailed } from '@/services';
 import { createCV } from '@/services/createPDF';
+import { createCVAts } from '@/services/createPDF.ats';
 import { createCVDocx } from '@/services/createDocx';
 import * as MODEL from '@/models';
 
@@ -292,6 +293,14 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
     // as a .docx instead of rendered to PDF.
     if (req.query['format'] === 'docx') {
       await createCVDocx(data, res);
+      return;
+    }
+
+    // ?template=ats (issue #211) — ATS-optimized template, same
+    // aggregated data. `template=classic` (the default, unchanged) keeps
+    // every existing client on the pre-existing visual template.
+    if (req.query['template'] === 'ats') {
+      await createCVAts(data, res, { lang });
       return;
     }
 

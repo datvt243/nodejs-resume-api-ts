@@ -39,6 +39,19 @@ each phase's own narrower `tsc`/test/build check to stand in for the
 initiative's own stated goal. See `doctrine/standards/initiative-scoping.md`
 (the #177→#204 case study that made this a rule).
 
+**Touching PDF/DOCX export** (`src/services/createPDF*.ts`,
+`createDocx.ts`, or any new export format) is a special case of the
+default loop: the diff must hold the 10 invariants in
+`doctrine/standards/pdf-export-standard.md` (no `letter-spacing` on real
+text, no un-awaited network fonts, i18n-driven labels, zero-padded
+`MM/YYYY` dates, per-item lists that actually render, sanitized free-text
+HTML, no DOB/gender/photo, single-column for anything ATS-branded, real
+PDF metadata, no PII in on-disk paths) — confirm each one in the evidence
+note, or name which one doesn't apply and why. A change that only passes
+`npm test`/`npm run build` without extracting the rendered PDF's real
+text is `EDIT_UNVERIFIED` for any of the first five rules, since those
+defects are invisible to the type checker and to a visual check.
+
 ## Forbidden states (Cost = KILL — stop immediately, don't self-continue)
 | State | Means |
 |---|---|
