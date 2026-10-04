@@ -35,7 +35,7 @@ describe('candidate_me/index.ts (issue #135)', () => {
 
   describe('handlerGetAboutMe', () => {
     it('fails closed and never queries the DB when the identifier is rejected by QuerySafe', async () => {
-      const result = await handlerGetAboutMe('$where:1', 'vi');
+      const result = await handlerGetAboutMe({ identifier: '$where:1', lang: 'vi' });
 
       expect(result.success).toBe(false);
       expect(MODEL.Candidate.findOne).not.toHaveBeenCalled();
@@ -44,7 +44,7 @@ describe('candidate_me/index.ts (issue #135)', () => {
     it('still looks up a valid identifier normally (regression check)', async () => {
       (MODEL.Candidate.findOne as jest.Mock).mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
 
-      const result = await handlerGetAboutMe('votan.it@gmail.com', 'vi');
+      const result = await handlerGetAboutMe({ identifier: 'votan.it@gmail.com', lang: 'vi' });
 
       expect(result.success).toBe(false);
       expect(MODEL.Candidate.findOne).toHaveBeenCalledTimes(2); // slug attempt, then email fallback
@@ -78,7 +78,7 @@ describe('candidate_me/index.ts (issue #135)', () => {
     });
 
     it('never queries Profile when no profile param is given (existing share-links unaffected)', async () => {
-      await handlerGetAboutMe('votan.it@gmail.com', 'vi');
+      await handlerGetAboutMe({ identifier: 'votan.it@gmail.com', lang: 'vi' });
 
       expect(MODEL.Profile.findOne).not.toHaveBeenCalled();
       expect(MODEL.Education.find).toHaveBeenCalledWith(expect.not.objectContaining({ _id: expect.anything() }), expect.anything());
@@ -92,7 +92,7 @@ describe('candidate_me/index.ts (issue #135)', () => {
           .mockResolvedValue({ educationIds, experienceIds: [], projectIds: [], certificateIds: [], awardIds: [], referenceIds: [] }),
       });
 
-      await handlerGetAboutMe('votan.it@gmail.com', 'vi', '507f1f77bcf86cd799439099');
+      await handlerGetAboutMe({ identifier: 'votan.it@gmail.com', lang: 'vi', profileId: '507f1f77bcf86cd799439099' });
 
       expect(MODEL.Education.find).toHaveBeenCalledWith(expect.objectContaining({ _id: { $in: educationIds } }), expect.anything());
       expect(MODEL.Experience.find).toHaveBeenCalledWith(expect.objectContaining({ _id: { $in: [] } }), expect.anything());
@@ -106,13 +106,13 @@ describe('candidate_me/index.ts (issue #135)', () => {
     it('falls back to unfiltered data when the given profile id does not resolve for this candidate', async () => {
       (MODEL.Profile.findOne as jest.Mock).mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
 
-      await handlerGetAboutMe('votan.it@gmail.com', 'vi', '507f1f77bcf86cd799439099');
+      await handlerGetAboutMe({ identifier: 'votan.it@gmail.com', lang: 'vi', profileId: '507f1f77bcf86cd799439099' });
 
       expect(MODEL.Education.find).toHaveBeenCalledWith(expect.not.objectContaining({ _id: expect.anything() }), expect.anything());
     });
 
     it('never queries Profile when the given id is rejected by QuerySafe (e.g. contains "$")', async () => {
-      await handlerGetAboutMe('votan.it@gmail.com', 'vi', '$where:1');
+      await handlerGetAboutMe({ identifier: 'votan.it@gmail.com', lang: 'vi', profileId: '$where:1' });
 
       expect(MODEL.Profile.findOne).not.toHaveBeenCalled();
       expect(MODEL.Education.find).toHaveBeenCalledWith(expect.not.objectContaining({ _id: expect.anything() }), expect.anything());
@@ -146,7 +146,7 @@ describe('handlerGetAboutMe — candidateId filter with an ObjectId _id (issue #
   });
 
   it('stringifies an ObjectId _id before filtering, instead of dropping candidateId entirely', async () => {
-    await handlerGetAboutMe('votan.it@gmail.com', 'vi');
+    await handlerGetAboutMe({ identifier: 'votan.it@gmail.com', lang: 'vi' });
 
     expect(MODEL.Education.find).toHaveBeenCalledWith(
       expect.objectContaining({ candidateId: '507f1f77bcf86cd799439011' }),

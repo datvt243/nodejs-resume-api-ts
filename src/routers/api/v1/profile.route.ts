@@ -48,7 +48,7 @@ router.get(
       await ensureDefaultProfile(req.body.candidateId);
       next();
     } catch (err) {
-      handleError(err, next, req.lang);
+      handleError({ err, next, lang: req.lang });
     }
   },
   baseGetAll,

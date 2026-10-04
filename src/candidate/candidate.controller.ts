@@ -56,7 +56,7 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
     const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -73,10 +73,10 @@ export const fnUploadCV = async (req: Request, res: Response, next: NextFunction
 
   try {
     if (!req.user?._id) throw new AuthenticationError();
-    const _result = await handlerUploadCV(req.user._id, file.originalname, req.lang);
+    const _result = await handlerUploadCV({ candidateId: req.user._id, originalName: file.originalname, lang: req.lang });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -102,7 +102,7 @@ export const fnDownloadCV = async (req: Request, res: Response, next: NextFuncti
     const filePath = path.join(CV_UPLOAD_DIR, `${candidateId}-cv.pdf`);
     return res.download(filePath, cvFile.originalName || 'CV.pdf');
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -134,7 +134,7 @@ export const fnParseLinkedInExport = async (req: Request, res: Response, next: N
         message: t('linkedinImport.invalidZip', req.lang),
       });
     }
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -149,7 +149,7 @@ export const fnGetVisits = async (req: Request, res: Response, next: NextFunctio
     const _result = await handlerGetVisits(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -163,7 +163,7 @@ export const fnDelete = async (req: Request, res: Response, next: NextFunction) 
     const _result = await handlerDelete(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -186,6 +186,6 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
     const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

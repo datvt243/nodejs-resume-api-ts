@@ -147,7 +147,7 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
 export const baseDeleteDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
-  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById(MODEL, __id, lang);
+  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById({ MODEL, _id: __id, lang });
   if (!isExist) return formatReturnFailed(_mess);
 
   const { _id, candidateId = '' } = document;
@@ -182,7 +182,7 @@ export const baseRestoreDocument = async <T extends CrudDocument>(props: { model
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
   // `baseCheckDocumentById` doesn't filter on `deletedAt`, so it finds the document whether it's currently soft-deleted or not.
-  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById(MODEL, __id, lang);
+  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById({ MODEL, _id: __id, lang });
   if (!isExist) return formatReturnFailed(_mess);
 
   const { _id, candidateId = '' } = document;
@@ -226,8 +226,11 @@ export const baseUpdateDocument = async <T extends CrudDocument>(props: {
   const { _id } = _valueUpdate;
 
   // Exclude soft-deleted documents — don't allow updating an already-deleted record (issue #136).
-  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById(MODEL, _id, lang, {
-    excludeDeleted: true,
+  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById({
+    MODEL,
+    _id,
+    lang,
+    opts: { excludeDeleted: true },
   });
   if (!isExist) return formatReturnFailed(_mess);
 
@@ -324,8 +327,11 @@ export const basePatchDocument = async <T extends CrudDocument>(props: {
   const { _id } = document;
 
   // Exclude soft-deleted documents — don't allow patching an already-deleted record (issue #136).
-  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById(MODEL, _id, lang, {
-    excludeDeleted: true,
+  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById({
+    MODEL,
+    _id,
+    lang,
+    opts: { excludeDeleted: true },
   });
   if (!isExist) return formatReturnFailed(_mess);
 
@@ -384,12 +390,17 @@ const _baseHelper = () => {
         errors: {},
       };
     },
-    baseCheckDocumentById: async <T extends CrudDocument>(
-      MODEL: Model<T>,
-      _id: string | undefined,
-      lang: string = DEFAULT_LANG,
-      opts: { excludeDeleted?: boolean } = {},
-    ) => {
+    baseCheckDocumentById: async <T extends CrudDocument>({
+      MODEL,
+      _id,
+      lang = DEFAULT_LANG,
+      opts = {},
+    }: {
+      MODEL: Model<T>;
+      _id: string | undefined;
+      lang?: string;
+      opts?: { excludeDeleted?: boolean };
+    }) => {
       const message = t('common.idNotFound', lang);
 
       /**

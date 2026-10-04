@@ -41,7 +41,7 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
     const template: 'ats' | 'classic' = req.body?.['template'] === 'classic' ? 'classic' : 'ats';
     const jobDescription: string | undefined = typeof req.body?.['jobDescription'] === 'string' ? req.body['jobDescription'] : undefined;
 
-    const { success, data } = await handlerGetAboutMe(find.email, lang);
+    const { success, data } = await handlerGetAboutMe({ identifier: find.email, lang });
     if (!success) {
       res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Lấy thông tin ứng viên thất bại'));
       return;
@@ -73,7 +73,7 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
     }
 
     const { text, pages } = await extractPdfText(buffer);
-    const facts = buildAtsContent(candidateData, lang);
+    const facts = buildAtsContent({ RECORD: candidateData, lang });
 
     const checkInput: AtsCheckInput = {
       text,
@@ -104,6 +104,6 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
       },
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

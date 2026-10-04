@@ -14,7 +14,7 @@ describe('handleError', () => {
     const duplicateSlugError = { code: 11000, keyValue: { slug: 'jane-doe-ab12' } };
     const next = jest.fn() as NextFunction;
 
-    handleError(duplicateSlugError, next);
+    handleError({ err: duplicateSlugError, next });
 
     expect(next).toHaveBeenCalledTimes(1);
     const passedError = (next as jest.Mock).mock.calls[0][0];
@@ -27,7 +27,7 @@ describe('handleError', () => {
     const duplicateEmailError = { code: 11000, keyValue: { email: 'existing@example.com' } };
     const next = jest.fn() as NextFunction;
 
-    handleError(duplicateEmailError, next);
+    handleError({ err: duplicateEmailError, next });
 
     const passedError = (next as jest.Mock).mock.calls[0][0];
     expect(passedError).toBeInstanceOf(ConflictError);

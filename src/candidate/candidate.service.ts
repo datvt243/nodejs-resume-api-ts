@@ -87,7 +87,15 @@ export const handlerUpdate = async (item: Record<string, unknown>, lang: string 
   return { success: true, message: t('common.updateSuccess', lang), errors: {}, data: _find ? _find : {} };
 };
 
-export const handlerUploadCV = async (candidateId: string, originalName: string, lang: string = DEFAULT_LANG) => {
+export const handlerUploadCV = async ({
+  candidateId,
+  originalName,
+  lang = DEFAULT_LANG,
+}: {
+  candidateId: string;
+  originalName: string;
+  lang?: string | undefined;
+}) => {
   if (!(await MODEL.findById(candidateId))) {
     return { success: false, message: t('common.idNotFound', lang) };
   }

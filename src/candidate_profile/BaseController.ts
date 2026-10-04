@@ -83,7 +83,7 @@ export const baseGetAll = async (req: Request, res: Response, next: NextFunction
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -104,7 +104,7 @@ export const baseDelete = async (req: Request, res: Response, next: NextFunction
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -130,7 +130,7 @@ export const baseRestore = async (req: Request, res: Response, next: NextFunctio
     });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -189,7 +189,7 @@ export const baseUploadImages = async (req: Request, res: Response, next: NextFu
     if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
       return formatReturn(res, { statusCode: StatusCodes.BAD_REQUEST, success: false, message: t('images.invalidFileType', req.lang) });
     }
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -197,7 +197,11 @@ export const createCrudController = (props: {
   schema: Schema;
   service: {
     handlerCreate: (item: Record<string, unknown>, lang?: string) => Promise<{ success: boolean; [key: string]: unknown }>;
-    handlerUpdate: (item: Record<string, unknown>, userID?: string, lang?: string) => Promise<{ success: boolean; [key: string]: unknown }>;
+    handlerUpdate: (args: {
+      item: Record<string, unknown>;
+      userID?: string | undefined;
+      lang?: string | undefined;
+    }) => Promise<{ success: boolean; [key: string]: unknown }>;
   };
   booleanDefaultField?: string;
 }) => {
@@ -212,7 +216,7 @@ export const createCrudController = (props: {
       const _result = await service.handlerCreate(value, req.lang);
       return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
     } catch (err) {
-      handleError(err, next, req.lang);
+      handleError({ err, next, lang: req.lang });
     }
   };
 
@@ -222,10 +226,10 @@ export const createCrudController = (props: {
 
     try {
       if (booleanDefaultField && !value[booleanDefaultField]) value[booleanDefaultField] = false;
-      const _result = await service.handlerUpdate(value, req.user?._id, req.lang);
+      const _result = await service.handlerUpdate({ item: value, userID: req.user?._id, lang: req.lang });
       return formatReturn(res, { ..._result });
     } catch (err) {
-      handleError(err, next, req.lang);
+      handleError({ err, next, lang: req.lang });
     }
   };
 
@@ -289,7 +293,7 @@ export const createCrudController = (props: {
         data: { results, summary },
       });
     } catch (err) {
-      handleError(err, next, lang);
+      handleError({ err, next, lang });
     }
   };
 

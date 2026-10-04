@@ -41,7 +41,7 @@ export const fnGet = async (req: Request, res: Response, next: NextFunction) => 
       data,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -57,7 +57,7 @@ export const fnCreate = async (req: Request, res: Response, next: NextFunction) 
     const _result = await handlerCreate(value, req.lang);
     return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -70,10 +70,10 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
   if (!isValidated) return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message, errors });
 
   try {
-    const _result = await handlerUpdate(value, req.user?._id, req.lang);
+    const _result = await handlerUpdate({ item: value, userID: req.user?._id, lang: req.lang });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -86,9 +86,9 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
   if (!isValidated) return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message, errors });
 
   try {
-    const _result = await handlerUpdate(value, req.user?._id, req.lang);
+    const _result = await handlerUpdate({ item: value, userID: req.user?._id, lang: req.lang });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

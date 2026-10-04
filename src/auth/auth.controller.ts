@@ -44,7 +44,7 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -84,7 +84,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
       data: _result?.data || null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -134,8 +134,8 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     // rotate: blacklist old refresh token
     await addToBlacklist(refreshToken);
 
-    const newAccess = jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
-    const newRefresh = jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
+    const newAccess = jwtSign({ data: { _id }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } });
+    const newRefresh = jwtSign({ data: { _id }, secretKey: TOKEN_REFRESH, props: { expiresIn: TOKEN_REFRESH_EXP_IN } });
 
     // issue #119: rotate the httpOnly cookies to match the rotated tokens
     setAuthCookies(res, { token: newAccess, tokenRefresh: newRefresh });
@@ -147,7 +147,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -174,7 +174,7 @@ export const authVerifyEmail = async (req: Request, res: Response, next: NextFun
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -205,7 +205,7 @@ export const authForgotPassword = async (req: Request, res: Response, next: Next
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -236,7 +236,7 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -266,7 +266,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
       message: t('auth.logoutSuccess', req.lang),
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -299,6 +299,6 @@ export const authLogoutAll = async (req: Request, res: Response, next: NextFunct
       message: t('auth.logoutAllSuccess', req.lang),
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
