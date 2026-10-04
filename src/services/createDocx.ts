@@ -39,7 +39,15 @@ const formatDate = (val: number | null | undefined): string => {
   return `${m < 10 ? `0${m}` : m}/${y}`;
 };
 
-const formatRange = (startDate: number, endDate: number | null, isCurrent: boolean): string => {
+const formatRange = ({
+  startDate,
+  endDate,
+  isCurrent,
+}: {
+  startDate: number;
+  endDate: number | null;
+  isCurrent: boolean;
+}): string => {
   const start = formatDate(startDate);
   if (!endDate) return start;
   const end = isCurrent ? 'Hiện tại' : formatDate(endDate);
@@ -100,7 +108,7 @@ export const buildDocxContent = (RECORD: AggregatedCandidateData = {}): DocxCont
     sections.push({
       heading: 'Kinh nghiệm làm việc',
       lines: experiences.map((e: ExperienceData) => {
-        const range = formatRange(e.startDate, e.endDate, e.isCurrent);
+        const range = formatRange({ startDate: e.startDate, endDate: e.endDate, isCurrent: e.isCurrent });
         return `${e.position} — ${e.company} (${range})${e.description ? `: ${e.description}` : ''}`;
       }),
     });
@@ -111,7 +119,7 @@ export const buildDocxContent = (RECORD: AggregatedCandidateData = {}): DocxCont
     sections.push({
       heading: 'Dự án',
       lines: projects.map((p: ProjectData) => {
-        const range = formatRange(p.startDate, p.endDate, p.isWorking);
+        const range = formatRange({ startDate: p.startDate, endDate: p.endDate, isCurrent: p.isWorking });
         return `${p.name} — ${p.position || ''} (${range})${p.description ? `: ${p.description}` : ''}`;
       }),
     });
@@ -122,7 +130,7 @@ export const buildDocxContent = (RECORD: AggregatedCandidateData = {}): DocxCont
     sections.push({
       heading: 'Học vấn',
       lines: educations.map((e: EducationData) => {
-        const range = formatRange(e.startDate, e.endDate, e.isCurrent);
+        const range = formatRange({ startDate: e.startDate, endDate: e.endDate, isCurrent: e.isCurrent });
         return `${e.major} — Trường: ${e.school} (${range})${e.description ? `: ${e.description}` : ''}`;
       }),
     });
@@ -141,7 +149,7 @@ export const buildDocxContent = (RECORD: AggregatedCandidateData = {}): DocxCont
     sections.push({
       heading: 'Chứng chỉ',
       lines: certificates.map((c: Certificate) => {
-        const range = formatRange(c.startDate, c.endDate, c.isNoExpiration);
+        const range = formatRange({ startDate: c.startDate, endDate: c.endDate, isCurrent: c.isNoExpiration });
         return `${c.name} — Nơi cấp: ${c.organization} (${range})${c.description ? `: ${c.description}` : ''}`;
       }),
     });

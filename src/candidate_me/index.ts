@@ -45,7 +45,7 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
   }
 
   try {
-    const _me = await handlerGetAboutMe(email, lang, profileId);
+    const _me = await handlerGetAboutMe({ identifier: email, lang, profileId });
     /**
      * Private profile (issue #75) — same response shape as "email not
      * found" so a private profile isn't distinguishable from a
@@ -59,7 +59,7 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
     }
     return formatReturn(res, _me);
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -78,7 +78,15 @@ const PROFILE_ID_FIELDS: Record<string, string> = {
   awards: 'awardIds',
 };
 
-export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi', profileId?: string) => {
+export const handlerGetAboutMe = async ({
+  identifier,
+  lang = 'vi',
+  profileId,
+}: {
+  identifier: string;
+  lang?: string | undefined;
+  profileId?: string | undefined;
+}) => {
   const removeFields = { __v: 0, createdAt: 0, updatedAt: 0, candidateId: 0 };
 
   const { candidateQuerySafe } = await import('@/utils/querySafe');
@@ -229,7 +237,7 @@ export const fnRecordVisit = async (req: Request, res: Response, next: NextFunct
     const _result = await handlerRecordVisit(email, req);
     return formatReturn(res, _result);
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -285,7 +293,7 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
 
   try {
     const lang = req.query['lang'] === 'en' ? 'en' : 'vi';
-    const { success, message, data } = await handlerGetAboutMe(email, lang);
+    const { success, message, data } = await handlerGetAboutMe({ identifier: email, lang });
     if (!success) {
       res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Lấy thông tin ứng viên thất bại'));
       return;
@@ -311,12 +319,12 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
      * every existing client on the pre-existing visual template.
      */
     if (req.query['template'] === 'ats') {
-      await createCVAts(data, res, { lang });
+      await createCVAts({ data, res, options: { lang } });
       return;
     }
 
     await createCV(data, res);
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

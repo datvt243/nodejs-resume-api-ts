@@ -34,7 +34,15 @@ export const getSelectFields = (fields: Record<string, unknown>): string => Obje
  * Pass error to global error handler via next()
  * Use this in catch blocks to forward errors to middleware
  */
-export const handleError = (err: unknown, next: NextFunction, lang: string = DEFAULT_LANG): void => {
+export const handleError = ({
+  err,
+  next,
+  lang = DEFAULT_LANG,
+}: {
+  err: unknown;
+  next: NextFunction;
+  lang?: string | undefined;
+}): void => {
   if (err instanceof AppError) {
     return next(err);
   }

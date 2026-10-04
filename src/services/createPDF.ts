@@ -192,15 +192,15 @@ const _helper = () => {
       return `${String(m).padStart(2, '0')}/${y}`;
     };
 
-    const getTime = ((startDate, endDate, isCurrent) => {
-      const _start = formatDate(startDate);
-      if (!endDate) {
+    const getTime = ((timeProps: Pick<Item, 'startDate' | 'endDate' | 'isCurrent'>) => {
+      const _start = formatDate(timeProps.startDate);
+      if (!timeProps.endDate) {
         return _start;
       }
 
-      const _end = isCurrent ? 'Hiện tại' : formatDate(endDate);
+      const _end = timeProps.isCurrent ? 'Hiện tại' : formatDate(timeProps.endDate);
       return `${_start} - ${_end}`;
-    })(startDate, endDate, isCurrent);
+    })({ startDate, endDate, isCurrent });
 
     /**
      * BUG FIX (found removing an unused-variable warning, issue #188): this
@@ -247,14 +247,22 @@ const _helper = () => {
     renderInfo: function (props: informationPersonal) {
       const { firstName, lastName, phone, email, address, introduction, github, linkedin, website } = props;
 
-      const getInfo = (phone: string, email: string, address: string) => {
+      const getInfo = ({ phone, email, address }: { phone: string; email: string; address: string }) => {
         let _result = '';
         address && (_result += address);
         email && (_result += ` - <a href="mailto:${email}">${email}</a>`);
         phone && (_result += ` - <a href="tel:${phone}">${phone}</a>`);
         return _result;
       };
-      const getWebsite = (github: string = '', linkedin: string = '', website: string = '') => {
+      const getWebsite = ({
+        github = '',
+        linkedin = '',
+        website = '',
+      }: {
+        github?: string | undefined;
+        linkedin?: string | undefined;
+        website?: string | undefined;
+      }) => {
         let _result = '';
         github && (_result += `<a href="${github}">${github}</a>`);
         linkedin && (_result += ` - <a href="${linkedin}">${linkedin}</a>`);
@@ -266,8 +274,8 @@ const _helper = () => {
                 <div class="box">
                     <div class="text-center" style="margin-bottom: 10px">
                         <div class="full-name">${firstName} ${lastName}</div>
-                        <div class="info mb-0">${getInfo(phone, email, address)}</div>
-                        <div class="website">${getWebsite(github, linkedin, website)}</div>
+                        <div class="info mb-0">${getInfo({ phone, email, address })}</div>
+                        <div class="website">${getWebsite({ github, linkedin, website })}</div>
                     </div>
                     <div class="description">${introduction}</div>
                 </div>`;

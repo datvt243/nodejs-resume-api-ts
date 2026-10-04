@@ -47,7 +47,17 @@ const formatMonthYear = (val: number | null | undefined): string => {
   return `${month}/${date.getFullYear()}`;
 };
 
-const formatDateRange = (startDate: number | null | undefined, endDate: number | null | undefined, isCurrent: boolean, lang: SupportedLang): string => {
+const formatDateRange = ({
+  startDate,
+  endDate,
+  isCurrent,
+  lang,
+}: {
+  startDate: number | null | undefined;
+  endDate: number | null | undefined;
+  isCurrent: boolean;
+  lang: SupportedLang;
+}): string => {
   const start = formatMonthYear(startDate);
   if (!endDate && !isCurrent) return start;
   const end = isCurrent ? t('cv.present', lang) : formatMonthYear(endDate);
@@ -101,7 +111,15 @@ const buildContactLine = (contact: AtsContactInfo): string => {
   return parts.join(' &middot; ');
 };
 
-const buildSkillsSection = (generalInformation: GeneralInformationData, lang: SupportedLang, includePersonalSkills: boolean): AtsSection | null => {
+const buildSkillsSection = ({
+  generalInformation,
+  lang,
+  includePersonalSkills,
+}: {
+  generalInformation: GeneralInformationData;
+  lang: SupportedLang;
+  includePersonalSkills: boolean;
+}): AtsSection | null => {
   const { professionalSkills = [], professionalSkillsGroup = [], personalSkills = [] } = generalInformation;
   if (!professionalSkills.length && !(includePersonalSkills && personalSkills.length)) return null;
 
@@ -132,7 +150,7 @@ const buildExperienceSection = (list: ExperienceData[], lang: SupportedLang): { 
   const sorted = [...list].sort((a, b) => b.startDate - a.startDate);
   const entries = sorted
     .map((e) => {
-      const range = formatDateRange(e.startDate, e.endDate, e.isCurrent, lang);
+      const range = formatDateRange({ startDate: e.startDate, endDate: e.endDate, isCurrent: e.isCurrent, lang });
       const stack = e.skills && e.skills.length ? `<p class="entry-stack">${t('cv.stackLabel', lang)}: ${e.skills.map(escapeHtml).join(', ')}</p>` : '';
       return `
         <div class="entry">
@@ -154,7 +172,7 @@ const buildProjectsSection = (list: ProjectData[], lang: SupportedLang): AtsSect
   if (!list.length) return null;
   const entries = list
     .map((p) => {
-      const range = formatDateRange(p.startDate, p.endDate, p.isWorking, lang);
+      const range = formatDateRange({ startDate: p.startDate, endDate: p.endDate, isCurrent: p.isWorking, lang });
       const stack = p.technology && p.technology.length ? `<p class="entry-stack">${t('cv.stackLabel', lang)}: ${p.technology.map(escapeHtml).join(', ')}</p>` : '';
       return `
         <div class="entry">
@@ -172,7 +190,7 @@ const buildEducationSection = (list: EducationData[], lang: SupportedLang): AtsS
   if (!list.length) return null;
   const entries = list
     .map((e) => {
-      const range = formatDateRange(e.startDate, e.endDate, e.isCurrent, lang);
+      const range = formatDateRange({ startDate: e.startDate, endDate: e.endDate, isCurrent: e.isCurrent, lang });
       return `
         <div class="entry">
           <p class="entry-title">${escapeHtml(e.major)} — ${escapeHtml(e.school)}</p>
@@ -188,7 +206,7 @@ const buildCertificatesSection = (list: Certificate[], lang: SupportedLang): Ats
   if (!list.length) return null;
   const entries = list
     .map((c) => {
-      const range = formatDateRange(c.startDate, c.isNoExpiration ? null : c.endDate, c.isNoExpiration, lang);
+      const range = formatDateRange({ startDate: c.startDate, endDate: c.isNoExpiration ? null : c.endDate, isCurrent: c.isNoExpiration, lang });
       return `
         <div class="entry">
           <p class="entry-title">${escapeHtml(c.name)} — ${escapeHtml(c.organization)}</p>
@@ -222,7 +240,15 @@ const buildLanguagesSection = (list: Language[], lang: SupportedLang): AtsSectio
   return { id: 'languages', heading: t('cv.languages', lang), bodyHtml: `<ul>${items}</ul>` };
 };
 
-export const buildAtsContent = (RECORD: AggregatedCandidateData = {}, lang: SupportedLang = 'vi', options: AtsContentOptions = {}): AtsContent => {
+export const buildAtsContent = ({
+  RECORD = {},
+  lang = 'vi',
+  options = {},
+}: {
+  RECORD?: AggregatedCandidateData;
+  lang?: SupportedLang;
+  options?: AtsContentOptions;
+}): AtsContent => {
   const { includePersonalSkills = false } = options;
   const {
     firstName = '',
@@ -253,7 +279,7 @@ export const buildAtsContent = (RECORD: AggregatedCandidateData = {}, lang: Supp
   };
 
   const sections: AtsSection[] = [];
-  const skillsSection = buildSkillsSection(generalInformation, lang, includePersonalSkills);
+  const skillsSection = buildSkillsSection({ generalInformation, lang, includePersonalSkills });
   if (skillsSection) sections.push(skillsSection);
 
   const { section: experienceSection, startDates } = buildExperienceSection(experiences, lang);
@@ -334,8 +360,16 @@ export const renderAtsHtml = (content: AtsContent, lang: SupportedLang = 'vi'): 
 </html>`;
 };
 
-export const pageRenderAts = (RECORD: AggregatedCandidateData, lang: SupportedLang = 'vi', options: AtsContentOptions = {}): { email: string; html: string; content: AtsContent } => {
-  const content = buildAtsContent(RECORD, lang, options);
+export const pageRenderAts = ({
+  RECORD,
+  lang = 'vi',
+  options = {},
+}: {
+  RECORD: AggregatedCandidateData;
+  lang?: SupportedLang;
+  options?: AtsContentOptions | undefined;
+}): { email: string; html: string; content: AtsContent } => {
+  const content = buildAtsContent({ RECORD, lang, options });
   const html = renderAtsHtml(content, lang);
   return { email: content.email, html, content };
 };
@@ -362,7 +396,7 @@ export interface CreateCVAtsOptions {
  */
 export const renderAtsPdfBuffer = async (data: AggregatedCandidateData, options: CreateCVAtsOptions = {}): Promise<{ buffer: Buffer; content: AtsContent }> => {
   const { lang = 'vi', pageFormat = 'A4' } = options;
-  const { content, html } = pageRenderAts(data, lang, options.contentOptions);
+  const { content, html } = pageRenderAts({ RECORD: data, lang, options: options.contentOptions });
 
   const executablePath = process.env['PUPPETEER_EXECUTABLE_PATH'];
   const browser = await puppeteer.launch({
@@ -405,7 +439,15 @@ export const renderAtsPdfBuffer = async (data: AggregatedCandidateData, options:
  * unless `PERSIST_EXPORTED_PDF` is set (pdf-export-standard.md rule 10:
  * no PII in on-disk paths by default).
  */
-export const createCVAts = async (data: AggregatedCandidateData, res: Response, options: CreateCVAtsOptions = {}): Promise<void> => {
+export const createCVAts = async ({
+  data,
+  res,
+  options = {},
+}: {
+  data: AggregatedCandidateData;
+  res: Response;
+  options?: CreateCVAtsOptions;
+}): Promise<void> => {
   try {
     const { buffer, content } = await renderAtsPdfBuffer(data, options);
 

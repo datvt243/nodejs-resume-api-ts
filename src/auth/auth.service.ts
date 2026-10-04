@@ -96,8 +96,8 @@ export const handlerLogin = async (data: Auth, lang: string = DEFAULT_LANG) => {
   const comparePwd = await bcryptCompareHash(password, pwdHash);
   if (!comparePwd) return { success: false, message: t('auth.wrongPassword', lang) };
 
-  const token = jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
-  const tokenRefresh = jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
+  const token = jwtSign({ data: { _id }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } });
+  const tokenRefresh = jwtSign({ data: { _id }, secretKey: TOKEN_REFRESH, props: { expiresIn: TOKEN_REFRESH_EXP_IN } });
 
   return {
     success: true,
