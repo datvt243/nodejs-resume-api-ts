@@ -5,7 +5,9 @@
  * letter-spacing, no images, single column (no flex/grid layout), real
  * localized headings, sanitized free-text, no forbidden fields.
  */
-import { buildAtsContent, renderAtsHtml, pageRenderAts } from '@/services/createPDF.ats';
+import { buildAtsContent, renderAtsHtml, pageRenderAts, renderAtsPdfBuffer, createCVAts } from '@/services/createPDF.ats';
+import puppeteer from 'puppeteer';
+import { logger } from '@/logger';
 import type { AggregatedCandidateData } from '@/types/candidate.type';
 
 const fixture: AggregatedCandidateData = {
@@ -194,3 +196,32 @@ describe('renderAtsHtml output is a function of buildAtsContent (separately test
     expect(htmlViaPageRender).toBe(htmlDirect);
   });
 });
+
+// issue #225 — Puppeteer mocked for these only; the rest of this file never launches it
+jest.mock('puppeteer', () => ({ launch: jest.fn() }));
+
+describe('ATS PDF failure handling (issue #225)', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('renderAtsPdfBuffer closes the browser and rethrows when rendering fails', async () => {
+    const browser = { newPage: jest.fn().mockRejectedValue(new Error('Target closed')), close: jest.fn().mockResolvedValue(undefined) };
+    (puppeteer.launch as jest.Mock).mockResolvedValue(browser);
+
+    await expect(renderAtsPdfBuffer(fixture)).rejects.toThrow('Target closed');
+    expect(browser.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('createCVAts logs the real error and answers 500 without echoing it', async () => {
+    (puppeteer.launch as jest.Mock).mockRejectedValue(new Error('Failed to launch the browser process'));
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => logger);
+    const res = { status: jest.fn(), send: jest.fn(), setHeader: jest.fn(), contentType: jest.fn() };
+    res.status.mockReturnValue(res);
+
+    await createCVAts({ data: fixture, res: res as any });
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('createCVAts'), expect.objectContaining({ error: 'Failed to launch the browser process' }));
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(expect.not.objectContaining({ error: expect.anything() }));
+  });
+});
+

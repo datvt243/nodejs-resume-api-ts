@@ -19,6 +19,7 @@
  * @see https://github.com/datvt243
  */
 import puppeteer from 'puppeteer';
+import { logger } from '@/logger';
 import { filterXSS, type IFilterXSSOptions } from 'xss';
 import { Response } from 'express';
 import { t, type SupportedLang } from '@/utils/i18n';
@@ -404,23 +405,28 @@ export const renderAtsPdfBuffer = async (data: AggregatedCandidateData, options:
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'domcontentloaded' });
-  // Local system font stack only, but await readiness anyway —
-  // pdf-export-standard.md rule 2: never print before fonts settle.
-  await page.evaluate(() => document.fonts.ready);
+  let buffer: Buffer;
+  // issue #225: close in `finally`, or each failed render leaks a Chromium process
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+    // Local system font stack only, but await readiness anyway —
+    // pdf-export-standard.md rule 2: never print before fonts settle.
+    await page.evaluate(() => document.fonts.ready);
 
-  const mm = '15mm';
-  let buffer = Buffer.from(
-    await page.pdf({
-      format: pageFormat,
-      printBackground: false,
-      margin: { top: mm, right: mm, bottom: mm, left: mm },
-      tagged: true,
-      outline: true,
-    }),
-  );
-  await browser.close();
+    const mm = '15mm';
+    buffer = Buffer.from(
+      await page.pdf({
+        format: pageFormat,
+        printBackground: false,
+        margin: { top: mm, right: mm, bottom: mm, left: mm },
+        tagged: true,
+        outline: true,
+      }),
+    );
+  } finally {
+    await browser.close().catch(() => undefined);
+  }
 
   buffer = await applyPdfMetadata(buffer, {
     title: `${content.fullName} - ${content.headline || 'CV'} CV`,
@@ -464,10 +470,12 @@ export const createCVAts = async ({
     res.contentType('application/pdf');
     res.send(buffer);
   } catch (error) {
+    // issue #225: an Error serializes to `{}` — log the real cause
+    // server-side instead of echoing an empty object to the client
+    logger.error('[createCVAts] PDF generation failed', { error: (error as Error).message, stack: (error as Error).stack });
     res.status(500).send({
       status: false,
       message: 'Xảy ra lỗi, không thể tạo file PDF (ATS)',
-      error,
     });
   }
 };
