@@ -3,6 +3,9 @@
  * CV in memory (same aggregated data as `download-pdf`), extracts the
  * real text back out of the rendered PDF, and scores it against the ATS
  * check suite. See `doctrine/standards/pdf-export-standard.md`.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';

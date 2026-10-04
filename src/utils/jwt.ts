@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: JWT token utilities with secure secret key validation
+ * JWT token utilities with secure secret key validation
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import jwt from 'jsonwebtoken';

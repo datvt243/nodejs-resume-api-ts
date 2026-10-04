@@ -1,7 +1,5 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: DOCX CV export (issue #76, remainder after JSON export
+ * DOCX CV export (issue #76, remainder after JSON export
  *   shipped separately — see createPDF.ts's `createCV`/`pageRender` for
  *   the sibling PDF path this mirrors).
  *
@@ -12,6 +10,9 @@
  *   `renderDocxDocument` turns that plain model into an actual `docx`
  *   `Document`. `createCVDocx` is the thin I/O wrapper that packs it to a
  *   buffer and sends it.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { Response } from 'express';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';

@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import generalInformationSchema from '@/models/generalInformation.model';
 import { baseFindDocument, baseCreateDocument } from '@/services';
 import { withDBTimeout } from '@/utils/timeout';

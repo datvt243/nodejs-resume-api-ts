@@ -1,8 +1,9 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: One document per profile visit (analytics for the public
+ * One document per profile visit (analytics for the public
  * GET /api/me/:email profile) — candidateId + ip + location, timestamped.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import mongoose from 'mongoose';

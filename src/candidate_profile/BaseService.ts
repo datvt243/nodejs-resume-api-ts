@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Shared CRUD handler factory for candidate_profile sections (education, experience, award, ...)
+ * Shared CRUD handler factory for candidate_profile sections (education, experience, award, ...)
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import { Model } from 'mongoose';

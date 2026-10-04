@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import { schemaProject } from './project.validate';
 import * as projectService from './project.service';
 import { createCrudController } from '@/candidate_profile/BaseController';

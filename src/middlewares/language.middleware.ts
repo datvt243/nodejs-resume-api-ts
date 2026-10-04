@@ -1,8 +1,9 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Resolves the request's language from Accept-Language and
+ * Resolves the request's language from Accept-Language and
  * attaches req.lang + req.t(key) for handlers to use.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { Request, Response, NextFunction } from 'express';
 import { t, SUPPORTED_LANGS, DEFAULT_LANG, SupportedLang } from '@/utils/i18n';

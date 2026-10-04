@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import mongoose from 'mongoose';
 import { localizedTextSchema } from '@/models/part';
 const Schema = mongoose.Schema;

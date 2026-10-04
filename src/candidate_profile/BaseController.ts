@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import { Response, Request, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Schema } from 'joi';

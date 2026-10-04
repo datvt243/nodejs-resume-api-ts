@@ -2,6 +2,9 @@
  * CV-wide utility endpoints that aren't a candidate CRUD section — today
  * just the ATS self-check. Mounted at `/api/v1/cv` behind `verifyToken`
  * (see `routers/api/v1/index.ts`).
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import express from 'express';
 const router = express.Router();

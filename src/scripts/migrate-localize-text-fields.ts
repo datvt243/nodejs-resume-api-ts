@@ -14,6 +14,9 @@
  * would otherwise fail to read/cast correctly under the new schema.
  *
  * Usage: npm run migrate:localize-text
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import dotenv from 'dotenv';
 dotenv.config();

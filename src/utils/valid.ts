@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import mongoose from 'mongoose';
 import { Schema, ValidationError, ValidationErrorItem } from 'joi';
 import { _log } from '@/utils';

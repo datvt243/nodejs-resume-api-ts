@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import Joi from 'joi';
 import { _id, candidateId } from '@/config/joi.config';
 

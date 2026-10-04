@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: MongoDB Connection Manager Class
+ * MongoDB Connection Manager Class
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import mongoose, { Mongoose } from 'mongoose';

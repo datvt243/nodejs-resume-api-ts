@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Token blacklist with Redis support or In-Memory fallback
+ * Token blacklist with Redis support or In-Memory fallback
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import jwt from 'jsonwebtoken';

@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 export * from '@/config/cors.config';
 export * from '@/config/joi.config';
 export * from '@/config/process.config';

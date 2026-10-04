@@ -5,6 +5,9 @@
  * here — so each one is independently unit-testable with a plain text
  * fixture. See `doctrine/standards/pdf-export-standard.md` for the
  * invariants these enforce.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { t } from '@/utils/i18n';
 import type { SupportedLang } from '@/utils/i18n';

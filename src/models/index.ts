@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import Application from './application.model';
 import Award from './award.model';
 import Candidate from './candidate.model';

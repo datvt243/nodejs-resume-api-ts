@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import { CORS_ORIGIN, NODE_ENV } from '@/config/process.config';
 
 const allowedOrigins = (CORS_ORIGIN || '')

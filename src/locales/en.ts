@@ -1,6 +1,9 @@
 /**
  * English locale. Opt-in via `Accept-Language: en` — Vietnamese remains
  * the default (see vi.ts).
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 export default {
   auth: {
