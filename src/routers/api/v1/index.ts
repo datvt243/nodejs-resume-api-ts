@@ -1,7 +1,6 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import express from 'express';
@@ -42,15 +41,34 @@ router.use('/cv', verifyToken, routeCv);
  *   get:
  *     tags: [CandidateMe]
  *     summary: Export the authenticated candidate's CV as a PDF
+ *     description: >
+ *       Authenticates via EITHER an `Authorization: Bearer` header (same as
+ *       every other endpoint) OR the `token` query parameter below — listed
+ *       as alternatives because this route is commonly opened as a direct
+ *       link/download (`<a href>`, new tab, `<iframe>`), where a browser
+ *       navigation can't attach a custom header. Both paths go through the
+ *       exact same `verifyToken` middleware: same JWT signature check, same
+ *       blacklist check, same "logout of all devices" session-revocation
+ *       check. A `?token=` value is simply the same access token issued by
+ *       `POST /auth/login`, placed in the URL instead of a header — not a
+ *       separate/weaker credential. Trade-off: unlike a header, a token in
+ *       the URL is exposed in server access logs and browser history, which
+ *       is why this is the only endpoint in the API that accepts it this
+ *       way.
  *     security:
  *       - bearerAuth: []
+ *       - queryTokenAuth: []
  *     parameters:
  *       - in: query
  *         name: token
- *         required: true
+ *         required: false
  *         schema:
  *           type: string
- *         description: Access token (token is read from the query string for this endpoint)
+ *         description: >
+ *           The access token, when not sent via the `Authorization: Bearer`
+ *           header. Required if no `Authorization` header is present (one
+ *           of the two is mandatory). See the endpoint description above
+ *           for why this endpoint uniquely accepts a query-string token.
  *       - in: query
  *         name: lang
  *         required: false

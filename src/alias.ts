@@ -1,4 +1,8 @@
-// alias.js
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 const path = require('path');
 const moduleAlias = require('module-alias');
 

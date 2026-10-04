@@ -1,7 +1,5 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: "Log out of all devices" (issue #74) — revoke every token
+ * "Log out of all devices" (issue #74) — revoke every token
  *   previously issued to a candidate at once, without enumerating or
  *   blacklisting them individually.
  *
@@ -15,6 +13,9 @@
  *   No schema change, no new DB round trip — just one more Redis/mem
  *   lookup alongside the blacklist check that already runs on every
  *   authenticated request.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { isRedisAvailable, getRedisClient } from '@/services/redis';
 import { logger } from '@/logger';

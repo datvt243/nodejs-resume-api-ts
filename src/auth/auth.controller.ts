@@ -1,8 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
+
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { validateSchema, formatReturn, handleError, setAuthCookies, clearAuthCookies } from '@/utils';
@@ -20,10 +20,6 @@ import { t } from '@/utils/i18n';
  * Chức năng Đăng ký mới
  */
 export const authRegister = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate dữ liệu đầu vào
-   * { email, password, re-password } = req.body;
-   */
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: schemaAuthRegister,
     item: { ...req.body },
@@ -38,9 +34,6 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
     });
   }
 
-  /**
-   * save mới document
-   */
   try {
     const { success, message } = await handlerRegister({ _id: null, ...value }, req.lang);
     return formatReturn(res, {
@@ -51,7 +44,7 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -59,9 +52,6 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
  * Chức năng Đăng nhập
  */
 export const authLogin = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate date come from req
-   */
   const { isValidated, value = {}, message, errors } = validateSchema({
     schema: schemaAuthLogin,
     item: { ...req.body },
@@ -76,9 +66,6 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
     });
   }
 
-  /**
-   * tiến hành Login
-   */
   try {
     const _result = await handlerLogin({ email: value.email, password: value.password }, req.lang);
 
@@ -97,7 +84,7 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
       data: _result?.data || null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -106,7 +93,6 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
  */
 export const authRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // pull from multiple locations using helper
     const refreshToken = extractTokenFromRequest(req, 'refreshToken');
 
     if (!refreshToken) {
@@ -125,7 +111,6 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // verify refresh token
     const decoded = jwtVerify(refreshToken, TOKEN_REFRESH);
     const { _id, iat } = (decoded as { _id?: string; iat?: number }) || {};
     if (!_id)
@@ -149,9 +134,8 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     // rotate: blacklist old refresh token
     await addToBlacklist(refreshToken);
 
-    // create new tokens
-    const newAccess = jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
-    const newRefresh = jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
+    const newAccess = jwtSign({ data: { _id }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } });
+    const newRefresh = jwtSign({ data: { _id }, secretKey: TOKEN_REFRESH, props: { expiresIn: TOKEN_REFRESH_EXP_IN } });
 
     // issue #119: rotate the httpOnly cookies to match the rotated tokens
     setAuthCookies(res, { token: newAccess, tokenRefresh: newRefresh });
@@ -163,7 +147,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       data: { token: newAccess, tokenRefresh: newRefresh },
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -190,7 +174,7 @@ export const authVerifyEmail = async (req: Request, res: Response, next: NextFun
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -221,7 +205,7 @@ export const authForgotPassword = async (req: Request, res: Response, next: Next
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -252,7 +236,7 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
       data: null,
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -261,7 +245,6 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
  */
 export const authLogout = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // attempt to extract token from header/cookie/query
     const token = extractTokenFromRequest(req);
 
     if (!token) {
@@ -283,7 +266,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
       message: t('auth.logoutSuccess', req.lang),
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -316,6 +299,6 @@ export const authLogoutAll = async (req: Request, res: Response, next: NextFunct
       message: t('auth.logoutAllSuccess', req.lang),
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

@@ -1,7 +1,6 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import path from 'path';
@@ -39,9 +38,6 @@ export const fnGetInformationByEmail = async (req: Request, res: Response) => {
 };
 
 export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data come from req.body
-   */
   const { isValidated, value, errors } = validateSchema({ schema: schemaCandidate, item: { ...req.body }, lang: req.lang });
   if (!isValidated)
     return formatReturn(res, {
@@ -52,7 +48,6 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
     });
 
   /**
-   * update data
    * Force _id to the authenticated user's own id — never trust a client-
    * supplied _id here, or any authenticated user could overwrite another
    * candidate's profile.
@@ -61,7 +56,7 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
     const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -78,10 +73,10 @@ export const fnUploadCV = async (req: Request, res: Response, next: NextFunction
 
   try {
     if (!req.user?._id) throw new AuthenticationError();
-    const _result = await handlerUploadCV(req.user._id, file.originalname, req.lang);
+    const _result = await handlerUploadCV({ candidateId: req.user._id, originalName: file.originalname, lang: req.lang });
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -107,7 +102,7 @@ export const fnDownloadCV = async (req: Request, res: Response, next: NextFuncti
     const filePath = path.join(CV_UPLOAD_DIR, `${candidateId}-cv.pdf`);
     return res.download(filePath, cvFile.originalName || 'CV.pdf');
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -139,7 +134,7 @@ export const fnParseLinkedInExport = async (req: Request, res: Response, next: N
         message: t('linkedinImport.invalidZip', req.lang),
       });
     }
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -154,7 +149,7 @@ export const fnGetVisits = async (req: Request, res: Response, next: NextFunctio
     const _result = await handlerGetVisits(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
@@ -168,14 +163,11 @@ export const fnDelete = async (req: Request, res: Response, next: NextFunction) 
     const _result = await handlerDelete(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };
 
 export const fnUpdateFields = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data gửi lên
-   */
   const { isValidated, value, errors } = validateSchema({
     schema: schemaCandidatePatch,
     item: { ...req.body },
@@ -189,13 +181,11 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
       errors,
     });
 
-  /**
-   * update data — force _id to the authenticated user (see fnUpdate)
-   */
+  // Force _id to the authenticated user — same IDOR-safety pattern as fnUpdate.
   try {
     const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

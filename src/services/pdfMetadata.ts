@@ -3,6 +3,9 @@
  * after Puppeteer renders the document — Chromium's own print-to-PDF path
  * does not expose a way to set these. See
  * `doctrine/standards/pdf-export-standard.md` rule 9.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { PDFDocument } from 'pdf-lib';
 

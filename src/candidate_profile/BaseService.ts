@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Shared CRUD handler factory for candidate_profile sections (education, experience, award, ...)
+ * Shared CRUD handler factory for candidate_profile sections (education, experience, award, ...)
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import { Model } from 'mongoose';
@@ -41,9 +42,7 @@ export const createCrudService = <T extends CrudDocument>(props: { model: Model<
             );
             return success ? find : undefined;
           },
-          hookHasErrors: () => {
-            //
-          },
+          hookHasErrors: () => {},
         }),
       );
     } catch (error: unknown) {
@@ -51,7 +50,15 @@ export const createCrudService = <T extends CrudDocument>(props: { model: Model<
     }
   };
 
-  const handlerUpdate = async (item: Record<string, unknown>, userID?: string, lang: string = DEFAULT_LANG) => {
+  const handlerUpdate = async ({
+    item,
+    userID,
+    lang = DEFAULT_LANG,
+  }: {
+    item: Record<string, unknown>;
+    userID?: string | undefined;
+    lang?: string | undefined;
+  }) => {
     try {
       return await withDBTimeout(baseUpdateDocument({ document: item, model: MODEL, userID, lang }));
     } catch (error: unknown) {
@@ -59,7 +66,15 @@ export const createCrudService = <T extends CrudDocument>(props: { model: Model<
     }
   };
 
-  const handlerDelete = async (id: string, userID: string, lang: string = DEFAULT_LANG) => {
+  const handlerDelete = async ({
+    id,
+    userID,
+    lang = DEFAULT_LANG,
+  }: {
+    id: string;
+    userID: string;
+    lang?: string | undefined;
+  }) => {
     try {
       return await withDBTimeout(baseDeleteDocument({ model: MODEL, _id: id, userID, name, lang }));
     } catch (error: unknown) {

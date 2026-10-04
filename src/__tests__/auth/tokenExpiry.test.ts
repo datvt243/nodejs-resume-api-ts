@@ -4,8 +4,8 @@
  * and refresh tokens always shared the same default (1h) expiry. Both
  * real call sites (auth.service.ts's handlerLogin, auth.controller.ts's
  * authRefreshToken) already sign with the exact same pattern:
- *   jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' })   // access
- *   jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN }) // refresh
+ *   jwtSign({ data: { _id }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } })   // access
+ *   jwtSign({ data: { _id }, secretKey: TOKEN_REFRESH, props: { expiresIn: TOKEN_REFRESH_EXP_IN } }) // refresh
  * This test exercises that exact pattern for real (no mocked jwtSign),
  * decodes the resulting JWTs, and proves the access token's lifetime
  * genuinely comes from TOKEN_EXP_IN and the refresh token's from
@@ -37,8 +37,8 @@ describe('access vs refresh token expiry — real TOKEN_EXP_IN/TOKEN_REFRESH_EXP
 
     // Exact same call shape as auth.service.ts's handlerLogin and
     // auth.controller.ts's authRefreshToken.
-    const accessToken = jwtSign({ _id: 'u1' }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
-    const refreshToken = jwtSign({ _id: 'u1' }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
+    const accessToken = jwtSign({ data: { _id: 'u1' }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } });
+    const refreshToken = jwtSign({ data: { _id: 'u1' }, secretKey: TOKEN_REFRESH, props: { expiresIn: TOKEN_REFRESH_EXP_IN } });
 
     // jwtVerify's return type only declares `_id`, but the real decoded
     // JWT payload also carries `exp`/`iat` at runtime — cast to read them.
@@ -59,7 +59,7 @@ describe('access vs refresh token expiry — real TOKEN_EXP_IN/TOKEN_REFRESH_EXP
     const { jwtSign, jwtVerify } = require('@/utils/jwt');
     const { TOKEN_SECRET, TOKEN_EXP_IN } = require('@/config/process.config');
 
-    const accessToken = jwtSign({ _id: 'u1' }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
+    const accessToken = jwtSign({ data: { _id: 'u1' }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } });
     const accessDecoded = jwtVerify(accessToken, TOKEN_SECRET) as any;
 
     expect(accessDecoded.exp - accessDecoded.iat).toBe(60 * 60); // 1h fallback

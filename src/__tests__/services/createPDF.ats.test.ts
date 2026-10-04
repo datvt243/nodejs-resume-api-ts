@@ -80,7 +80,7 @@ const fixture: AggregatedCandidateData = {
 
 describe('buildAtsContent', () => {
   it('builds the full content model with headline, contact, summary', () => {
-    const content = buildAtsContent(fixture, 'en');
+    const content = buildAtsContent({ RECORD: fixture, lang: 'en' });
 
     expect(content.fullName).toBe('Jane Doe');
     expect(content.headline).toBe('Senior Backend Engineer');
@@ -91,23 +91,23 @@ describe('buildAtsContent', () => {
   });
 
   it('sorts experience entries reverse-chronologically (most recent first)', () => {
-    const content = buildAtsContent(fixture, 'en');
+    const content = buildAtsContent({ RECORD: fixture, lang: 'en' });
     expect(content.experienceStartDates).toEqual([...content.experienceStartDates].sort((a, b) => b - a));
     expect(content.experienceStartDates[0]).toBeGreaterThan(content.experienceStartDates[1] as number);
   });
 
   it('skips personalSkills by default and includes them only when opted in', () => {
-    const withoutPersonal = buildAtsContent(fixture, 'en');
+    const withoutPersonal = buildAtsContent({ RECORD: fixture, lang: 'en' });
     const skillsSection = withoutPersonal.sections.find((s) => s.id === 'skills');
     expect(skillsSection?.bodyHtml).not.toContain('Communication');
 
-    const withPersonal = buildAtsContent(fixture, 'en', { includePersonalSkills: true });
+    const withPersonal = buildAtsContent({ RECORD: fixture, lang: 'en', options: { includePersonalSkills: true } });
     const skillsSectionWithPersonal = withPersonal.sections.find((s) => s.id === 'skills');
     expect(skillsSectionWithPersonal?.bodyHtml).toContain('Communication');
   });
 
   it('groups professional skills by professionalSkillsGroup, ungrouped skills fall under "Other"', () => {
-    const content = buildAtsContent(fixture, 'en');
+    const content = buildAtsContent({ RECORD: fixture, lang: 'en' });
     const skillsSection = content.sections.find((s) => s.id === 'skills');
     expect(skillsSection?.bodyHtml).toContain('Languages: TypeScript');
     expect(skillsSection?.bodyHtml).toContain('Frameworks: Node.js');
@@ -115,12 +115,12 @@ describe('buildAtsContent', () => {
   });
 
   it('omits the References section by default (not part of the ATS section list)', () => {
-    const content = buildAtsContent(fixture, 'en');
+    const content = buildAtsContent({ RECORD: fixture, lang: 'en' });
     expect(content.sections.find((s) => s.id === 'references')).toBeUndefined();
   });
 
   it('never surfaces date of birth, gender, or marital status', () => {
-    const { html } = pageRenderAts(fixture, 'en');
+    const { html } = pageRenderAts({ RECORD: fixture, lang: 'en' });
     const lower = html.toLowerCase();
     expect(lower).not.toContain('date of birth');
     expect(lower).not.toContain('gender');
@@ -130,7 +130,7 @@ describe('buildAtsContent', () => {
 
 describe('renderAtsHtml — ATS-safety invariants (doctrine/standards/pdf-export-standard.md)', () => {
   it.each(['en', 'vi'] as const)('holds for lang=%s', (lang) => {
-    const { html } = pageRenderAts(fixture, lang);
+    const { html } = pageRenderAts({ RECORD: fixture, lang });
 
     // Rule 1: no letter-spacing on real text.
     expect(html).not.toMatch(/letter-spacing:\s*\.?\d/);
@@ -156,7 +156,7 @@ describe('renderAtsHtml — ATS-safety invariants (doctrine/standards/pdf-export
   });
 
   it('renders standard localized headings in the expected order (en)', () => {
-    const { html } = pageRenderAts(fixture, 'en');
+    const { html } = pageRenderAts({ RECORD: fixture, lang: 'en' });
     const order = ['>Skills<', '>Experience<', '>Projects<', '>Education<', '>Languages<'];
     const indices = order.map((heading) => html.indexOf(heading));
     expect(indices.every((i) => i !== -1)).toBe(true);
@@ -164,7 +164,7 @@ describe('renderAtsHtml — ATS-safety invariants (doctrine/standards/pdf-export
   });
 
   it('renders standard localized headings in Vietnamese', () => {
-    const { html } = pageRenderAts(fixture, 'vi');
+    const { html } = pageRenderAts({ RECORD: fixture, lang: 'vi' });
     expect(html).toContain('>Kỹ năng<');
     expect(html).toContain('>Kinh nghiệm làm việc<');
     expect(html).toContain('>Dự án<');
@@ -173,14 +173,14 @@ describe('renderAtsHtml — ATS-safety invariants (doctrine/standards/pdf-export
   });
 
   it('uses zero-padded MM/YYYY dates, including September', () => {
-    const { html } = pageRenderAts(fixture, 'en');
+    const { html } = pageRenderAts({ RECORD: fixture, lang: 'en' });
     expect(html).toContain('09/2021');
     expect(html).not.toMatch(/[^0]9\/2021/);
   });
 
   it('marks the current role as Present / Hiện tại', () => {
-    const en = pageRenderAts(fixture, 'en').html;
-    const vi = pageRenderAts(fixture, 'vi').html;
+    const en = pageRenderAts({ RECORD: fixture, lang: 'en' }).html;
+    const vi = pageRenderAts({ RECORD: fixture, lang: 'vi' }).html;
     expect(en).toContain('Present');
     expect(vi).toContain('Hiện tại');
   });
@@ -188,9 +188,9 @@ describe('renderAtsHtml — ATS-safety invariants (doctrine/standards/pdf-export
 
 describe('renderAtsHtml output is a function of buildAtsContent (separately testable)', () => {
   it('produces the same html via pageRenderAts and via the two-step build+render', () => {
-    const content = buildAtsContent(fixture, 'en');
+    const content = buildAtsContent({ RECORD: fixture, lang: 'en' });
     const htmlDirect = renderAtsHtml(content, 'en');
-    const { html: htmlViaPageRender } = pageRenderAts(fixture, 'en');
+    const { html: htmlViaPageRender } = pageRenderAts({ RECORD: fixture, lang: 'en' });
     expect(htmlViaPageRender).toBe(htmlDirect);
   });
 });

@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Custom error classes for the application
+ * Custom error classes for the application
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { StatusCodes } from 'http-status-codes';
 
@@ -36,25 +37,16 @@ export enum ErrorCode {
  */
 export type AppErrorDetails = string | string[] | Record<string, string> | null | undefined;
 
-/**
- * Interface for error constructor options
- */
 export interface IErrorOptions {
   message?: string;
   errorCode?: ErrorCode;
   errors?: AppErrorDetails;
 }
 
-/**
- * Interface for error constructor options with custom status code
- */
 export interface IErrorOptionsWithStatus extends IErrorOptions {
   statusCode?: number;
 }
 
-/**
- * Base application error class
- */
 export class AppError extends Error {
   public readonly statusCode: number;
   public override readonly message: string;
@@ -65,7 +57,6 @@ export class AppError extends Error {
   constructor(options: IErrorOptionsWithStatus);
   constructor(message: string, statusCode?: number, errorCode?: ErrorCode, errors?: AppErrorDetails);
   constructor(messageOrOptions: string | IErrorOptionsWithStatus, statusCode?: number, errorCode?: ErrorCode, errors?: AppErrorDetails) {
-    // Handle constructor overloading
     let message: string;
     let finalStatusCode: number;
     let finalErrorCode: ErrorCode;
@@ -99,9 +90,6 @@ export class AppError extends Error {
   }
 }
 
-/**
- * Error for validation failures (Joi, Zod, etc.)
- */
 export class ValidationError extends AppError {
   constructor(options?: IErrorOptions);
   constructor(message?: string, errors?: AppErrorDetails);
@@ -121,9 +109,6 @@ export class ValidationError extends AppError {
   }
 }
 
-/**
- * Error for authentication failures
- */
 export class AuthenticationError extends AppError {
   constructor(options?: IErrorOptions);
   constructor(message?: string, errorCode?: ErrorCode, errors?: AppErrorDetails);
@@ -146,9 +131,6 @@ export class AuthenticationError extends AppError {
   }
 }
 
-/**
- * Error for authorization/permission failures
- */
 export class AuthorizationError extends AppError {
   constructor(options?: IErrorOptions);
   constructor(message?: string, errorCode?: ErrorCode, errors?: AppErrorDetails);
@@ -171,9 +153,6 @@ export class AuthorizationError extends AppError {
   }
 }
 
-/**
- * Error for resource not found
- */
 export class NotFoundError extends AppError {
   constructor(options?: IErrorOptions);
   constructor(message?: string, errors?: AppErrorDetails);
@@ -215,9 +194,6 @@ export class ConflictError extends AppError {
   }
 }
 
-/**
- * Error for bad requests (general)
- */
 export class BadRequestError extends AppError {
   constructor(options?: IErrorOptions);
   constructor(message?: string, errors?: AppErrorDetails);
@@ -237,9 +213,6 @@ export class BadRequestError extends AppError {
   }
 }
 
-/**
- * Error for invalid credentials
- */
 export class InvalidCredentialsError extends AuthenticationError {
   constructor(options?: IErrorOptions);
   constructor(message?: string);
@@ -256,9 +229,6 @@ export class InvalidCredentialsError extends AuthenticationError {
   }
 }
 
-/**
- * Error for expired tokens
- */
 export class TokenExpiredError extends AuthenticationError {
   constructor(options?: IErrorOptions);
   constructor(message?: string);
@@ -275,9 +245,6 @@ export class TokenExpiredError extends AuthenticationError {
   }
 }
 
-/**
- * Error for revoked/blacklisted tokens
- */
 export class TokenRevokedError extends AuthenticationError {
   constructor(options?: IErrorOptions);
   constructor(message?: string);
@@ -294,9 +261,6 @@ export class TokenRevokedError extends AuthenticationError {
   }
 }
 
-/**
- * Error for invalid tokens
- */
 export class InvalidTokenError extends AuthenticationError {
   constructor(options?: IErrorOptions);
   constructor(message?: string);
@@ -310,15 +274,15 @@ export class InvalidTokenError extends AuthenticationError {
 }
 
 /**
- * Helper function to throw operational errors
+ * Throws an `AppError` built from `options` — always "operational"
+ * (`AppError.isOperational` is always `true`), i.e. an anticipated,
+ * known failure mode rather than a programming bug.
  */
 export const throwError = (options: IErrorOptionsWithStatus): never => {
   throw new AppError(options);
 };
 
-/**
- * Helper to check if an error is an operational error (known error)
- */
+/** True for a known/anticipated (`isOperational`) error, false for an unexpected one (a real bug). */
 export const isOperationalError = (error: Error): boolean => {
   if (error instanceof AppError) {
     return error.isOperational;

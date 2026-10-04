@@ -1,7 +1,6 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import Joi from 'joi';
@@ -19,7 +18,6 @@ interface JoiProps {
   pattern?: string;
   title?: string;
 }
-// Định nghĩa một custom validator cho ObjectId của MongoDB
 const objectIdValidator = Joi.extend((joi) => ({
   type: 'objectId',
   base: joi
@@ -108,11 +106,13 @@ export const phone = Joi.string().pattern(phoneRegex).trim().strict().required()
   'string.empty': 'Số điện thoại không được để trống',
 });
 
-// Free-text content stored per language (vi/en) — see
-// models/part/index.ts's localizedTextSchema for the Mongoose side.
-// Individual language values may be empty; only the object itself is
-// required (matches the previous plain-string fields' lenient min(0)
-// behavior, just with a language dimension added).
+/**
+ * Free-text content stored per language (vi/en) — see
+ * models/part/index.ts's localizedTextSchema for the Mongoose side.
+ * Individual language values may be empty; only the object itself is
+ * required (matches the previous plain-string fields' lenient min(0)
+ * behavior, just with a language dimension added).
+ */
 const localizedTextShape = {
   vi: Joi.string().allow(''),
   en: Joi.string().allow(''),
@@ -131,10 +131,12 @@ export const endDate = Joi.number().greater(Joi.ref('startDate')).messages({
   'number.greater': 'Ngày kết thúc phải lớn hơn ngày bắt đầu',
 });
 
-// Vanity slug for the public profile (issue #120) — lowercased before the
-// pattern check runs so a caller sending mixed case isn't rejected (the
-// Mongoose model also lowercases on save, this just keeps validation
-// consistent with the stored value).
+/**
+ * Vanity slug for the public profile (issue #120) — lowercased before the
+ * pattern check runs so a caller sending mixed case isn't rejected (the
+ * Mongoose model also lowercases on save, this just keeps validation
+ * consistent with the stored value).
+ */
 export const slug = Joi.string().trim().lowercase().min(3).max(50).pattern(slugRegex).messages({
   'string.min': 'Slug phải có ít nhất {#limit} ký tự',
   'string.max': 'Slug không được vượt quá {#limit} ký tự',

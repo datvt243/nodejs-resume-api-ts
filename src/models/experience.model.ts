@@ -1,7 +1,6 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import mongoose from 'mongoose';
@@ -19,7 +18,7 @@ const schema = new Schema(
     isCurrent: { type: Boolean, default: false },
     candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
     skills: { type: Array, of: String },
-    /* soft-delete (issue #121) — null nghĩa là chưa xoá */
+    // soft-delete (issue #121) — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import logger from './winston';
 import { Request } from 'express';
 
@@ -29,13 +34,19 @@ export const _log = (props: LogPayload) => {
   logger[level](message);
 };
 
-// Error logging helper
 export const logCatchError = (err: Error) => {
   logger.error('Caught error', { error: err.message, stack: err.stack });
 };
 
-// Request helper (adds req context)
-export const logRequest = (req: Request, message: string, extra: Record<string, unknown> = {}) => {
+export const logRequest = ({
+  req,
+  message,
+  extra = {},
+}: {
+  req: Request;
+  message: string;
+  extra?: Record<string, unknown>;
+}) => {
   logger.info(message, {
     method: req.method,
     url: req.originalUrl,

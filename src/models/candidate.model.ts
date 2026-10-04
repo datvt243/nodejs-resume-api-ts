@@ -1,7 +1,6 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import mongoose from 'mongoose';
@@ -11,7 +10,6 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const schema = new Schema(
   {
-    /* _id: ObjectId, */
     _id: { type: ObjectId, required: false },
     email: {
       type: String,
@@ -26,7 +24,6 @@ const schema = new Schema(
     },
     password: { type: String, default: '', required: [false, 'Password is required'] },
 
-    /* họ và tên */
     firstName: { type: String, default: '', required: false },
     lastName: { type: String, default: '', required: false },
 
@@ -42,14 +39,14 @@ const schema = new Schema(
       linkedin: { type: String, required: false },
       website: { type: String, required: false },
     },
-    /* CV file đã upload (khác với PDF export live-generate ở /download-pdf) */
+    // CV file đã upload (khác với PDF export live-generate ở /download-pdf)
     cvFile: {
       originalName: { type: String, required: false },
       uploadedAt: { type: Number, required: false },
     },
-    /* hiển thị public tại GET /api/me/:email hay không, default true để giữ nguyên hành vi cũ */
+    // hiển thị public tại GET /api/me/:email hay không, default true để giữ nguyên hành vi cũ
     isPublic: { type: Boolean, default: true, required: false },
-    /* vanity slug cho public profile (issue #120) — không phải PII như email, an toàn hơn để share */
+    // vanity slug cho public profile (issue #120) — không phải PII như email, an toàn hơn để share
     slug: {
       type: String,
       default: '',
@@ -60,9 +57,9 @@ const schema = new Schema(
       sparse: true,
       index: true,
     },
-    /* đã xác thực email chưa (issue #71) — không chặn login, chỉ để frontend tự quyết định hiển thị */
+    // đã xác thực email chưa (issue #71) — không chặn login, chỉ để frontend tự quyết định hiển thị
     emailVerified: { type: Boolean, default: false, required: false },
-    /* soft-delete (issue #121) — null nghĩa là chưa xoá */
+    // soft-delete (issue #121) — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

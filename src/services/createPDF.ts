@@ -1,5 +1,9 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import puppeteer from 'puppeteer';
-// import open from 'open';
 
 import path from 'path';
 import fs from 'fs';
@@ -19,16 +23,18 @@ import {
   ProjectData,
 } from '@/types/candidate.type';
 
-// Anchored to __dirname, not a bare relative literal — resolves to
-// `src/public/pdf/` when running from source (ts-node, __dirname is
-// `src/services`) and `dist/public/pdf/` when running compiled
-// (__dirname is `dist/services`), matching exactly what
-// `express.static(path.join(__dirname, 'public'))` serves in
-// `src/server.ts` (fix-hardcoded-src-public-write-paths,
-// doctrine/domains/PROJECT.md — the old hardcoded `src/public/pdf/`
-// ENOENT'd in a minimal production Docker image that has no `src/` at
-// all, and even outside Docker never matched what's actually served in
-// a compiled deploy).
+/**
+ * Anchored to __dirname, not a bare relative literal — resolves to
+ * `src/public/pdf/` when running from source (ts-node, __dirname is
+ * `src/services`) and `dist/public/pdf/` when running compiled
+ * (__dirname is `dist/services`), matching exactly what
+ * `express.static(path.join(__dirname, 'public'))` serves in
+ * `src/server.ts` (fix-hardcoded-src-public-write-paths,
+ * doctrine/domains/PROJECT.md — the old hardcoded `src/public/pdf/`
+ * ENOENT'd in a minimal production Docker image that has no `src/` at
+ * all, and even outside Docker never matched what's actually served in
+ * a compiled deploy).
+ */
 const PDF_OUTPUT_DIR = path.join(__dirname, '..', 'public', 'pdf');
 
 export const createCV = async (data: AggregatedCandidateData, res: Response) => {
@@ -36,8 +42,10 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
     if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
     const URL = `${PDF_OUTPUT_DIR}${path.sep}`;
 
-    // Optional override for CI/Docker where a specific Chrome/Chromium must be pinned.
-    // Unset: puppeteer resolves its own bundled Chromium automatically.
+    /**
+     * Optional override for CI/Docker where a specific Chrome/Chromium must be pinned.
+     * Unset: puppeteer resolves its own bundled Chromium automatically.
+     */
     const executablePath = process.env['PUPPETEER_EXECUTABLE_PATH'];
 
     const otp = {
@@ -49,8 +57,6 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
     const page = await browser.newPage();
 
     const { email, html: contentHTML } = pageRender(data);
-
-    /* res.send(contentHTML); */
 
     await page.setContent(contentHTML, {
       waitUntil: 'domcontentloaded',
@@ -68,19 +74,6 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
       },
     });
 
-    // Open the generated PDF file in the default PDF viewer
-
-    // try {
-    //     await (async () => {
-    //         const open: any = await import('open');
-    //         await open(`${URL}${email}.pdf`, { wait: true });
-    //     })();
-    //
-    // } catch (e) {
-    //     console.log({ e })
-    // }
-
-    // Close the browser
     await browser.close();
 
     res.contentType('application/pdf');
@@ -119,9 +112,6 @@ export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Bu
 };
 
 export const pageRender = (RECORD: AggregatedCandidateData) => {
-  /**
-   * get data format
-   */
   const {
     candidate,
     generalInformation,
@@ -133,9 +123,6 @@ export const pageRender = (RECORD: AggregatedCandidateData) => {
     awards = [],
   } = getDataCandidate(RECORD);
 
-  /**
-   * render HTML
-   */
   let _content = '';
   const _ = _helper();
 
@@ -155,16 +142,9 @@ export const pageRender = (RECORD: AggregatedCandidateData) => {
     email: candidate?.email || 'resume',
     html,
   };
-  /* res.send(html); */
 };
 
-/**
- * format data
- * @param {*} RECORD
- * @returns
- */
 const getDataCandidate = (RECORD: AggregatedCandidateData) => {
-  // Thông tin cơ bản
   const candidate = (() => {
     const { firstName = '', lastName = '', phone = '', email = '', address = '', introduction = '', socialMedia = {} } = RECORD;
     const { github = '', linkedin = '', website = '' } = socialMedia;
@@ -181,13 +161,11 @@ const getDataCandidate = (RECORD: AggregatedCandidateData) => {
     };
   })();
 
-  // Thông tin công việc
   const generalInformation: GeneralInformationData = ((el) => {
     if (!el) return {};
     return Array.isArray(el) ? el?.[0] || {} : el;
   })(RECORD?.['generalInformation'] || null);
 
-  // ---
   const { educations = [], experiences = [], projects = [], references = [], certificates = [], awards = [] } = RECORD;
 
   return {
@@ -214,24 +192,26 @@ const _helper = () => {
       return `${String(m).padStart(2, '0')}/${y}`;
     };
 
-    const getTime = ((startDate, endDate, isCurrent) => {
-      const _start = formatDate(startDate);
-      if (!endDate) {
+    const getTime = ((timeProps: Pick<Item, 'startDate' | 'endDate' | 'isCurrent'>) => {
+      const _start = formatDate(timeProps.startDate);
+      if (!timeProps.endDate) {
         return _start;
       }
 
-      const _end = isCurrent ? 'Hiện tại' : formatDate(endDate);
+      const _end = timeProps.isCurrent ? 'Hiện tại' : formatDate(timeProps.endDate);
       return `${_start} - ${_end}`;
-    })(startDate, endDate, isCurrent);
+    })({ startDate, endDate, isCurrent });
 
-    // BUG FIX (found removing an unused-variable warning, issue #188): this
-    // IIFE was called with no arguments, so its own `skills = []` default
-    // always shadowed the real `skills` destructured from `props` above —
-    // the skills list was never actually read. The condition was also
-    // inverted (`!skills.length` rendered the div, i.e. exactly when
-    // there were NO skills) — combined, the rendered PDF never showed an
-    // item's skills, regardless of whether it had any. Fixed both: pass
-    // the real value in, and render only when it's non-empty.
+    /**
+     * BUG FIX (found removing an unused-variable warning, issue #188): this
+     * IIFE was called with no arguments, so its own `skills = []` default
+     * always shadowed the real `skills` destructured from `props` above —
+     * the skills list was never actually read. The condition was also
+     * inverted (`!skills.length` rendered the div, i.e. exactly when
+     * there were NO skills) — combined, the rendered PDF never showed an
+     * item's skills, regardless of whether it had any. Fixed both: pass
+     * the real value in, and render only when it's non-empty.
+     */
     const getSkills = ((skillsList: string[]) => {
       return skillsList.length ? `<div class="skills">${skillsList.join(', ')}</div>` : '';
     })(skills);
@@ -267,14 +247,22 @@ const _helper = () => {
     renderInfo: function (props: informationPersonal) {
       const { firstName, lastName, phone, email, address, introduction, github, linkedin, website } = props;
 
-      const getInfo = (phone: string, email: string, address: string) => {
+      const getInfo = ({ phone, email, address }: { phone: string; email: string; address: string }) => {
         let _result = '';
         address && (_result += address);
         email && (_result += ` - <a href="mailto:${email}">${email}</a>`);
         phone && (_result += ` - <a href="tel:${phone}">${phone}</a>`);
         return _result;
       };
-      const getWebsite = (github: string = '', linkedin: string = '', website: string = '') => {
+      const getWebsite = ({
+        github = '',
+        linkedin = '',
+        website = '',
+      }: {
+        github?: string | undefined;
+        linkedin?: string | undefined;
+        website?: string | undefined;
+      }) => {
         let _result = '';
         github && (_result += `<a href="${github}">${github}</a>`);
         linkedin && (_result += ` - <a href="${linkedin}">${linkedin}</a>`);
@@ -286,18 +274,20 @@ const _helper = () => {
                 <div class="box">
                     <div class="text-center" style="margin-bottom: 10px">
                         <div class="full-name">${firstName} ${lastName}</div>
-                        <div class="info mb-0">${getInfo(phone, email, address)}</div>
-                        <div class="website">${getWebsite(github, linkedin, website)}</div>
+                        <div class="info mb-0">${getInfo({ phone, email, address })}</div>
+                        <div class="website">${getWebsite({ github, linkedin, website })}</div>
                     </div>
                     <div class="description">${introduction}</div>
                 </div>`;
     },
     renderCareer: function (generalInformation: { career?: string; careerGoal?: string }) {
-      // `career`/`careerGoal` are localized ({vi,en}) fields at the model
-      // level, but by the time they reach here they've already been
-      // resolved to a single string upstream (candidate_me/index.ts's
-      // resolveLocalizedText) — same as every other field this function
-      // handles.
+      /**
+       * `career`/`careerGoal` are localized ({vi,en}) fields at the model
+       * level, but by the time they reach here they've already been
+       * resolved to a single string upstream (candidate_me/index.ts's
+       * resolveLocalizedText) — same as every other field this function
+       * handles.
+       */
       const { career = '', careerGoal = '' } = generalInformation || {};
       if (!career && !careerGoal) return '';
 

@@ -1,7 +1,6 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import Joi from 'joi';
@@ -45,6 +44,3 @@ export const schemaCandidate = getObject({
   }),
   candidateId,
 });
-
-// personal information: thông tin cá nhân
-// general information: thông tin chung

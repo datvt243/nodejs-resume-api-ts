@@ -5,6 +5,9 @@
  * here — so each one is independently unit-testable with a plain text
  * fixture. See `doctrine/standards/pdf-export-standard.md` for the
  * invariants these enforce.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { t } from '@/utils/i18n';
 import type { SupportedLang } from '@/utils/i18n';
@@ -35,9 +38,11 @@ export interface AtsCheckInput {
 
 const MIN_EXTRACTABLE_LENGTH = 200;
 
-// A run of 5+ single letters each separated by a single space — the
-// classic symptom of `letter-spacing` turning "FRONTEND" into "F R O N
-// T E N D" in extracted text. Covers Vietnamese letters too.
+/**
+ * A run of 5+ single letters each separated by a single space — the
+ * classic symptom of `letter-spacing` turning "FRONTEND" into "F R O N
+ * T E N D" in extracted text. Covers Vietnamese letters too.
+ */
 const SPACED_LETTERS_PATTERN = /\b(?:[A-Za-zÀ-ỹ] ){4,}[A-Za-zÀ-ỹ]\b/;
 
 // A date token with a single-digit month (e.g. "9/2024") — the exact
@@ -76,12 +81,14 @@ export const checkReadingOrder = (input: AtsCheckInput): AtsCheckResult => {
   const firstLine = (lines[0] || '').toLowerCase();
   const nameFirst = input.fullName.trim().length > 0 && firstLine.includes(input.fullName.trim().toLowerCase());
 
-  // Case-insensitive: the ATS template's `.heading` CSS applies
-  // `text-transform: uppercase` (allowed on headings — pdf-export-standard.md
-  // rule 3's note), which Chromium renders as actual uppercase glyphs, so
-  // real extracted text has e.g. "SKILLS" while the locale string is
-  // "Skills" — comparing exact case here would false-fail on every real
-  // PDF, not just a visually-broken one.
+  /**
+   * Case-insensitive: the ATS template's `.heading` CSS applies
+   * `text-transform: uppercase` (allowed on headings — pdf-export-standard.md
+   * rule 3's note), which Chromium renders as actual uppercase glyphs, so
+   * real extracted text has e.g. "SKILLS" while the locale string is
+   * "Skills" — comparing exact case here would false-fail on every real
+   * PDF, not just a visually-broken one.
+   */
   const lowerText = input.text.toLowerCase();
   let headingsInOrder = true;
   let searchFrom = 0;
@@ -210,10 +217,12 @@ export const runAtsChecks = (input: AtsCheckInput): AtsCheckResult[] => [
   checkMetadata(input),
 ];
 
-// Weighted pass rate: an `error`-severity check counts for 2 points, a
-// `warning` for 1 — a single failed error (e.g. spaced letters) drags the
-// score down harder than a 3rd page warning, since errors are the checks
-// that actually break keyword matching, not just length.
+/**
+ * Weighted pass rate: an `error`-severity check counts for 2 points, a
+ * `warning` for 1 — a single failed error (e.g. spaced letters) drags the
+ * score down harder than a 3rd page warning, since errors are the checks
+ * that actually break keyword matching, not just length.
+ */
 const SEVERITY_WEIGHT: Record<AtsCheckSeverity, number> = { error: 2, warning: 1 };
 
 export const scoreChecks = (checks: AtsCheckResult[]): number => {

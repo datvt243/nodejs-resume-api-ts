@@ -1,6 +1,9 @@
 /**
  * Redis client singleton for token blacklist and caching.
  * Supports optional Redis configuration via REDIS_URL env var.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import { createClient, RedisClientType } from 'redis';
@@ -22,10 +25,12 @@ export const initRedis = async () => {
   }
 
   try {
-    // reconnectStrategy: false — default strategy retries forever
-    // (retries => Math.min(retries * 50, 500)), which kept initRedis()
-    // pending indefinitely when Redis is unreachable and blocked
-    // server.ts's `await initRedis()` from ever reaching app.listen().
+    /**
+     * reconnectStrategy: false — default strategy retries forever
+     * (retries => Math.min(retries * 50, 500)), which kept initRedis()
+     * pending indefinitely when Redis is unreachable and blocked
+     * server.ts's `await initRedis()` from ever reaching app.listen().
+     */
     redisClient = createClient({ url: REDIS_URL, socket: { reconnectStrategy: false } });
 
     redisClient.on('error', (err) => {
@@ -52,16 +57,10 @@ export const getRedisClient = (): RedisClientType | null => {
   return isConnected ? redisClient : null;
 };
 
-/**
- * Check if Redis is available.
- */
 export const isRedisAvailable = (): boolean => {
   return isConnected && redisClient !== null;
 };
 
-/**
- * Cleanup Redis connection.
- */
 export const closeRedis = async () => {
   if (redisClient && isConnected) {
     try {

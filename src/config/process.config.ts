@@ -1,12 +1,10 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import 'dotenv/config';
 
-// Validate required environment variables
 const requiredEnvVars = ['MONGOBD_USER', 'MONGOBD_PASSWORD', 'TOKEN_SECRET', 'TOKEN_REFRESH', 'SESSION_SECRET'];
 const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
 
@@ -32,9 +30,11 @@ const {
   CORS_ORIGIN,
 } = process.env;
 
-// No dedicated env var for refresh-token lifetime; default it to
-// meaningfully outlive the access token (TOKEN_EXP_IN) so the refresh
-// flow (get a new access token once the old one expires) stays usable.
+/**
+ * No dedicated env var for refresh-token lifetime; default it to
+ * meaningfully outlive the access token (TOKEN_EXP_IN) so the refresh
+ * flow (get a new access token once the old one expires) stays usable.
+ */
 const TOKEN_REFRESH_EXP_IN = process.env['TOKEN_REFRESH_EXP_IN'] || '7d';
 
 export {

@@ -2,6 +2,9 @@
  * CV-wide utility endpoints that aren't a candidate CRUD section — today
  * just the ATS self-check. Mounted at `/api/v1/cv` behind `verifyToken`
  * (see `routers/api/v1/index.ts`).
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import express from 'express';
 const router = express.Router();
@@ -14,6 +17,12 @@ import { fnAtsCheck } from '@/candidate_me/ats-check';
  *   post:
  *     tags: [CV]
  *     summary: Render the authenticated candidate's CV in memory and score it against ATS-safety checks
+ *     description: >
+ *       Authenticates via `Authorization: Bearer` header or the httpOnly
+ *       auth cookie only — unlike `GET /download-pdf`, this endpoint does
+ *       NOT accept a `?token=` query parameter, since it's a normal JSON
+ *       API call (made via fetch/axios, which can set headers), not a
+ *       browser-navigated download.
  *     security:
  *       - bearerAuth: []
  *     requestBody:

@@ -4,6 +4,9 @@
  * form is what gets reported back in `matched`/`missing`; `aliases` are the
  * different real-world spellings that should all resolve to that one
  * canonical form (e.g. "vuejs"/"vue.js"/"vue" all mean the same skill).
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 export interface AtsKeywordEntry {
   canonical: string;

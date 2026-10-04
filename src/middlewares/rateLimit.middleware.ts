@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { getRedisClient, isRedisAvailable } from '@/services/redis';
 
@@ -50,18 +55,19 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
   const skipPaths = opts.skipPaths ?? [];
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Skip rate limiting for exempt paths
     if (skipPaths.some((path) => req.path === path || req.path.startsWith(path + '/'))) {
       return next();
     }
 
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    // BUG FIX (found removing the `any` cast here, issue #179): this read
-    // `.user?.id`, but `Express.Request.user` is declared `{ _id: string }`
-    // everywhere else in the codebase — `.id` never existed, so `userId`
-    // silently fell back to 'anon' for every authenticated request, and
-    // per-user rate limiting was never actually applying (bucket key was
-    // effectively IP-only). Fixed to the real property.
+    /**
+     * BUG FIX (found removing the `any` cast here, issue #179): this read
+     * `.user?.id`, but `Express.Request.user` is declared `{ _id: string }`
+     * everywhere else in the codebase — `.id` never existed, so `userId`
+     * silently fell back to 'anon' for every authenticated request, and
+     * per-user rate limiting was never actually applying (bucket key was
+     * effectively IP-only). Fixed to the real property.
+     */
     const userId = req.user?._id || 'anon'; // From verifyToken middleware
     const now = Date.now();
 
@@ -71,7 +77,6 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
 
       const key = `${prefix}:${userId}:${ip}`;
 
-      // Retry logic for Redis operations (wrap in try-catch)
       try {
         const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> => {
           let lastError: unknown = new Error('withRetry: exhausted retries without a successful attempt');
@@ -136,8 +141,6 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
   };
 };
 
-// default middleware using env defaults
 const rateLimitMiddleware = createRateLimiter();
-// export default defaultLimiter;
 
 export { memStore, rateLimitMiddleware };

@@ -1,8 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
+
 import mongoose, { Model, Types } from 'mongoose';
 import type { BaseReturn } from '@/types/base.type';
 import { getSelectFields } from '@/utils/helper';
@@ -27,36 +27,41 @@ import { t, DEFAULT_LANG } from '@/utils/i18n';
 export interface CrudDocument {
   candidateId?: Types.ObjectId | string;
   deletedAt?: number | null;
-  // Only 3 of the 9 CV sections (Project/Certificate/Award) actually carry
-  // an `images` array, but `BaseController.ts`'s `baseUploadImages` is the
-  // one generic handler that touches it across whichever section the route
-  // wires it to — same shared-optional-field shape as `candidateId`/
-  // `deletedAt` above, not a claim every section has images.
+  /**
+   * Only 3 of the 9 CV sections (Project/Certificate/Award) actually carry
+   * an `images` array, but `BaseController.ts`'s `baseUploadImages` is the
+   * one generic handler that touches it across whichever section the route
+   * wires it to — same shared-optional-field shape as `candidateId`/
+   * `deletedAt` above, not a claim every section has images.
+   */
   images?: string[];
 }
 
 interface baseProp<T extends CrudDocument> {
   model: Model<T>;
-  // `candidateId?: string | undefined` (issue #189): several callers (e.g.
-  // generalInformation.service.ts) narrow `document?.candidateId` with a
-  // `typeof x === 'string' ? x : undefined` guard before passing it here —
-  // a real, intentional "not a string" state, not an accidental omission.
+  /**
+   * `candidateId?: string | undefined` (issue #189): several callers (e.g.
+   * generalInformation.service.ts) narrow `document?.candidateId` with a
+   * `typeof x === 'string' ? x : undefined` guard before passing it here —
+   * a real, intentional "not a string" state, not an accidental omission.
+   */
   fields: { _id?: string; candidateId?: string | undefined };
   findOne?: boolean;
-  // `| undefined` added explicitly (issue #189, `exactOptionalPropertyTypes`):
-  // `BaseController.ts`'s `baseGetAll` passes each of these as
-  // `cond ? value : undefined` — a real, intentional "no value given"
-  // state, not an accidental omission — so a plain `?:` (which now means
-  // "may be omitted, but if present must be the real type, never
-  // `undefined` itself") no longer accepts it.
+  /**
+   * `| undefined` added explicitly (issue #189, `exactOptionalPropertyTypes`):
+   * `BaseController.ts`'s `baseGetAll` passes each of these as
+   * `cond ? value : undefined` — a real, intentional "no value given"
+   * state, not an accidental omission — so a plain `?:` (which now means
+   * "may be omitted, but if present must be the real type, never
+   * `undefined` itself") no longer accepts it.
+   */
   lang?: string | undefined;
   page?: number | undefined;
   limit?: number | undefined;
   sort?: string | undefined;
 }
 
-// Pagination (issue #73) hard cap — a caller cannot request more than this
-// many documents per page regardless of what `limit` it passes.
+// Pagination (issue #73) hard cap — a caller cannot request more than this many documents per page regardless of what `limit` it passes.
 const MAX_PAGE_LIMIT = 100;
 
 const formatReturn = (props: BaseReturn) => {
@@ -87,11 +92,13 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
   if (!MODEL || !fields || !Object.keys(fields).length) return formatReturnFailed(t('common.notFoundData', lang));
 
   const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
-  // Soft-delete (issue #121): exclude documents that have been soft-deleted
-  // by default. `fields` can never override this key (safeQuery only ever
-  // merges keys from its own allow-list into the base query), so every
-  // existing caller keeps working unchanged — they just stop seeing
-  // soft-deleted rows.
+  /**
+   * Soft-delete (issue #121): exclude documents that have been soft-deleted
+   * by default. `fields` can never override this key (safeQuery only ever
+   * merges keys from its own allow-list into the base query), so every
+   * existing caller keeps working unchanged — they just stop seeing
+   * soft-deleted rows.
+   */
   const safeFields = idQuerySafe.safeQuery({ deletedAt: null }, fields);
 
   if (findOne) {
@@ -136,22 +143,15 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
   });
 };
 
-// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`):
-// BaseController.ts passes `req.lang`, itself `string | undefined`.
+// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`): BaseController.ts passes `req.lang`, itself `string | undefined`.
 export const baseDeleteDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
-  /**
-   * Check Document có tồn tại không -> findById
-   */
-  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById(MODEL, __id, lang);
+  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById({ MODEL, _id: __id, lang });
   if (!isExist) return formatReturnFailed(_mess);
 
   const { _id, candidateId = '' } = document;
 
-  /**
-   * Kiểm tra doc cần xoá có thuộc người đang xoá hay không
-   */
   if (candidateId.toString() !== userID) return formatReturnFailed(t('common.deleteNotYours', lang));
 
   /**
@@ -177,25 +177,16 @@ export const baseDeleteDocument = async <T extends CrudDocument>(props: { model:
   });
 };
 
-// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`):
-// BaseController.ts passes `req.lang`, itself `string | undefined`.
+// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`): BaseController.ts passes `req.lang`, itself `string | undefined`.
 export const baseRestoreDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
-  /**
-   * Check Document có tồn tại không -> findById. `baseCheckDocumentById`
-   * doesn't filter on `deletedAt`, so it finds the document whether it's
-   * currently soft-deleted or not.
-   */
-  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById(MODEL, __id, lang);
+  // `baseCheckDocumentById` doesn't filter on `deletedAt`, so it finds the document whether it's currently soft-deleted or not.
+  const { isExist, message: _mess, document } = await _baseHelper().baseCheckDocumentById({ MODEL, _id: __id, lang });
   if (!isExist) return formatReturnFailed(_mess);
 
   const { _id, candidateId = '' } = document;
 
-  /**
-   * Kiểm tra doc cần khôi phục có thuộc người đang khôi phục hay không
-   * (cùng logic ownership check với baseDeleteDocument)
-   */
   if (candidateId.toString() !== userID) return formatReturnFailed(t('common.restoreNotYours', lang));
 
   let success = false,
@@ -219,59 +210,42 @@ export const baseRestoreDocument = async <T extends CrudDocument>(props: { model
 export const baseUpdateDocument = async <T extends CrudDocument>(props: {
   document: Record<string, unknown> & { _id?: string };
   model: Model<T>;
-  // `| undefined` (issue #189, `exactOptionalPropertyTypes`): `BaseService.ts`'s
-  // `handlerUpdate(item, userID?, lang)` forwards its own optional
-  // `userID` param straight through — when the caller omits it, that's a
-  // real, intentional `undefined`, not an accidental one.
+  /**
+   * `| undefined` (issue #189, `exactOptionalPropertyTypes`): `BaseService.ts`'s
+   * `handlerUpdate(item, userID?, lang)` forwards its own optional
+   * `userID` param straight through — when the caller omits it, that's a
+   * real, intentional `undefined`, not an accidental one.
+   */
   userID?: string | undefined;
   lang?: string;
   hookHasErrors?: (props: { err: unknown }) => void;
 }) => {
-  /**
-   * get values
-   */
   const { document, model: MODEL, userID, lang = DEFAULT_LANG } = props;
-
-  /**
-   * @return
-   *  success: boolean,
-   *  message: string,
-   *  data: Document,
-   *  error: Array
-   *
-   */
 
   const _valueUpdate = { ...document };
   const { _id } = _valueUpdate;
 
-  /**
-   * Check Document có tồn tại không -> findById (loại trừ document đã
-   * soft-delete — không cho update một bản ghi đã bị xoá, issue #136)
-   */
-  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById(MODEL, _id, lang, {
-    excludeDeleted: true,
+  // Exclude soft-deleted documents — don't allow updating an already-deleted record (issue #136).
+  const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById({
+    MODEL,
+    _id,
+    lang,
+    opts: { excludeDeleted: true },
   });
   if (!isExist) return formatReturnFailed(_mess);
 
   /**
-   * Kiểm tra doc cần update có thuộc người đang update hay không
-   * (đối chiếu owner của document ĐÃ TỒN TẠI, không phải candidateId gửi
-   * lên trong payload — nếu không, update có thể "cướp" document của
-   * người khác bằng cách gửi kèm candidateId của chính mình)
+   * Checked against the owner of the EXISTING document, not the
+   * `candidateId` sent in the payload — otherwise an update could "steal"
+   * someone else's document by including their own `candidateId`.
    */
   if (userID !== undefined && _existing?.candidateId !== undefined && _existing.candidateId.toString() !== userID) {
     return formatReturnFailed(t('common.updateNotYours', lang));
   }
 
-  /**
-   * validate ở mongoose model
-   */
   const modelValid = await _baseHelper().modelValidate(MODEL, { ..._valueUpdate });
   if (!modelValid.success) return formatReturnFailed({ message: modelValid.message, errors: modelValid.errors });
 
-  /**
-   * Save
-   */
   let _success = true,
     _message = t('common.updateSuccess', lang),
     _data = null,
@@ -287,9 +261,6 @@ export const baseUpdateDocument = async <T extends CrudDocument>(props: {
     _errors = errors;
     props?.hookHasErrors?.({ err });
   } finally {
-    /**
-     * return
-     */
     return formatReturn({
       success: _success,
       message: _message,
@@ -309,25 +280,13 @@ export const baseCreateDocument = async <T extends CrudDocument>(props: {
 }) => {
   const { document, model: MODEL, lang = DEFAULT_LANG } = props;
 
-  /**
-   * remove _id nếu có
-   */
   delete document['_id'];
 
-  /**
-   * Nếu không có candidateId thì trả về thất bại
-   */
   if (!document['candidateId']) return formatReturnFailed(t('common.createFailed', lang));
 
-  /**
-   * validate ở mongoose model
-   */
   const modelValid = await _baseHelper().modelValidate(MODEL, { ...document });
   if (!modelValid.success) return formatReturnFailed({ message: modelValid.message, errors: modelValid.errors });
 
-  /**
-   * Lưu data
-   */
   let _success = true,
     _data = null,
     _message = t('common.createSuccess', lang),
@@ -336,12 +295,12 @@ export const baseCreateDocument = async <T extends CrudDocument>(props: {
   try {
     _data = await MODEL.create({ _id: null, ...document });
     /**
-     * callback thực hiện sau khi thêm mới thành công. Nếu hook trả về
-     * (khác undefined), dùng giá trị đó thay _data — trước đây hook nhận
-     * `data` qua destructure-by-value nên gán lại bên trong hook không hề
-     * cập nhật _data ở đây, khiến response luôn trả nguyên kết quả thô của
-     * MODEL.create() (Mongoose giữ `_id: null` như đã truyền, thay vì id
-     * thật mà MongoDB gán khi lưu) thay vì list mới đã refetch.
+     * If the hook returns something (not `undefined`), use that instead of
+     * `_data` — the hook used to receive `data` by-value destructuring, so
+     * reassigning inside the hook never actually updated `_data` here,
+     * which meant the response always returned `MODEL.create()`'s raw
+     * result (Mongoose keeps `_id: null` as passed, not the real id
+     * MongoDB assigns on save) instead of the freshly-refetched list.
      */
     if (props?.hookAfterSave) {
       const replacement = await props.hookAfterSave(document, { success: _success, message: _message, data: _data });
@@ -352,15 +311,8 @@ export const baseCreateDocument = async <T extends CrudDocument>(props: {
     _success = false;
     _message = message || t('common.createFailed', lang);
     _errors = errors;
-
-    /**
-     * callback if it's has error
-     */
     props?.hookHasErrors?.({ err });
   } finally {
-    /**
-     * return
-     */
     return formatReturn({ success: _success, message: _message, errors: _errors, data: _data });
   }
 };
@@ -370,43 +322,27 @@ export const basePatchDocument = async <T extends CrudDocument>(props: {
   model: Model<T>;
   lang?: string;
 }) => {
-  /**
-   * get value
-   */
   const { document, model: MODEL, lang = DEFAULT_LANG } = props;
 
   const { _id } = document;
 
-  /**
-   * Check Document có tồn tại không -> findById (loại trừ document đã
-   * soft-delete — không cho patch một bản ghi đã bị xoá, issue #136)
-   */
-  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById(MODEL, _id, lang, {
-    excludeDeleted: true,
+  // Exclude soft-deleted documents — don't allow patching an already-deleted record (issue #136).
+  const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById({
+    MODEL,
+    _id,
+    lang,
+    opts: { excludeDeleted: true },
   });
   if (!isExist) return formatReturnFailed(_mess);
 
-  /**
-   * validate ở mongoose model
-   */
   const modelValid = await _baseHelper().modelValidate(MODEL, { ...document });
   if (!modelValid.success) return formatReturnFailed({ message: modelValid.message, errors: modelValid.errors });
 
   try {
     await MODEL.updateOne({ _id }, document).exec();
-    /**
-     * get information
-     */
     const data = await _baseHelper().getDocumentUpdated(_id, { model: MODEL, select: getSelectFields(document) });
-
-    /**
-     * return
-     */
     return { success: true, message: t('common.updateSuccess', lang), errors: {}, data: data ? data : null };
   } catch (err) {
-    /**
-     * catch errors
-     */
     return { success: false, message: t('common.updateFailed', lang), error: err, data: null };
   }
 };
@@ -416,9 +352,6 @@ const _baseHelper = () => {
     getDocumentUpdated: async <T extends CrudDocument>(_id: string | undefined, props: { model: Model<T>; select: string }) => {
       const { model: MODEL } = props;
       const find = MODEL.findById(_id);
-      /* if (select) {
-                find.select(select);
-            } */
       const record = await find.exec();
       return record;
     },
@@ -457,30 +390,39 @@ const _baseHelper = () => {
         errors: {},
       };
     },
-    baseCheckDocumentById: async <T extends CrudDocument>(
-      MODEL: Model<T>,
-      _id: string | undefined,
-      lang: string = DEFAULT_LANG,
-      opts: { excludeDeleted?: boolean } = {},
-    ) => {
+    baseCheckDocumentById: async <T extends CrudDocument>({
+      MODEL,
+      _id,
+      lang = DEFAULT_LANG,
+      opts = {},
+    }: {
+      MODEL: Model<T>;
+      _id: string | undefined;
+      lang?: string;
+      opts?: { excludeDeleted?: boolean };
+    }) => {
       const message = t('common.idNotFound', lang);
 
-      // A real discriminated union (literal `true`/`false` on `isExist`)
-      // instead of a shared `{isExist: boolean; document: T | null}` shape —
-      // callers' `if (!isExist) return ...;` guard now actually narrows
-      // `document` to non-null afterward. Before this generic pass, `MODEL`
-      // (and therefore `document`) was `any`, which silently hid that every
-      // caller was accessing `.candidateId`/`._id` on a value TS could not
-      // prove was non-null.
+      /**
+       * A real discriminated union (literal `true`/`false` on `isExist`)
+       * instead of a shared `{isExist: boolean; document: T | null}` shape —
+       * callers' `if (!isExist) return ...;` guard now actually narrows
+       * `document` to non-null afterward. Before this generic pass, `MODEL`
+       * (and therefore `document`) was `any`, which silently hid that every
+       * caller was accessing `.candidateId`/`._id` on a value TS could not
+       * prove was non-null.
+       */
       if (!_id) return { isExist: false as const, message, document: null };
 
       const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
-      // Soft-delete (issue #121) excludes deletedAt-set docs from reads by
-      // default (baseFindDocument), but this shared existence check was
-      // never updated — update/patch could still find and mutate a
-      // soft-deleted document. `excludeDeleted` is opt-in per caller:
-      // baseRestoreDocument (and baseDeleteDocument) must still find a
-      // document regardless of its deletedAt state.
+      /**
+       * Soft-delete (issue #121) excludes deletedAt-set docs from reads by
+       * default (baseFindDocument), but this shared existence check was
+       * never updated — update/patch could still find and mutate a
+       * soft-deleted document. `excludeDeleted` is opt-in per caller:
+       * baseRestoreDocument (and baseDeleteDocument) must still find a
+       * document regardless of its deletedAt state.
+       */
       const baseQuery = opts.excludeDeleted ? { deletedAt: null } : {};
       const _find = await MODEL.findOne(idQuerySafe.safeQuery(baseQuery, { _id })).exec();
       if (!_find) return { isExist: false as const, message, document: null };

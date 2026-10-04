@@ -3,6 +3,9 @@
  * CV in memory (same aggregated data as `download-pdf`), extracts the
  * real text back out of the rendered PDF, and scores it against the ATS
  * check suite. See `doctrine/standards/pdf-export-standard.md`.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -38,7 +41,7 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
     const template: 'ats' | 'classic' = req.body?.['template'] === 'classic' ? 'classic' : 'ats';
     const jobDescription: string | undefined = typeof req.body?.['jobDescription'] === 'string' ? req.body['jobDescription'] : undefined;
 
-    const { success, data } = await handlerGetAboutMe(find.email, lang);
+    const { success, data } = await handlerGetAboutMe({ identifier: find.email, lang });
     if (!success) {
       res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Lấy thông tin ứng viên thất bại'));
       return;
@@ -52,12 +55,14 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
     let metadataAuthor: string | undefined;
 
     if (template === 'classic') {
-      // The classic template hardcodes Vietnamese section labels (not
-      // localized) and sets no PDF metadata — both correctly surface as
-      // failures below (standard-headings/metadata), not bugs in this
-      // check: pdf-export-standard.md rule 8's single-column/no-letter-
-      // spacing invariants only bind on a template claiming ATS-safety,
-      // which `classic` never has.
+      /**
+       * The classic template hardcodes Vietnamese section labels (not
+       * localized) and sets no PDF metadata — both correctly surface as
+       * failures below (standard-headings/metadata), not bugs in this
+       * check: pdf-export-standard.md rule 8's single-column/no-letter-
+       * spacing invariants only bind on a template claiming ATS-safety,
+       * which `classic` never has.
+       */
       buffer = await renderPdfBuffer(candidateData);
     } else {
       const atsResult = await renderAtsPdfBuffer(candidateData, { lang });
@@ -68,7 +73,7 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
     }
 
     const { text, pages } = await extractPdfText(buffer);
-    const facts = buildAtsContent(candidateData, lang);
+    const facts = buildAtsContent({ RECORD: candidateData, lang });
 
     const checkInput: AtsCheckInput = {
       text,
@@ -99,6 +104,6 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
       },
     });
   } catch (err) {
-    handleError(err, next, req.lang);
+    handleError({ err, next, lang: req.lang });
   }
 };

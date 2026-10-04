@@ -5,6 +5,9 @@
  * ts/typescript, reactjs/react, ...) to one canonical form via each
  * entry's `aliases` list, so neither side of the comparison has to agree
  * on exact spelling.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { ALL_ATS_KEYWORDS } from '@/constant/atsKeywords';
 

@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 export * from '@/middlewares/errors.middleware';
 export * from '@/middlewares/verifyToken.middleware';
 export * from '@/middlewares/rateLimit.middleware';
