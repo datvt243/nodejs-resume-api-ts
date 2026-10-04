@@ -3,7 +3,7 @@
  * @see https://github.com/datvt243
  */
 
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import ProfileModel from '@/models/profile.model';
 import * as MODELS from '@/models';
 import { createCrudService } from '@/candidate_profile/BaseService';
@@ -42,7 +42,13 @@ export const ensureDefaultProfile = async (candidateId: string) => {
     idsOf(MODELS.Reference as unknown as Model<CrudDocument>),
   ]);
 
+  /**
+   * Explicit `_id` (issue #224): profile.model.ts redeclares `_id: ObjectId`,
+   * which replaces Mongoose's auto-generated `_id` — `create()` without one
+   * throws "document must have an _id before saving" (see visit.model.ts).
+   */
   await ProfileModel.create({
+    _id: new Types.ObjectId(),
     candidateId,
     name: 'Tổng hợp',
     educationIds,

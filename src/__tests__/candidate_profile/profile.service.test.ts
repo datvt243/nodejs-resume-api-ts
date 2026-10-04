@@ -6,6 +6,7 @@
  * (BaseController.test.ts, services/*.test.ts) — not retested per-section.
  */
 
+import { Types } from 'mongoose';
 import ProfileModel from '@/models/profile.model';
 import * as MODELS from '@/models';
 import { ensureDefaultProfile } from '@/candidate_profile/profile/profile.service';
@@ -53,6 +54,7 @@ describe('profile.service.ts ensureDefaultProfile (issue #133)', () => {
 
     expect(MODELS.Education.find).toHaveBeenCalledWith({ candidateId: 'cand1', deletedAt: null }, '_id');
     expect(ProfileModel.create).toHaveBeenCalledWith({
+      _id: expect.any(Types.ObjectId),
       candidateId: 'cand1',
       name: 'Tổng hợp',
       educationIds: ['edu1'],
@@ -62,5 +64,23 @@ describe('profile.service.ts ensureDefaultProfile (issue #133)', () => {
       awardIds: [],
       referenceIds: ['ref1'],
     });
+  });
+
+  it('passes a document the real Profile schema accepts with an _id (issue #224)', async () => {
+    (ProfileModel.countDocuments as jest.Mock).mockResolvedValue(0);
+    const mockFind = { exec: jest.fn().mockResolvedValue([]) };
+    [MODELS.Education, MODELS.Experience, MODELS.Project, MODELS.Certificate, MODELS.Award, MODELS.Reference].forEach((model) =>
+      (model.find as jest.Mock).mockReturnValue(mockFind),
+    );
+
+    await ensureDefaultProfile(new Types.ObjectId().toString());
+
+    // the real model redeclares `_id: ObjectId` (no auto-generation) — a
+    // doc built from these args without an _id fails on save()
+    const RealProfile = jest.requireActual<{ default: typeof ProfileModel }>('@/models/profile.model').default;
+    const [args] = (ProfileModel.create as jest.Mock).mock.calls[0] as [Record<string, unknown>];
+    const doc = new RealProfile(args);
+    expect(doc._id).toBeInstanceOf(Types.ObjectId);
+    expect(doc.validateSync()).toBeUndefined();
   });
 });
