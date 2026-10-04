@@ -42,69 +42,22 @@ export const email = Joi.string()
   .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net', 'vn'] } })
   .trim()
   .strict()
-  .required()
-  .messages({
-    'any.required': 'Email là bắt buộc',
-    'string.empty': 'Email không được rỗng',
-    'string.email': 'Email không đúng định dạng',
-  });
+  .required();
 import { passwordRegex } from '@/config/regex.config';
 
-export const password = Joi.string()
-  .min(PASSWORD_MIN_LENGTH)
-  .max(PASSWORD_MAX_LENGTH)
-  .regex(passwordRegex)
-  .trim()
-  .strict()
-  .required()
-  .messages({
-    'any.required': 'Password là bắt buộc',
-    'string.empty': 'Password không được rỗng',
-    'string.min': 'Password phải có ít nhất 12 ký tự',
-    'string.max': 'Password không được vượt quá 128 ký tự',
-    'string.pattern.base': 'Password phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt',
-  });
+export const password = Joi.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH).regex(passwordRegex).trim().strict().required();
 
-export const firstName = Joi.string().min(1).max(15).trim().strict().required().messages({
-  'any.required': 'Họ là bắt buộc',
-  'string.min': 'Họ có ít nhất {#limit} ký tự',
-  'string.max': 'Họ có ít nhất {#limit} ký tự',
-  'string.empty': 'Họ không được trống',
-});
+export const firstName = Joi.string().min(1).max(15).trim().strict().required();
 
-export const lastName = Joi.string().min(3).max(35).trim().strict().required().messages({
-  'any.required': 'Tên là bắt buộc',
-  'string.min': 'Tên có ít nhất {#limit} ký tự',
-  'string.max': 'Tên có ít nhất {#limit} ký tự',
-  'string.empty': 'Tên không được trống',
-});
+export const lastName = Joi.string().min(3).max(35).trim().strict().required();
 
-export const fullName = Joi.string().min(3).max(50).trim().strict().required().messages({
-  'any.required': 'Họ tên là bắt buộc',
-  'string.min': 'Họ tên có ít nhất {#limit} ký tự',
-  'string.max': 'Họ tên có ít nhất {#limit} ký tự',
-  'string.empty': 'Họ tên không được trống',
-});
+export const fullName = Joi.string().min(3).max(50).trim().strict().required();
 
-export const company = Joi.string().min(0).max(100).trim().strict().required().messages({
-  'any.required': 'Tên công ty là bắt buộc',
-  'string.min': 'Tên công ty có ít nhất {#limit} ký tự',
-  'string.max': 'Tên công ty có ít nhất {#limit} ký tự',
-  'string.empty': 'Tên công ty tên không được trống',
-});
+export const company = Joi.string().min(0).max(100).trim().strict().required();
 
-export const position = Joi.string().min(0).max(100).trim().strict().required().messages({
-  'any.required': 'Vị trí là bắt buộc',
-  'string.min': 'Vị trí ty có ít nhất {#limit} ký tự',
-  'string.max': 'Vị trí ty có ít nhất {#limit} ký tự',
-  'string.empty': 'Vị trí ty tên không được trống',
-});
+export const position = Joi.string().min(0).max(100).trim().strict().required();
 
-export const phone = Joi.string().pattern(phoneRegex).trim().strict().required().messages({
-  'any.required': 'Số điện thoại là bắt buộc',
-  'string.pattern.base': 'Số điện thoại {#value} không hợp lệ. Số điện thoại phải có 10-11 chữ số',
-  'string.empty': 'Số điện thoại không được để trống',
-});
+export const phone = Joi.string().pattern(phoneRegex).trim().strict().required();
 
 /**
  * Free-text content stored per language (vi/en) — see
@@ -118,18 +71,10 @@ const localizedTextShape = {
   en: Joi.string().allow(''),
 };
 
-export const introduction = Joi.object(localizedTextShape).required().label('Giới thiệu bản thân').messages({
-  'any.required': '{#label} không được rỗng',
-  'object.base': '{#label} phải là object dạng vi/en',
-});
+export const introduction = Joi.object(localizedTextShape).required().label('Giới thiệu bản thân');
 
-export const startDate = Joi.number().required().messages({
-  'any.required': 'Ngày bắt đầu là bắt buộc',
-  'number.empty': 'Ngày bắt đầu không được trống',
-});
-export const endDate = Joi.number().greater(Joi.ref('startDate')).messages({
-  'number.greater': 'Ngày kết thúc phải lớn hơn ngày bắt đầu',
-});
+export const startDate = Joi.number().required();
+export const endDate = Joi.number().greater(Joi.ref('startDate'));
 
 /**
  * Vanity slug for the public profile (issue #120) — lowercased before the
@@ -137,11 +82,7 @@ export const endDate = Joi.number().greater(Joi.ref('startDate')).messages({
  * Mongoose model also lowercases on save, this just keeps validation
  * consistent with the stored value).
  */
-export const slug = Joi.string().trim().lowercase().min(3).max(50).pattern(slugRegex).messages({
-  'string.min': 'Slug phải có ít nhất {#limit} ký tự',
-  'string.max': 'Slug không được vượt quá {#limit} ký tự',
-  'string.pattern.base': 'Slug chỉ được chứa chữ thường, số và dấu gạch ngang',
-});
+export const slug = Joi.string().trim().lowercase().min(3).max(50).pattern(slugRegex);
 
 export const _boolean = Joi.boolean();
 export const _arrayString = Joi.array().items(Joi.string());
@@ -151,21 +92,11 @@ export const foreignLanguages = Joi.array().items({
   level: Joi.string(),
 });
 
-export const description = Joi.object(localizedTextShape).required().label('Mô tả').messages({
-  'any.required': `{#label} là bắt buộc`,
-  'object.base': `{#label} phải là object dạng vi/en`,
-});
+export const description = Joi.object(localizedTextShape).required().label('Mô tả');
 
-export const descriptionOptional = Joi.object(localizedTextShape).label('Mô tả').messages({
-  'object.base': `{#label} phải là object dạng vi/en`,
-});
+export const descriptionOptional = Joi.object(localizedTextShape).label('Mô tả');
 
 export const _stringDefault = (props: JoiProps) => {
   const { min = 3, max = 100, title = 'Title' } = props;
-  return Joi.string().min(min).max(max).trim().strict().required().label(title).messages({
-    'any.required': `{#label} là bắt buộc`,
-    'string.min': `{#label} có ít nhất {#limit} ký tự`,
-    'string.max': `{#label} có ít nhất {#limit} ký tự`,
-    'string.empty': `{#label} không được trống`,
-  });
+  return Joi.string().min(min).max(max).trim().strict().required().label(title);
 };

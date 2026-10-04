@@ -149,5 +149,12 @@ export default {
     professionalSkillsGroup: 'Skill group',
     candidateId: 'Candidate ID',
     _id: 'ID',
+    slug: 'Slug',
+    token: 'Token',
+    exp: 'Years of experience',
+    appliedDate: 'Applied date',
+    status: 'Status',
+    note: 'Note',
+    jobLink: 'Job link',
   },
 };

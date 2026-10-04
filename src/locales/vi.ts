@@ -149,5 +149,12 @@ export default {
     professionalSkillsGroup: 'Nhóm kỹ năng',
     candidateId: 'ID ứng viên',
     _id: 'ID',
+    slug: 'Slug',
+    token: 'Token',
+    exp: 'Số năm kinh nghiệm',
+    appliedDate: 'Ngày nộp đơn',
+    status: 'Trạng thái',
+    note: 'Ghi chú',
+    jobLink: 'Liên kết công việc',
   },
 };

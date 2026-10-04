@@ -1,10 +1,5 @@
 import Joi from 'joi';
-import { validateSchema } from '@/utils/valid';
-
-// Mock formatValidateError để tránh lỗi khi không có implement thật
-jest.mock('@/utils', () => ({
-  formatValidateError: jest.fn((error) => error.details.map((e: any) => e.message)),
-}));
+import { validateSchema, formatValidateError } from '@/utils/valid';
 
 describe('validateSchema', () => {
   const schema = Joi.object({
@@ -31,7 +26,7 @@ describe('validateSchema', () => {
   });
 
   test('❌ Thiếu schema - Trả về lỗi "Schema không hợp lệ"', () => {
-    const result = validateSchema({ schema: null as any, item: { email: 'test' } });
+    const result = validateSchema({ schema: null as unknown as Joi.Schema, item: { email: 'test' } });
 
     expect(result.isValidated).toBe(false);
     expect(result.message).toBe('Schema không hợp lệ');
@@ -43,5 +38,50 @@ describe('validateSchema', () => {
 
     expect(result.isValidated).toBe(true);
     expect(result.value).toEqual({});
+  });
+});
+
+/**
+ * Regression coverage for issue #160 — the generic Joi-error-translation
+ * system (`translateJoiDetail` in utils/valid.ts) that replaced every
+ * per-schema hardcoded `.messages()` call. The known pitfall: a naive
+ * dot-path key walker misparses a Joi error `type` string that itself
+ * contains a dot (e.g. "any.required" read as 3 nested levels instead of
+ * one literal key). `tErrorType` already has its own unit test for this
+ * in i18n.test.ts — these tests prove the real end-to-end pipeline
+ * (`formatValidateError` -> `translateJoiDetail` -> `tErrorType` +
+ * `fieldLabels`) resolves correctly in both languages, using the real
+ * `education.validate.ts` schema whose hardcoded `.messages()` was
+ * removed in this same change because this generic system already
+ * superseded it.
+ */
+describe('formatValidateError — generic i18n templates (issue #160)', () => {
+  const educationSchema = Joi.object({
+    school: Joi.string().min(10).max(255).required(),
+  });
+
+  test('a missing required field resolves via tErrorType (not a dot-path walk) in vi', () => {
+    const { error } = educationSchema.validate({}, { abortEarly: false });
+    const messages = formatValidateError(error as Joi.ValidationError, 'vi');
+    expect(messages['school']).toBe('Tên trường là bắt buộc');
+  });
+
+  test('the same case in en uses the English field label + template', () => {
+    const { error } = educationSchema.validate({}, { abortEarly: false });
+    const messages = formatValidateError(error as Joi.ValidationError, 'en');
+    expect(messages['school']).toBe('School name is required');
+  });
+
+  test('a string.min violation interpolates both the field label and the limit', () => {
+    const { error } = educationSchema.validate({ school: 'short' }, { abortEarly: false });
+    const messages = formatValidateError(error as Joi.ValidationError, 'en');
+    expect(messages['school']).toBe('School name must be at least 10 characters');
+  });
+
+  test('a field with no fieldLabels entry falls back to the raw field name', () => {
+    const schema = Joi.object({ unmappedField: Joi.string().required() });
+    const { error } = schema.validate({}, { abortEarly: false });
+    const messages = formatValidateError(error as Joi.ValidationError, 'en');
+    expect(messages['unmappedField']).toBe('unmappedField is required');
   });
 });
