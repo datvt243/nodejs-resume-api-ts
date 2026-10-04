@@ -16,12 +16,14 @@ import { StatusCodes } from 'http-status-codes';
 import { formatReturn } from '@/utils';
 import { t } from '@/utils/i18n';
 
-// Anchored to __dirname, not a bare relative literal — resolves to
-// `src/public/uploads/cv/` when running from source and
-// `dist/public/uploads/cv/` when running compiled, matching exactly what
-// `express.static(path.join(__dirname, 'public'))` serves in
-// `src/server.ts` (fix-hardcoded-src-public-write-paths,
-// doctrine/domains/PROJECT.md).
+/**
+ * Anchored to __dirname, not a bare relative literal — resolves to
+ * `src/public/uploads/cv/` when running from source and
+ * `dist/public/uploads/cv/` when running compiled, matching exactly what
+ * `express.static(path.join(__dirname, 'public'))` serves in
+ * `src/server.ts` (fix-hardcoded-src-public-write-paths,
+ * doctrine/domains/PROJECT.md).
+ */
 export const CV_UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'cv');
 export const CV_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB, per operator decision
 
@@ -31,18 +33,22 @@ const storage = multer.diskStorage({
     cb(null, CV_UPLOAD_DIR);
   },
   filename: (req, _file, cb) => {
-    // Deterministic per-candidate filename — never derived from the
-    // client-supplied original filename (path traversal / collision
-    // risk) — matches candidateId, which every other CV-section model
-    // already trusts as the ownership key.
+    /**
+     * Deterministic per-candidate filename — never derived from the
+     * client-supplied original filename (path traversal / collision
+     * risk) — matches candidateId, which every other CV-section model
+     * already trusts as the ownership key.
+     */
     const candidateId = req.user?._id;
     cb(null, `${candidateId}-cv.pdf`);
   },
 });
 
-// Real content-type check, not just the frontend's `accept="application/pdf"`
-// (client-side only, trivially bypassable) — checked on both mimetype and
-// extension.
+/**
+ * Real content-type check, not just the frontend's `accept="application/pdf"`
+ * (client-side only, trivially bypassable) — checked on both mimetype and
+ * extension.
+ */
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const isPdfMime = file.mimetype === 'application/pdf';
   const isPdfExt = path.extname(file.originalname).toLowerCase() === '.pdf';
@@ -62,9 +68,11 @@ const upload = multer({
  * fall through to the generic (500) branch of the global error handler.
  */
 export const uploadCVMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // Only ever mounted behind `verifyToken` (see candidate.route.ts) —
-  // `req.user._id` is already guaranteed by that point, same assumption
-  // every other candidate handler (fnUpdate/fnDelete) already makes.
+  /**
+   * Only ever mounted behind `verifyToken` (see candidate.route.ts) —
+   * `req.user._id` is already guaranteed by that point, same assumption
+   * every other candidate handler (fnUpdate/fnDelete) already makes.
+   */
   upload(req, res, (err: unknown) => {
     if (!err) return next();
 

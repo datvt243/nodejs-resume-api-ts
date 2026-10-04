@@ -22,10 +22,12 @@ import { t, type SupportedLang } from '@/utils/i18n';
 import { applyPdfMetadata } from '@/services/pdfMetadata';
 import type { AggregatedCandidateData, GeneralInformationData, Skill, EducationData, ExperienceData, ProjectData, Award, Certificate, Language } from '@/types/candidate.type';
 
-// `sanitize-html`'s latest major pulls in `htmlparser2@12` (ESM-only, no
-// CJS export condition) which this CommonJS project's Jest runner can't
-// `require()` — `xss` gives the same allow-list sanitization with a
-// plain-CJS dependency tree. See pdf-export-standard.md rule 6.
+/**
+ * `sanitize-html`'s latest major pulls in `htmlparser2@12` (ESM-only, no
+ * CJS export condition) which this CommonJS project's Jest runner can't
+ * `require()` — `xss` gives the same allow-list sanitization with a
+ * plain-CJS dependency tree. See pdf-export-standard.md rule 6.
+ */
 const SANITIZE_OPTIONS: IFilterXSSOptions = {
   whiteList: { p: [], ul: [], ol: [], li: [], strong: [], em: [], br: [], a: ['href'] },
   stripIgnoreTag: true,

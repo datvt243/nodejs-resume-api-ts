@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import path from 'path';
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -39,9 +33,6 @@ export const fnGetInformationByEmail = async (req: Request, res: Response) => {
 };
 
 export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data come from req.body
-   */
   const { isValidated, value, errors } = validateSchema({ schema: schemaCandidate, item: { ...req.body }, lang: req.lang });
   if (!isValidated)
     return formatReturn(res, {
@@ -52,7 +43,6 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
     });
 
   /**
-   * update data
    * Force _id to the authenticated user's own id — never trust a client-
    * supplied _id here, or any authenticated user could overwrite another
    * candidate's profile.
@@ -173,9 +163,6 @@ export const fnDelete = async (req: Request, res: Response, next: NextFunction) 
 };
 
 export const fnUpdateFields = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data gửi lên
-   */
   const { isValidated, value, errors } = validateSchema({
     schema: schemaCandidatePatch,
     item: { ...req.body },
@@ -189,9 +176,7 @@ export const fnUpdateFields = async (req: Request, res: Response, next: NextFunc
       errors,
     });
 
-  /**
-   * update data — force _id to the authenticated user (see fnUpdate)
-   */
+  // Force _id to the authenticated user — same IDOR-safety pattern as fnUpdate.
   try {
     const _result = await handlerUpdate({ ...value, _id: req.user?._id }, req.lang);
     return formatReturn(res, { ..._result });

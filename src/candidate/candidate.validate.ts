@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import Joi from 'joi';
 
 import { getObject, _id, firstName, lastName, phone, candidateId, introduction, _boolean, slug } from '@/config/joi.config';
@@ -45,6 +39,3 @@ export const schemaCandidate = getObject({
   }),
   candidateId,
 });
-
-// personal information: thông tin cá nhân
-// general information: thông tin chung

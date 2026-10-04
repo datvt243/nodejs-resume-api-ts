@@ -1,8 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { validateSchema, formatReturn, handleError, setAuthCookies, clearAuthCookies } from '@/utils';
@@ -20,10 +15,6 @@ import { t } from '@/utils/i18n';
  * Chức năng Đăng ký mới
  */
 export const authRegister = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate dữ liệu đầu vào
-   * { email, password, re-password } = req.body;
-   */
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: schemaAuthRegister,
     item: { ...req.body },
@@ -38,9 +29,6 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
     });
   }
 
-  /**
-   * save mới document
-   */
   try {
     const { success, message } = await handlerRegister({ _id: null, ...value }, req.lang);
     return formatReturn(res, {
@@ -59,9 +47,6 @@ export const authRegister = async (req: Request, res: Response, next: NextFuncti
  * Chức năng Đăng nhập
  */
 export const authLogin = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate date come from req
-   */
   const { isValidated, value = {}, message, errors } = validateSchema({
     schema: schemaAuthLogin,
     item: { ...req.body },
@@ -76,9 +61,6 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
     });
   }
 
-  /**
-   * tiến hành Login
-   */
   try {
     const _result = await handlerLogin({ email: value.email, password: value.password }, req.lang);
 
@@ -106,7 +88,6 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
  */
 export const authRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // pull from multiple locations using helper
     const refreshToken = extractTokenFromRequest(req, 'refreshToken');
 
     if (!refreshToken) {
@@ -125,7 +106,6 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
       });
     }
 
-    // verify refresh token
     const decoded = jwtVerify(refreshToken, TOKEN_REFRESH);
     const { _id, iat } = (decoded as { _id?: string; iat?: number }) || {};
     if (!_id)
@@ -149,7 +129,6 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     // rotate: blacklist old refresh token
     await addToBlacklist(refreshToken);
 
-    // create new tokens
     const newAccess = jwtSign({ _id }, TOKEN_SECRET, { expiresIn: TOKEN_EXP_IN || '1h' });
     const newRefresh = jwtSign({ _id }, TOKEN_REFRESH, { expiresIn: TOKEN_REFRESH_EXP_IN });
 
@@ -261,7 +240,6 @@ export const authResetPassword = async (req: Request, res: Response, next: NextF
  */
 export const authLogout = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // attempt to extract token from header/cookie/query
     const token = extractTokenFromRequest(req);
 
     if (!token) {

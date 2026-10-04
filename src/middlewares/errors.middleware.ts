@@ -11,12 +11,7 @@ import { AppError, ErrorCode } from '@/errors/AppError';
 
 type ErrorMid = Error | ReferenceError | TypeError;
 
-/**
- * Global error handling middleware
- * Handles both custom AppError instances and unknown errors
- */
 export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Response, _next: NextFunction) => {
-  // Check if error is a known operational error
   if (err instanceof AppError) {
     logger.error(`ERROR [${err.errorCode}]: ${err.message}`, {
       errorCode: err.errorCode,
@@ -53,9 +48,6 @@ export const errorsMiddleware = (err: ErrorMid | AppError, req: Request, res: Re
   });
 };
 
-/**
- * Middleware to handle 404 - Route not found
- */
 export const notFoundHandler = (req: Request, _res: Response, next: NextFunction) => {
   const error = new AppError(`Route ${req.originalUrl} not found`, StatusCodes.NOT_FOUND, ErrorCode.NOT_FOUND);
   next(error);

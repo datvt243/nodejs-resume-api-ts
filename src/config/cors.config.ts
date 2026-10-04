@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import { CORS_ORIGIN, NODE_ENV } from '@/config/process.config';
 
 const allowedOrigins = (CORS_ORIGIN || '')

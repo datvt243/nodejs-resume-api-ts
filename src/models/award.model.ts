@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import mongoose from 'mongoose';
 import { localizedTextSchema } from '@/models/part';
 const Schema = mongoose.Schema;
@@ -19,7 +13,7 @@ const schema = new Schema(
     images: { type: Array, of: String },
     description: { type: localizedTextSchema, default: () => ({}) },
     candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
-    /* soft-delete (issue #121) — null nghĩa là chưa xoá */
+    // soft-delete (issue #121) — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

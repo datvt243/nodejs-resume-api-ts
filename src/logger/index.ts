@@ -29,12 +29,10 @@ export const _log = (props: LogPayload) => {
   logger[level](message);
 };
 
-// Error logging helper
 export const logCatchError = (err: Error) => {
   logger.error('Caught error', { error: err.message, stack: err.stack });
 };
 
-// Request helper (adds req context)
 export const logRequest = (req: Request, message: string, extra: Record<string, unknown> = {}) => {
   logger.info(message, {
     method: req.method,

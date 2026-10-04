@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import express, { Request, Response, NextFunction } from 'express';
 import { Collections } from '@/types/base.type';
 import { baseDelete, baseGetAll, baseRestore } from '@/candidate_profile/BaseController';
