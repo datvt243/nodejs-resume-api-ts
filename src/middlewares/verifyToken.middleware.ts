@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: JWT Token verification middleware
+ * JWT Token verification middleware
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';

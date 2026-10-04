@@ -1,11 +1,12 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Double-submit CSRF token helpers (issue #134), paired with
+ * Double-submit CSRF token helpers (issue #134), paired with
  * the httpOnly auth cookies (issue #119). Moving those cookies' `sameSite`
  * from 'strict' to 'none' (required for the real cross-site GitHub Pages ->
  * Render deployment) removes the incidental CSRF protection 'strict' gave
  * for free — this replaces it with a real check.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import crypto from 'crypto';
 import { Request, Response, CookieOptions } from 'express';

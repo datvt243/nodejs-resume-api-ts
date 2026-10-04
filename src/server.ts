@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Learning nodejs basic
+ * Learning nodejs basic
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 require('module-alias/register');
 require('./alias');

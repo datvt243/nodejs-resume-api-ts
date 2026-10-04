@@ -1,10 +1,11 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Minimal hand-rolled i18n — the message surface is small
+ * Minimal hand-rolled i18n — the message surface is small
  * enough that a full library (i18next, etc.) would be more machinery
  * than the app needs. See middlewares/language.middleware.ts for the
  * per-request language resolution that feeds this.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import vi from '@/locales/vi';
 import en from '@/locales/en';

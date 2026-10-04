@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import CandidateModel from '@/models/candidate.model';
 import { bcryptGenerateSalt, bcryptCompareHash, jwtSign } from '@/utils';
 import { TOKEN_SECRET, TOKEN_REFRESH, TOKEN_EXP_IN, TOKEN_REFRESH_EXP_IN } from '@/config/process.config';

@@ -14,6 +14,9 @@
  * actual HTML string Puppeteer prints. `createCVAts` is the thin I/O
  * wrapper: launches Puppeteer, awaits font readiness, prints, applies
  * PDF metadata, and sends the response.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import puppeteer from 'puppeteer';
 import { filterXSS, type IFilterXSSOptions } from 'xss';

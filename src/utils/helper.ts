@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Utility functions for HTTP responses and error handling
+ * Utility functions for HTTP responses and error handling
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';

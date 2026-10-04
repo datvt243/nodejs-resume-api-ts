@@ -1,10 +1,11 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Multer config for the LinkedIn "Data export" ZIP upload
+ * Multer config for the LinkedIn "Data export" ZIP upload
  *   (issue #141 — parse-and-return endpoint, nothing is persisted to
  *   disk or DB). Kept in memory only, unlike uploadCV.middleware.ts's
  *   disk storage -- there is no per-candidate file to keep around here.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import path from 'path';
 import multer from 'multer';

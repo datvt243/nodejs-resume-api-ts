@@ -1,6 +1,9 @@
 /**
  * Vietnamese locale — also the default/fallback language, matching the
  * API's existing behavior before i18n was introduced.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 export default {
   auth: {

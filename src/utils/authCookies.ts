@@ -1,7 +1,5 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: httpOnly cookie helpers for JWT auth (issue #119) — lets the
+ * httpOnly cookie helpers for JWT auth (issue #119) — lets the
  * frontend stop storing the JWT in localStorage (XSS risk). Cookie names
  * ('token' / 'refreshToken') match the field names `extractTokenFromRequest`
  * (`@/utils/helper-auth`) already reads as a fallback.
@@ -13,6 +11,9 @@
  * 'none' removes that incidental CSRF protection, so a real double-submit
  * CSRF cookie (`@/utils/csrf`) is issued/cleared alongside these on the
  * same lifecycle.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import { Response, CookieOptions } from 'express';

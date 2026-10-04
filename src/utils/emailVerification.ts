@@ -1,7 +1,5 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Single-use, TTL email-verification tokens. Same
+ * Single-use, TTL email-verification tokens. Same
  * Redis-with-in-memory-fallback pattern as utils/passwordReset.ts /
  * utils/tokenBlacklist.ts.
  *
@@ -9,6 +7,9 @@
  * same gap as issue #70. The verification link is logged instead of
  * emailed, a stand-in until a mail provider is chosen. See
  * auth.service.ts's handlerRegister.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import crypto from 'crypto';

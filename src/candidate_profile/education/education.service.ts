@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import EducationModel from '@/models/education.model';
 import { baseFindDocument } from '@/services';
 import { createCrudService } from '@/candidate_profile/BaseService';

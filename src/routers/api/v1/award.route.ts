@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import express, { Request, Response, NextFunction } from 'express';
 import { Collections } from '@/types/base.type';
 import { baseDelete, baseGetAll, baseUploadImages, baseRestore } from '@/candidate_profile/BaseController';

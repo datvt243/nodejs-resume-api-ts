@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import { Request } from 'express';
 
 export type TokenSource = 'header' | 'body' | 'query' | 'cookie' | null;

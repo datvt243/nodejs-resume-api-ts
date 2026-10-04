@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import mongoose, { Model, Types } from 'mongoose';
 import type { BaseReturn } from '@/types/base.type';
 import { getSelectFields } from '@/utils/helper';

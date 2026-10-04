@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: OpenAPI/Swagger spec generation config
+ * OpenAPI/Swagger spec generation config
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 import swaggerJsdoc from 'swagger-jsdoc';

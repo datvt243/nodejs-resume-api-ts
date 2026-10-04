@@ -1,7 +1,8 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Custom error classes for the application
+ * Custom error classes for the application
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import { StatusCodes } from 'http-status-codes';
 

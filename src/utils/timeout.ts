@@ -1,5 +1,8 @@
 /**
  * Timeout utilities for async operations
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 
 const DB_TIMEOUT = 5000; // 5s for DB ops

@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import { Model } from 'mongoose';
 import ProfileModel from '@/models/profile.model';
 import * as MODELS from '@/models';

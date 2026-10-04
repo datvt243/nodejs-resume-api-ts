@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import 'dotenv/config';
 
 const requiredEnvVars = ['MONGOBD_USER', 'MONGOBD_PASSWORD', 'TOKEN_SECRET', 'TOKEN_REFRESH', 'SESSION_SECRET'];

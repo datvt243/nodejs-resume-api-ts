@@ -5,6 +5,9 @@
  * See `doctrine/standards/pdf-export-standard.md`: any claim about a
  * PDF being ATS-safe must be backed by extracted text, not a visual
  * check.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import pdfParse from 'pdf-parse';
 

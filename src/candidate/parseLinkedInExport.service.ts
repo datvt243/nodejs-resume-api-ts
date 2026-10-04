@@ -1,12 +1,13 @@
 /**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description: Best-effort LinkedIn "Data export" (ZIP of CSVs) parser
+ * Best-effort LinkedIn "Data export" (ZIP of CSVs) parser
  *   (issue #141) — pulls Education.csv/Positions.csv into this API's own
  *   Education/Experience shapes. Pure, no I/O beyond the already-uploaded
  *   buffer, never touches the DB: this is a stateless parse-and-return
  *   helper, the frontend maps the result into its existing create forms
  *   for the user to review/edit before saving.
+ *
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
  */
 import path from 'path';
 import AdmZip from 'adm-zip';

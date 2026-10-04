@@ -1,3 +1,8 @@
+/**
+ * @author Đạt Võ <votan.it@gmail.com>
+ * @see https://github.com/datvt243
+ */
+
 import Joi from 'joi';
 import { email, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '@/config/joi.config';
 import { passwordRegex } from '@/config/regex.config';
