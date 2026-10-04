@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import EducationModel from '@/models/education.model';
 import { baseFindDocument } from '@/services';
 import { createCrudService } from '@/candidate_profile/BaseService';
@@ -16,9 +10,6 @@ export const { handlerGet, handlerCreate, handlerUpdate, handlerDelete } = creat
 });
 
 export const handlerCheckEducationId = async (_id: string) => {
-  /**
-   *
-   */
   const { success } = await baseFindDocument({
     model: MODEL,
     fields: { _id },
@@ -27,9 +18,6 @@ export const handlerCheckEducationId = async (_id: string) => {
 };
 
 export const handlerGetEducationById = async (_id: string) => {
-  /**
-   *
-   */
   const { success, data } = await baseFindDocument({
     model: MODEL,
     fields: { _id },

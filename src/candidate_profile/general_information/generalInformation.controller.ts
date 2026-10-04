@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { handlerGet, handlerCreate, handlerUpdate } from './generalInformation.service';
@@ -25,13 +19,14 @@ export const fnGet = async (req: Request, res: Response, next: NextFunction) => 
       return formatReturn(res, _resultRaw);
     }
 
-    // information trả về 1 object or null
-    // `_resultRaw`'s inferred type isn't a true discriminated union (neither
-    // branch's `success` is a literal type), so the `!_resultRaw.success`
-    // guard above doesn't narrow away `handlerGet`'s error-path shape (which
-    // has no `data` field at all) — see `fix-utils-real-any-casts`/#180's
-    // evidence note. Narrowing properly here instead of casting; a full fix
-    // belongs to `type-crud-core`/#181 (BaseService.ts's return shapes).
+    /**
+     * `_resultRaw`'s inferred type isn't a true discriminated union (neither
+     * branch's `success` is a literal type), so the `!_resultRaw.success`
+     * guard above doesn't narrow away `handlerGet`'s error-path shape (which
+     * has no `data` field at all) — see `fix-utils-real-any-casts`/#180's
+     * evidence note. Narrowing properly here instead of casting; a full fix
+     * belongs to `type-crud-core`/#181 (BaseService.ts's return shapes).
+     */
     const rawData = 'data' in _resultRaw ? _resultRaw.data : undefined;
     const data = Array.isArray(rawData) ? (rawData.length ? rawData[0] : {}) : rawData;
 
@@ -46,9 +41,6 @@ export const fnGet = async (req: Request, res: Response, next: NextFunction) => 
 };
 
 export const fnCreate = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data gửi lên
-   */
   const { isValidated, value = {}, errors, message } = validateSchema({
     schema: VALIDATE_SCHEMA,
     item: { ...req.body },
@@ -56,9 +48,6 @@ export const fnCreate = async (req: Request, res: Response, next: NextFunction) 
   });
   if (!isValidated) return formatReturn(res, { success: false, message, errors });
 
-  /**
-   * save mới document
-   */
   try {
     const _result = await handlerCreate(value, req.lang);
     return formatReturn(res, { statusCode: StatusCodes.CREATED, ..._result });
@@ -68,19 +57,12 @@ export const fnCreate = async (req: Request, res: Response, next: NextFunction) 
 };
 
 export const fnUpdate = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data gửi lên
-   */
   const { isValidated, value, errors, message } = validateSchema({
     schema: req.method === 'PUT' ? VALIDATE_SCHEMA : VALIDATE_SCHEMA_PATCH,
     item: { ...req.body },
     lang: req.lang,
   });
   if (!isValidated) return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message, errors });
-
-  /**
-   * update data
-   */
 
   try {
     const _result = await handlerUpdate(value, req.user?._id, req.lang);
@@ -91,19 +73,12 @@ export const fnUpdate = async (req: Request, res: Response, next: NextFunction) 
 };
 
 export const fnUpdateFields = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   * validate data gửi lên
-   */
   const { isValidated, value, errors, message } = validateSchema({
     schema: VALIDATE_SCHEMA_PATCH,
     item: { ...req.body },
     lang: req.lang,
   });
   if (!isValidated) return formatReturn(res, { statusCode: StatusCodes.UNAUTHORIZED, success: false, message, errors });
-
-  /**
-   * update data
-   */
 
   try {
     const _result = await handlerUpdate(value, req.user?._id, req.lang);

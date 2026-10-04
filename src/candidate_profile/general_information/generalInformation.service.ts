@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import generalInformationSchema from '@/models/generalInformation.model';
 import { baseFindDocument, baseCreateDocument } from '@/services';
 import { withDBTimeout } from '@/utils/timeout';
@@ -16,19 +10,7 @@ const NAME = 'Thông tin chung';
 export const { handlerGet, handlerUpdate, handlerDelete } = createCrudService({ model: MODEL, name: NAME });
 
 export const handlerCreate = async (document: Record<string, unknown>, lang: string = DEFAULT_LANG) => {
-  /**
-   * @return
-   *  success: boolean,
-   *  message: string,
-   *  data: Document,
-   *  error: Array | null
-   *
-   */
-
-  /**
-   * check candidate has any document,
-   *  - is has: don't save
-   */
+  // Refuse to create a second generalInformation document for a candidate that already has one.
   const candidateId = typeof document?.['candidateId'] === 'string' ? document['candidateId'] : undefined;
   const { success, data } = await withDBTimeout(
     baseFindDocument({
@@ -43,9 +25,6 @@ export const handlerCreate = async (document: Record<string, unknown>, lang: str
     };
   }
 
-  /**
-   * save
-   */
   try {
     return await withDBTimeout(
       baseCreateDocument({
@@ -64,21 +43,10 @@ export const handlerCreate = async (document: Record<string, unknown>, lang: str
           );
           return success ? find : undefined;
         },
-        hookHasErrors: () => {
-          //
-        },
+        hookHasErrors: () => {},
       }),
     );
   } catch (error: unknown) {
     return { success: false, message: t('common.createFailed', lang), error: error instanceof Error ? error.message : String(error) };
   }
 };
-
-/* export const handerUpdateFields = async (req, res) => {
-    
-
-    return await basePatchDocument({
-        document: { ...document },
-        model: MODEL,
-    });
-}; */

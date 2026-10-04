@@ -41,9 +41,7 @@ export const createCrudService = <T extends CrudDocument>(props: { model: Model<
             );
             return success ? find : undefined;
           },
-          hookHasErrors: () => {
-            //
-          },
+          hookHasErrors: () => {},
         }),
       );
     } catch (error: unknown) {

@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import mongoose from 'mongoose';
 import { Schema, ValidationError, ValidationErrorItem } from 'joi';
 import { _log } from '@/utils';
@@ -21,14 +15,6 @@ export const validateSchema = ({
   // "not resolved yet" state, not an accidental omission.
   lang?: string | undefined;
 }) => {
-  /**
-   * @return
-   *  isValidated: boolean,
-   *  value?: object,
-   *  message?: object,
-   *  error?: array
-   *
-   */
   const validationOptions = { abortEarly: false };
   if (!schema || typeof schema.validate !== 'function') {
     return { isValidated: false, message: t('validation.invalidSchema', lang) };
@@ -91,7 +77,6 @@ export const validateModel = async (model: { validate: (doc: unknown) => Promise
       }
     } else {
       message = 'An error occurred';
-      /*  errors = []; */
     }
   }
   return { valid, message, errors };

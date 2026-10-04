@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import express from 'express';
 
 const router = express.Router();

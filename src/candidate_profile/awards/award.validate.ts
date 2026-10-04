@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import Joi from 'joi';
 import { _id, _arrayString, candidateId, _stringDefault, description } from '@/config/joi.config';
 

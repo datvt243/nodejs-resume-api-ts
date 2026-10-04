@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import fs from 'fs';
 import path from 'path';
 import { Model } from 'mongoose';
@@ -17,13 +11,15 @@ import { CrudDocument } from '@/services';
 
 const MODEL = MODELS.Candidate;
 
-// CV section models keyed by candidateId — deleted alongside the
-// candidate document itself so a self-delete doesn't leave orphaned data.
-// `Model<CrudDocument>` + a narrow per-entry cast, same justified pattern
-// `type-crud-core`/#181 established for `BaseController.ts`'s
-// `modelObject` — Mongoose's `Model<T>` is invariant, so no concrete
-// model can be assigned to a fixed, differently-parameterized
-// `Model<CrudDocument>` slot without one.
+/**
+ * CV section models keyed by candidateId — deleted alongside the
+ * candidate document itself so a self-delete doesn't leave orphaned data.
+ * `Model<CrudDocument>` + a narrow per-entry cast, same justified pattern
+ * `type-crud-core`/#181 established for `BaseController.ts`'s
+ * `modelObject` — Mongoose's `Model<T>` is invariant, so no concrete
+ * model can be assigned to a fixed, differently-parameterized
+ * `Model<CrudDocument>` slot without one.
+ */
 const CV_SECTION_MODELS: Model<CrudDocument>[] = [
   MODELS.generalInformation as unknown as Model<CrudDocument>,
   MODELS.Experience as unknown as Model<CrudDocument>,
@@ -36,9 +32,11 @@ const CV_SECTION_MODELS: Model<CrudDocument>[] = [
   MODELS.Profile as unknown as Model<CrudDocument>,
 ];
 
-// Only these 3 have an images[] field (issue #72) — same on-disk-file
-// cleanup concern as CV_UPLOAD_DIR below, just spread across N documents
-// instead of one deterministic filename.
+/**
+ * Only these 3 have an images[] field (issue #72) — same on-disk-file
+ * cleanup concern as CV_UPLOAD_DIR below, just spread across N documents
+ * instead of one deterministic filename.
+ */
 const IMAGE_SECTION_MODELS: Model<CrudDocument>[] = [
   MODELS.Project as unknown as Model<CrudDocument>,
   MODELS.Certificate as unknown as Model<CrudDocument>,
@@ -47,12 +45,14 @@ const IMAGE_SECTION_MODELS: Model<CrudDocument>[] = [
 
 export const handlerGetInformationById = async (id: string, props: { select: string } = { select: '' }) => {
   const { select = '' } = props;
-  // `select` here is already a whitelisted, space-joined field list (see
-  // callers) — re-wrapping it in candidateQuerySafe.whitelistSelect([select])
-  // treated the whole joined string as a single field name, which never
-  // matched the allow-list, silently making the select a no-op and
-  // returning the full document (including password) to every caller.
-  // Default to excluding password when no explicit select is given.
+  /**
+   * `select` here is already a whitelisted, space-joined field list (see
+   * callers) — re-wrapping it in candidateQuerySafe.whitelistSelect([select])
+   * treated the whole joined string as a single field name, which never
+   * matched the allow-list, silently making the select a no-op and
+   * returning the full document (including password) to every caller.
+   * Default to excluding password when no explicit select is given.
+   */
   const find = MODEL.findById(id).select(select || '-password');
   return await find.exec();
 };
@@ -64,15 +64,6 @@ export const handlerGetInformationByEmail = async (email: string) => {
 };
 
 export const handlerUpdate = async (item: Record<string, unknown>, lang: string = DEFAULT_LANG) => {
-  /**
-   * @return
-   *  success: boolean,
-   *  message: string,
-   *  data: Document,
-   *  errors: Array
-   *
-   */
-
   const id = typeof item['_id'] === 'string' ? item['_id'] : undefined;
 
   if (!id || !(await MODEL.findById(id))) {
@@ -81,25 +72,13 @@ export const handlerUpdate = async (item: Record<string, unknown>, lang: string 
 
   const value = { ...item };
 
-  /**
-   * validate data trước khi lưu vào database
-   */
   const { valid, message, errors } = await validateModel(MODEL, value);
   if (!valid) return { success: false, message, errors };
 
-  /**
-   * update
-   */
   await MODEL.updateOne({ _id: id }, value).exec();
 
-  /**
-   * lấy thông tin vừa update (SAFE SELECT)
-   */
   const safeSelect = candidateQuerySafe.whitelistSelect(Object.keys(value));
   const _find = await handlerGetInformationById(id, { select: safeSelect });
-  /**
-   * return
-   */
   return { success: true, message: t('common.updateSuccess', lang), errors: {}, data: _find ? _find : {} };
 };
 
@@ -119,10 +98,12 @@ export const handlerGetCVFile = async (candidateId: string) => {
   return doc?.get('cvFile.originalName') ? doc.get('cvFile') : null;
 };
 
-// `candidateId` here is always req.user._id from the verified JWT (never
-// client-supplied) — same trusted-id pattern already used by
-// handlerDelete's own CV_SECTION_MODELS.deleteMany calls above, so no
-// QuerySafe wrapping needed.
+/**
+ * `candidateId` here is always req.user._id from the verified JWT (never
+ * client-supplied) — same trusted-id pattern already used by
+ * handlerDelete's own CV_SECTION_MODELS.deleteMany calls above, so no
+ * QuerySafe wrapping needed.
+ */
 export const handlerGetVisits = async (candidateId: string, lang: string = DEFAULT_LANG) => {
   const visits = await MODELS.Visit.find({ candidateId }).sort({ createdAt: -1 }).exec();
   return { success: true, message: t('candidate.getVisitsSuccess', lang), errors: {}, data: { count: visits.length, visits } };
@@ -133,10 +114,12 @@ export const handlerDelete = async (_id: string, lang: string = DEFAULT_LANG) =>
     return { success: false, message: t('common.idNotFound', lang) };
   }
 
-  // Collect image filenames BEFORE the documents holding them are
-  // deleted — same on-disk cleanup concern as the CV file below, just
-  // spread across every project/certificate/award document instead of
-  // one deterministic filename.
+  /**
+   * Collect image filenames BEFORE the documents holding them are
+   * deleted — same on-disk cleanup concern as the CV file below, just
+   * spread across every project/certificate/award document instead of
+   * one deterministic filename.
+   */
   const imageDocsPerModel = await Promise.all(IMAGE_SECTION_MODELS.map((model) => model.find({ candidateId: _id }, { images: 1 })));
   const imageFilenames = imageDocsPerModel
     .flat()

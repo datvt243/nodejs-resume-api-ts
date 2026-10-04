@@ -1,4 +1,3 @@
-// alias.js
 const path = require('path');
 const moduleAlias = require('module-alias');
 

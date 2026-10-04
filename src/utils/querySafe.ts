@@ -36,7 +36,6 @@ export class QuerySafe {
   }
 }
 
-// Pre-configured instances
 export const candidateQuerySafe = new QuerySafe([
   'firstName',
   'lastName',

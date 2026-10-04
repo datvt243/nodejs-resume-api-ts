@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import ProjectModel from '@/models/project.model';
 import { createCrudService } from '@/candidate_profile/BaseService';
 

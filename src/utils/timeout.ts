@@ -23,9 +23,6 @@ export const withTimeout = <T>(promise: Promise<T>, ms: number, signal?: AbortSi
   ]);
 };
 
-/**
- * Pre-configured timeouts
- */
 export const withDBTimeout = <T>(promise: Promise<T>, signal?: AbortSignal) => withTimeout(promise, DB_TIMEOUT, signal);
 export const withRedisTimeout = <T>(promise: Promise<T>, signal?: AbortSignal) => withTimeout(promise, REDIS_TIMEOUT, signal);
 export const withConnectTimeout = <T>(promise: Promise<T>, signal?: AbortSignal) => withTimeout(promise, CONNECT_TIMEOUT, signal);

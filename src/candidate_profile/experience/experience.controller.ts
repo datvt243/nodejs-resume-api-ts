@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import { schemaExperience } from './experience.validate';
 import * as experienceService from './experience.service';
 import { createCrudController } from '@/candidate_profile/BaseController';

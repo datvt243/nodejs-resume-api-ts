@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { _log } from '@/utils';
 
-/**
- * Structured request logging middleware with Winston
- */
 export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
 

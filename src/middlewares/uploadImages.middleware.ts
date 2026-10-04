@@ -16,15 +16,17 @@ import crypto from 'crypto';
 import multer from 'multer';
 import { Request } from 'express';
 
-// Anchored to __dirname, not a bare relative literal — resolves to
-// `src/public/uploads/images/` when running from source and
-// `dist/public/uploads/images/` when running compiled, matching exactly
-// what `express.static(path.join(__dirname, 'public'))` serves in
-// `src/server.ts` (fix-hardcoded-src-public-write-paths,
-// doctrine/domains/PROJECT.md — a bare `src/...` literal never matched
-// what's actually served in a compiled deploy, meaning these "public
-// portfolio" images were silently unreachable via their own static URL
-// outside a dev/ts-node run).
+/**
+ * Anchored to __dirname, not a bare relative literal — resolves to
+ * `src/public/uploads/images/` when running from source and
+ * `dist/public/uploads/images/` when running compiled, matching exactly
+ * what `express.static(path.join(__dirname, 'public'))` serves in
+ * `src/server.ts` (fix-hardcoded-src-public-write-paths,
+ * doctrine/domains/PROJECT.md — a bare `src/...` literal never matched
+ * what's actually served in a compiled deploy, meaning these "public
+ * portfolio" images were silently unreachable via their own static URL
+ * outside a dev/ts-node run).
+ */
 export const IMAGE_UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'images');
 export const IMAGE_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB per file
 export const IMAGE_MAX_FILES = 5; // per request
@@ -37,10 +39,12 @@ const storage = multer.diskStorage({
     cb(null, IMAGE_UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
-    // `<recordId>-<timestamp>-<random>.<ext>` — unique per file (unlike
-    // the CV upload's deterministic name, images are additive, not
-    // replace-in-place) and never derived from the client-supplied
-    // original filename (path traversal risk).
+    /**
+     * `<recordId>-<timestamp>-<random>.<ext>` — unique per file (unlike
+     * the CV upload's deterministic name, images are additive, not
+     * replace-in-place) and never derived from the client-supplied
+     * original filename (path traversal risk).
+     */
     const recordId = (req.params as Record<string, string>)?.['id'] || 'unknown';
     const ext = path.extname(file.originalname).toLowerCase();
     const unique = crypto.randomBytes(6).toString('hex');
@@ -48,9 +52,11 @@ const storage = multer.diskStorage({
   },
 });
 
-// Real content-type check, not just whatever the client's multipart
-// request claims — checked on both mimetype and extension, same
-// discipline as uploadCV.middleware.ts.
+/**
+ * Real content-type check, not just whatever the client's multipart
+ * request claims — checked on both mimetype and extension, same
+ * discipline as uploadCV.middleware.ts.
+ */
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const isImageMime = file.mimetype.startsWith('image/');
   const isAllowedExt = ALLOWED_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase());

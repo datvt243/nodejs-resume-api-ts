@@ -52,12 +52,14 @@ export const fnAtsCheck = async (req: Request, res: Response, next: NextFunction
     let metadataAuthor: string | undefined;
 
     if (template === 'classic') {
-      // The classic template hardcodes Vietnamese section labels (not
-      // localized) and sets no PDF metadata — both correctly surface as
-      // failures below (standard-headings/metadata), not bugs in this
-      // check: pdf-export-standard.md rule 8's single-column/no-letter-
-      // spacing invariants only bind on a template claiming ATS-safety,
-      // which `classic` never has.
+      /**
+       * The classic template hardcodes Vietnamese section labels (not
+       * localized) and sets no PDF metadata — both correctly surface as
+       * failures below (standard-headings/metadata), not bugs in this
+       * check: pdf-export-standard.md rule 8's single-column/no-letter-
+       * spacing invariants only bind on a template claiming ATS-safety,
+       * which `classic` never has.
+       */
       buffer = await renderPdfBuffer(candidateData);
     } else {
       const atsResult = await renderAtsPdfBuffer(candidateData, { lang });

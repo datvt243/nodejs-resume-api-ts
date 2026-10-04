@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import type { Model } from 'mongoose';
@@ -16,10 +10,12 @@ import { createCVAts } from '@/services/createPDF.ats';
 import { createCVDocx } from '@/services/createDocx';
 import * as MODEL from '@/models';
 
-// Localized ({vi, en}) fields get resolved down to a single string for
-// public-facing reads (profile view, PDF export) — the owner's own
-// authenticated CRUD endpoints (candidate_profile/*) still return the
-// full {vi, en} object so they can edit both languages.
+/**
+ * Localized ({vi, en}) fields get resolved down to a single string for
+ * public-facing reads (profile view, PDF export) — the owner's own
+ * authenticated CRUD endpoints (candidate_profile/*) still return the
+ * full {vi, en} object so they can edit both languages.
+ */
 const resolveLocalizedText = (value: unknown, lang: string): string => {
   if (typeof value === 'string') return value; // defensive: pre-migration data shape
   if (!value || typeof value !== 'object') return '';
@@ -31,27 +27,28 @@ const resolveLocalizedText = (value: unknown, lang: string): string => {
 export const fnGetAboutMe = async (req: Request, res: Response, next: NextFunction) => {
   const { email } = req.params;
   const lang = req.query['lang'] === 'en' ? 'en' : 'vi';
-  // Optional CV profile filter (issue #133) — a named subset of the
-  // candidate's own Education/Experience/Project/Certificate/Award/
-  // Reference entries. Omitted -> unchanged behavior (everything), so
-  // existing share-links keep working.
+  /**
+   * Optional CV profile filter (issue #133) — a named subset of the
+   * candidate's own Education/Experience/Project/Certificate/Award/
+   * Reference entries. Omitted -> unchanged behavior (everything), so
+   * existing share-links keep working.
+   */
   const profileId = typeof req.query['profile'] === 'string' ? req.query['profile'] : undefined;
   if (!email) {
     res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('Không tìm thấy Email'));
     return;
   }
 
-  /**
-   * get data
-   */
   try {
     const _me = await handlerGetAboutMe(email, lang, profileId);
-    // Private profile (issue #75) — same response shape as "email not
-    // found" so a private profile isn't distinguishable from a
-    // non-existent one. Only gates this public route; the authenticated
-    // self-export path (fnExportPDF) calls handlerGetAboutMe directly
-    // and is unaffected — a candidate can always see/export their own
-    // data regardless of this flag.
+    /**
+     * Private profile (issue #75) — same response shape as "email not
+     * found" so a private profile isn't distinguishable from a
+     * non-existent one. Only gates this public route; the authenticated
+     * self-export path (fnExportPDF) calls handlerGetAboutMe directly
+     * and is unaffected — a candidate can always see/export their own
+     * data regardless of this flag.
+     */
     if (_me.success && _me.data?.isPublic === false) {
       return formatReturn(res, formatReturnFailed('Email không tồn tại'));
     }
@@ -61,10 +58,12 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// Maps a CV-section collection name to the array field on a Profile
-// document that lists which of that section's ids belong to it.
-// generalInformation has no entry — it's a single document per candidate,
-// not a selectable list.
+/**
+ * Maps a CV-section collection name to the array field on a Profile
+ * document that lists which of that section's ids belong to it.
+ * generalInformation has no entry — it's a single document per candidate,
+ * not a selectable list.
+ */
 const PROFILE_ID_FIELDS: Record<string, string> = {
   experiences: 'experienceIds',
   educations: 'educationIds',
@@ -78,12 +77,14 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
   const removeFields = { __v: 0, createdAt: 0, updatedAt: 0, candidateId: 0 };
 
   const { candidateQuerySafe } = await import('@/utils/querySafe');
-  // Slug-first (issue #120) — a slug is a non-PII, shareable identifier;
-  // email lookup stays as a fallback so existing shared links keep working.
-  // QuerySafe silently DROPS a rejected value (e.g. containing "$") instead
-  // of throwing — checking the key survived sanitization keeps a rejected
-  // identifier from collapsing the query to {} and matching an arbitrary
-  // candidate (issue #135).
+  /**
+   * Slug-first (issue #120) — a slug is a non-PII, shareable identifier;
+   * email lookup stays as a fallback so existing shared links keep working.
+   * QuerySafe silently DROPS a rejected value (e.g. containing "$") instead
+   * of throwing — checking the key survived sanitization keeps a rejected
+   * identifier from collapsing the query to {} and matching an arbitrary
+   * candidate (issue #135).
+   */
   const safeSlugQuery = candidateQuerySafe.safeQuery({}, { slug: identifier });
   let document = 'slug' in safeSlugQuery ? await MODEL.Candidate.findOne(safeSlugQuery, { ...removeFields }).exec() : null;
   if (!document) {
@@ -94,10 +95,12 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
 
   const { _id } = document;
 
-  // Resolve the optional profile filter (issue #133) — must belong to this
-  // same candidate; an invalid/foreign/deleted profile id is treated the
-  // same as "no profile given" (falls back to unfiltered) rather than
-  // erroring, since this is a public, unauthenticated route.
+  /**
+   * Resolve the optional profile filter (issue #133) — must belong to this
+   * same candidate; an invalid/foreign/deleted profile id is treated the
+   * same as "no profile given" (falls back to unfiltered) rather than
+   * erroring, since this is a public, unauthenticated route.
+   */
   let profileDoc: Awaited<ReturnType<typeof MODEL.Profile.findOne>> = null;
   if (profileId) {
     const { idQuerySafe: profileIdQuerySafe } = await import('@/utils/querySafe');
@@ -109,16 +112,15 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
   }
 
   /**
-   * lấy thông tin liên quan [học vấn, kinh nghiệm, người liên hệ]
+   * `Model<SectionDocument>` instead of `any` — same justified, narrow cast
+   * pattern as `BaseController.ts`'s `modelObject` (`type-crud-core`/#181):
+   * Mongoose's `Model<T>` is invariant enough that none of these 7
+   * differently-shaped concrete models can be assigned directly to a fixed
+   * `Model<SectionDocument>`-typed slot without a cast (confirmed the same
+   * way #181 did). Self-contained here rather than importing #181's
+   * `CrudDocument` since that node's export doesn't exist on this branch
+   * yet (both branch independently off `staging`).
    */
-  // `Model<SectionDocument>` instead of `any` — same justified, narrow cast
-  // pattern as `BaseController.ts`'s `modelObject` (`type-crud-core`/#181):
-  // Mongoose's `Model<T>` is invariant enough that none of these 7
-  // differently-shaped concrete models can be assigned directly to a fixed
-  // `Model<SectionDocument>`-typed slot without a cast (confirmed the same
-  // way #181 did). Self-contained here rather than importing #181's
-  // `CrudDocument` since that node's export doesn't exist on this branch
-  // yet (both branch independently off `staging`).
   interface SectionDocument {
     candidateId?: unknown;
   }
@@ -138,36 +140,37 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
   for (const { collection, model } of getMoreInfo) {
     dataResult[collection] = [];
     const { idQuerySafe } = await import('@/utils/querySafe');
-    // _id here is a Mongoose ObjectId instance (from the raw document,
-    // destructured before the JSON.parse/stringify flatten above), not a
-    // string. QuerySafe.safeQuery only accepts string values (typeof
-    // check) — passing the ObjectId directly made it silently drop the
-    // candidateId filter, so this query returned EVERY candidate's CV
-    // section data unfiltered.
+    /**
+     * _id here is a Mongoose ObjectId instance (from the raw document,
+     * destructured before the JSON.parse/stringify flatten above), not a
+     * string. QuerySafe.safeQuery only accepts string values (typeof
+     * check) — passing the ObjectId directly made it silently drop the
+     * candidateId filter, so this query returned EVERY candidate's CV
+     * section data unfiltered.
+     */
     const safeCandidateQuery = idQuerySafe.safeQuery({}, { candidateId: _id?.toString() || '' });
-    // Profile filter (issue #133): the id list comes from the already
-    // ownership-checked `profileDoc` above (server-derived, not raw user
-    // input), so it's safe to merge in directly rather than through
-    // QuerySafe, which only accepts string values anyway.
+    // Profile filter (issue #133): the id list comes from the already ownership-checked `profileDoc` above (server-derived), so it's safe to merge in directly rather than through QuerySafe.
     const profileIdsField = PROFILE_ID_FIELDS[collection];
-    // Dynamic per-collection field lookup (`experienceIds`/`educationIds`/...)
-    // on the real Profile document — genuinely needs a cast since the real
-    // document type has no string index signature (its fields are named
-    // explicitly in the schema), but `profileIdsField` is only known at
-    // runtime. Narrowed to exactly the shape read here.
+    /**
+     * Dynamic per-collection field lookup (`experienceIds`/`educationIds`/...)
+     * on the real Profile document — genuinely needs a cast since the real
+     * document type has no string index signature (its fields are named
+     * explicitly in the schema), but `profileIdsField` is only known at
+     * runtime. Narrowed to exactly the shape read here.
+     */
     const profileIds = profileDoc && profileIdsField ? (profileDoc as unknown as Record<string, unknown[]>)[profileIdsField] : undefined;
     const sectionQuery = profileDoc && profileIdsField ? { ...safeCandidateQuery, _id: { $in: profileIds || [] } } : safeCandidateQuery;
-    // Real hydrated Mongoose documents — immediately flattened via
-    // JSON.parse(JSON.stringify(...)) below, so the exact document shape
-    // isn't needed here.
+    // Real hydrated Mongoose documents — immediately flattened via JSON.parse(JSON.stringify(...)) below, so the exact document shape isn't needed here.
     const _find = await model.find(sectionQuery, { _id: 0, ...removeFields }).exec();
     if (!_find) continue;
-    // Flatten Mongoose documents to plain objects immediately (same as
-    // `document` above) — spreading a live Mongoose document later (for
-    // the language-resolution step) only copies its internal bookkeeping
-    // properties ($__, _doc, ...), not the clean schema fields, since
-    // those are only reachable via getters that a plain object spread
-    // doesn't invoke.
+    /**
+     * Flatten Mongoose documents to plain objects immediately (same as
+     * `document` above) — spreading a live Mongoose document later (for
+     * the language-resolution step) only copies its internal bookkeeping
+     * properties ($__, _doc, ...), not the clean schema fields, since
+     * those are only reachable via getters that a plain object spread
+     * doesn't invoke.
+     */
     dataResult[collection] = JSON.parse(JSON.stringify(_find));
   }
 
@@ -188,12 +191,14 @@ export const handlerGetAboutMe = async (identifier: string, lang: string = 'vi',
     }));
   }
   if (dataResult.generalInformation && Object.keys(dataResult.generalInformation).length) {
-    // Spread into a new plain object rather than mutating in place —
-    // generalInformation still holds a live Mongoose document here (only
-    // the top-level Candidate doc went through JSON.parse(JSON.stringify)
-    // above), so assigning a plain string onto a subdocument path would
-    // route through Mongoose's own setter/caster instead of just
-    // overwriting the value in the response payload.
+    /**
+     * Spread into a new plain object rather than mutating in place —
+     * generalInformation still holds a live Mongoose document here (only
+     * the top-level Candidate doc went through JSON.parse(JSON.stringify)
+     * above), so assigning a plain string onto a subdocument path would
+     * route through Mongoose's own setter/caster instead of just
+     * overwriting the value in the response payload.
+     */
     dataResult.generalInformation = {
       ...dataResult.generalInformation,
       career: resolveLocalizedText(dataResult.generalInformation.career, lang),
@@ -229,16 +234,20 @@ export const handlerRecordVisit = async (email: string, req: Request) => {
   // rejected email must not fall through to an unfiltered findOne({}).
   const safeEmailQuery = candidateQuerySafe.safeQuery({}, { email });
   const candidate = 'email' in safeEmailQuery ? await MODEL.Candidate.findOne(safeEmailQuery).select('_id').exec() : null;
-  // Same response shape as the "email not found" branch of handlerGetAboutMe
-  // above (success: false, no throw) — kept consistent with that sibling
-  // public endpoint rather than introducing a different error convention
-  // (e.g. NotFoundError/404) for this one route.
+  /**
+   * Same response shape as the "email not found" branch of handlerGetAboutMe
+   * above (success: false, no throw) — kept consistent with that sibling
+   * public endpoint rather than introducing a different error convention
+   * (e.g. NotFoundError/404) for this one route.
+   */
   if (!candidate) return formatReturnFailed('Email không tồn tại');
 
-  // Same IP-extraction pattern already used by rateLimit.middleware.ts —
-  // no `trust proxy` is configured on the Express app, so behind a
-  // reverse proxy (e.g. Render) this may resolve to the proxy's address
-  // rather than the real client IP; out of scope to fix here.
+  /**
+   * Same IP-extraction pattern already used by rateLimit.middleware.ts —
+   * no `trust proxy` is configured on the Express app, so behind a
+   * reverse proxy (e.g. Render) this may resolve to the proxy's address
+   * rather than the real client IP; out of scope to fix here.
+   */
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
   const geo = ip && ip !== 'unknown' ? geoip.lookup(ip) : null;
   const location = geo ? [geo.city, geo.region, geo.country].filter(Boolean).join(', ') : '';
@@ -249,12 +258,7 @@ export const handlerRecordVisit = async (email: string, req: Request) => {
 };
 
 export const fnExportPDF = async (req: Request, res: Response, next: NextFunction) => {
-  /**
-   *
-   */
-
-  // Use the authenticated user's own id — never a client-supplied one,
-  // or any authenticated user could export another candidate's PDF.
+  // Use the authenticated user's own id — never a client-supplied one, or any authenticated user could export another candidate's PDF.
   const _id = req.user?._id;
   if (!_id) {
     res.status(StatusCodes.BAD_REQUEST).json(formatReturnFailed('CandidateId not found'));
@@ -296,9 +300,11 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    // ?template=ats (issue #211) — ATS-optimized template, same
-    // aggregated data. `template=classic` (the default, unchanged) keeps
-    // every existing client on the pre-existing visual template.
+    /**
+     * ?template=ats (issue #211) — ATS-optimized template, same
+     * aggregated data. `template=classic` (the default, unchanged) keeps
+     * every existing client on the pre-existing visual template.
+     */
     if (req.query['template'] === 'ats') {
       await createCVAts(data, res, { lang });
       return;

@@ -28,17 +28,19 @@ const options: swaggerJsdoc.Options = {
           bearerFormat: 'JWT',
           description: 'The JWT access token issued by POST /auth/login (same token as everywhere else in this API), sent as `Authorization: Bearer <token>`. Also accepted via an httpOnly cookie on routes that support it — see each route\'s own description.',
         },
-        // Same JWT access token as bearerAuth, just read from a query
-        // string field instead of a header — exists ONLY for
-        // GET /api/v1/download-pdf, where a browser-navigated download
-        // (<a href>, new tab, <iframe>) can't attach a custom
-        // Authorization header. Goes through the exact same verifyToken
-        // middleware (blacklist + session-revocation checks included) as
-        // every bearerAuth-only route; it's a different transport for
-        // the same credential, not a weaker one. Caveat: a token in the
-        // URL ends up in server access logs and browser history, which
-        // is why every other authenticated route still requires the
-        // header/cookie instead.
+        /**
+         * Same JWT access token as bearerAuth, just read from a query
+         * string field instead of a header — exists ONLY for
+         * GET /api/v1/download-pdf, where a browser-navigated download
+         * (<a href>, new tab, <iframe>) can't attach a custom
+         * Authorization header. Goes through the exact same verifyToken
+         * middleware (blacklist + session-revocation checks included) as
+         * every bearerAuth-only route; it's a different transport for
+         * the same credential, not a weaker one. Caveat: a token in the
+         * URL ends up in server access logs and browser history, which
+         * is why every other authenticated route still requires the
+         * header/cookie instead.
+         */
         queryTokenAuth: {
           type: 'apiKey',
           in: 'query',
@@ -47,10 +49,12 @@ const options: swaggerJsdoc.Options = {
         },
       },
       parameters: {
-        // Pagination (issue #73) — shared by every CV-section `GET /` list
-        // endpoint via BaseController.baseGetAll. All three are optional;
-        // omitting `limit` returns the full, unpaginated array exactly as
-        // before (see ApiResponse vs ApiResponsePaginated).
+        /**
+         * Pagination (issue #73) — shared by every CV-section `GET /` list
+         * endpoint via BaseController.baseGetAll. All three are optional;
+         * omitting `limit` returns the full, unpaginated array exactly as
+         * before (see ApiResponse vs ApiResponsePaginated).
+         */
         PageParam: {
           in: 'query',
           name: 'page',
@@ -83,9 +87,11 @@ const options: swaggerJsdoc.Options = {
             data: { nullable: true },
           },
         },
-        // Shape of `data` when a `GET /` list endpoint is called with
-        // `?limit=` (issue #73) — otherwise `data` stays a plain array,
-        // as documented on ApiResponse.
+        /**
+         * Shape of `data` when a `GET /` list endpoint is called with
+         * `?limit=` (issue #73) — otherwise `data` stays a plain array,
+         * as documented on ApiResponse.
+         */
         Pagination: {
           type: 'object',
           properties: {

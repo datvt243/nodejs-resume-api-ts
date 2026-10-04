@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Schema.Types.ObjectId;
@@ -13,7 +7,6 @@ import { foreignLanguageSchema, professionalSkillsSchema, personalSkills, locali
 const schema = new Schema(
   {
     candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', unique: true },
-    /* vị trí mong muốn */
     positionDesired: { type: String, default: '', required: [false, 'Vui lòng nhập vị trí mong muốn'] },
     career: { type: localizedTextSchema, default: () => ({}) },
     levelCurrent: { type: String, default: '', required: [false, 'Vui lòng nhập cấp bậc hiện tại'] },
@@ -23,7 +16,6 @@ const schema = new Schema(
     yearsOfExperience: { type: Number, default: 0, required: [false, 'Vui lòng nhập số năm kinh nghiệm'] },
     workLocation: { type: String, default: '', required: [false, 'Vui lòng nhập địa điểm làm việc'] },
     workForm: { type: String, default: '', required: [false, 'Vui lòng nhập hình thức làm việc'] },
-    /* đang mở tìm việc hay không */
     openToWork: { type: Boolean, default: false, required: false },
     careerGoal: { type: localizedTextSchema, default: () => ({}) },
     personalSkills: { type: [personalSkills], default: [] },
@@ -34,7 +26,7 @@ const schema = new Schema(
       default: [],
       required: [false, 'Vui lòng nhập ngoại ngữ'],
     },
-    /* soft-delete (issue #121) — null nghĩa là chưa xoá */
+    // soft-delete (issue #121) — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

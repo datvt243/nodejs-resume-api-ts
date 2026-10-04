@@ -34,12 +34,10 @@ export const getSelectFields = (fields: Record<string, unknown>): string => Obje
  * Use this in catch blocks to forward errors to middleware
  */
 export const handleError = (err: unknown, next: NextFunction, lang: string = DEFAULT_LANG): void => {
-  // If it's already an AppError, pass it through
   if (err instanceof AppError) {
     return next(err);
   }
 
-  // If it's a Mongoose CastError (invalid ObjectId)
   if (err instanceof mongoose.Error.CastError) {
     return next(
       new BadRequestError({
@@ -49,16 +47,17 @@ export const handleError = (err: unknown, next: NextFunction, lang: string = DEF
     );
   }
 
-  // If it's a Mongoose duplicate key error
   if (isDuplicateKeyError(err)) {
     const field = Object.keys(err.keyValue || {})[0] || 'field';
     return next(new ConflictError({ message: t('errors.duplicateKey', lang).replace('{{field}}', field) }));
   }
 
-  // If it's a Mongoose validation error — translate each field's error using
-  // the same generic error-type + field-label approach as Joi (see
-  // utils/valid.ts). Only `required` is currently used by any model's
-  // schema; anything else falls back to Mongoose's own hardcoded message.
+  /**
+   * Mongoose validation error — translate each field's error using the
+   * same generic error-type + field-label approach as Joi (see
+   * utils/valid.ts). Only `required` is currently used by any model's
+   * schema; anything else falls back to Mongoose's own hardcoded message.
+   */
   if (err instanceof mongoose.Error.ValidationError) {
     const details = Object.entries(err.errors).map(([field, e]) => {
       if (e?.kind === 'required') {
@@ -72,24 +71,11 @@ export const handleError = (err: unknown, next: NextFunction, lang: string = DEF
     return next(new ValidationError({ message: t('validation.hasErrors', lang), errors: details }));
   }
 
-  // Default to internal server error
   const message = err instanceof Error ? err.message : undefined;
   return next(new AppError({ message: message || t('errors.internalServerError', lang), statusCode: StatusCodes.INTERNAL_SERVER_ERROR }));
 };
 
-/**
- * Standard response formatter
- */
 export const formatResponse = (props: BaseReturn) => {
-  /**
-   * Chuẩn data trả về của API
-   *  {
-   *      success: boolean        // trạng thái
-   *      message: string         // mess thành công or thất bại
-   *      error: string | array   // danh sách lỗi
-   *      data: null | object{ token: string, user: object{ _id, name } } //  data trả về gồm token và thông tin user
-   *  }
-   */
   const { type = '', success, message, errors = {}, data } = props;
 
   const getData = (() => {
@@ -110,10 +96,6 @@ export const formatResponse = (props: BaseReturn) => {
   };
 };
 
-/**
- * Format and send standardized API response
- * Main utility function for controller responses
- */
 export const formatReturn = (res: Response, props: formatReturn) => {
   const {
     success = false,

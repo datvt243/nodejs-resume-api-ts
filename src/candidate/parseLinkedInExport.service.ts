@@ -45,9 +45,11 @@ const pickField = (row: Record<string, string>, candidates: string[]): string =>
   return '';
 };
 
-// LinkedIn's date columns are free text like "Sep 2020" or "2020", empty
-// for an ongoing entry -- Date.parse handles "Sep 2020" directly; "2020"
-// alone needs a day prefixed first. Unparseable -> null, never throws.
+/**
+ * LinkedIn's date columns are free text like "Sep 2020" or "2020", empty
+ * for an ongoing entry -- Date.parse handles "Sep 2020" directly; "2020"
+ * alone needs a day prefixed first. Unparseable -> null, never throws.
+ */
 const parseLinkedInDate = (raw: string): number | null => {
   const value = raw.trim();
   if (!value || /present/i.test(value)) return null;

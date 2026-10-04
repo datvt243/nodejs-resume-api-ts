@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import Joi from 'joi';
 import {
   _id,
@@ -24,7 +18,6 @@ export const schemaCertificate = Joi.object({
   startDate,
   endDate,
   isNoExpiration: _boolean,
-  /* link: _stringDefault({ min: 0, max: 100, title: 'Liên kết' }), */
   images: _arrayString,
   candidateId,
 });

@@ -1,9 +1,3 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import express, { Request, Response } from 'express';
 
 const router = express.Router();
@@ -11,19 +5,9 @@ const router = express.Router();
 import { fnGetAboutMe, fnRecordVisit } from '@/candidate_me';
 import routerAPI from './api/v1/index';
 import routerAPIV2 from './api/v2/index';
-/**
- * API V1
- */
+
 router.use('/api/v1', routerAPI);
-
-/**
- * API V2
- */
 router.use('/api/v2', routerAPIV2);
-
-/**
- * get ME
- */
 
 /**
  * @swagger
@@ -89,9 +73,6 @@ router.get('/api/me/:email', fnGetAboutMe);
  */
 router.post('/api/me/:email/visit', fnRecordVisit);
 
-/**
- * 404
- */
 router.get('/api/*', (_req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -101,12 +82,6 @@ router.get('/api/*', (_req: Request, res: Response) => {
   });
 });
 
-/**
- * get page home
- */
-/* router.get('/', (req: Request, res: Response) => {
-    res.render('render', { data: null });
-}); */
 router.get('/*', (_req: Request, res: Response) => {
   res.send(
     `<div style="text-align: center; padding: 50px">

@@ -1,21 +1,7 @@
-/**
- * Author: Đạt Võ - https://github.com/datvt243
- * Date: `--/--`
- * Description:
- */
-
 import Joi from 'joi';
 import { email, PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from '@/config/joi.config';
 import { passwordRegex } from '@/config/regex.config';
 
-/**
- * Password strength validation
- * - At least PASSWORD_MIN_LENGTH characters
- * - At least 1 uppercase letter
- * - At least 1 lowercase letter
- * - At least 1 number
- * - At least 1 special character
- */
 export const password = Joi.string()
   .min(PASSWORD_MIN_LENGTH)
   .max(PASSWORD_MAX_LENGTH)
