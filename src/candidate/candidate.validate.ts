@@ -24,18 +24,10 @@ export const schemaCandidate = getObject({
   firstName,
   lastName,
   phone,
-  marital: Joi.boolean().required().messages({
-    'any.required': 'Tình trạng hôn nhân không được rỗng',
-  }),
-  gender: Joi.boolean().required().messages({
-    'any.required': 'Giới tính không được rỗng',
-  }),
-  birthday: Joi.number().min(0).required().messages({
-    'any.required': 'Ngày sinh không được rỗng',
-  }),
-  address: Joi.string().min(0).max(255).required().messages({
-    'any.required': 'Địa chỉ không được rỗng',
-  }),
+  marital: Joi.boolean().required(),
+  gender: Joi.boolean().required(),
+  birthday: Joi.number().min(0).required(),
+  address: Joi.string().min(0).max(255).required(),
   introduction,
   socialMedia: Joi.object({
     github: Joi.string(),

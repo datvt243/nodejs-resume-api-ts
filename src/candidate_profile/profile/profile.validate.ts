@@ -13,11 +13,7 @@ const objectIdArray = Joi.array().items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/
 
 export const schemaProfile = Joi.object({
   _id,
-  name: Joi.string().min(1).max(100).trim().strict().required().messages({
-    'any.required': 'Tên profile là bắt buộc',
-    'string.empty': 'Tên profile không được trống',
-    'string.max': 'Tên profile có nhiều nhất {#limit} ký tự',
-  }),
+  name: Joi.string().min(1).max(100).trim().strict().required(),
   educationIds: objectIdArray,
   experienceIds: objectIdArray,
   projectIds: objectIdArray,

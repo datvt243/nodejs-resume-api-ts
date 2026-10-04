@@ -3,8 +3,9 @@
  */
 
 import { NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { handleError } from '@/utils/helper';
-import { ConflictError } from '@/errors';
+import { ConflictError, ValidationError } from '@/errors';
 
 describe('handleError', () => {
   it('converts a Mongo duplicate-key error on `slug` into a ConflictError (issue #120)', () => {
@@ -32,5 +33,30 @@ describe('handleError', () => {
     const passedError = (next as jest.Mock).mock.calls[0][0];
     expect(passedError).toBeInstanceOf(ConflictError);
     expect(passedError.message).toContain('email');
+  });
+
+  /**
+   * Regression for issue #160, scope item 2: Mongoose `required` errors
+   * must resolve through the same `tErrorType` + `fieldLabels` i18n
+   * system as Joi (see utils/valid.ts), in both vi and en — previously
+   * untested here.
+   */
+  it('translates a Mongoose "required" validation error via tErrorType, in vi and en (issue #160)', () => {
+    const buildRequiredError = () => {
+      const err = new mongoose.Error.ValidationError();
+      err.errors['birthday'] = new mongoose.Error.ValidatorError({ type: 'required', path: 'birthday' });
+      return err;
+    };
+
+    const nextVi = jest.fn() as NextFunction;
+    handleError({ err: buildRequiredError(), next: nextVi, lang: 'vi' });
+    const viError = (nextVi as jest.Mock).mock.calls[0][0];
+    expect(viError).toBeInstanceOf(ValidationError);
+    expect(viError.errors).toEqual(['Ngày sinh là bắt buộc']);
+
+    const nextEn = jest.fn() as NextFunction;
+    handleError({ err: buildRequiredError(), next: nextEn, lang: 'en' });
+    const enError = (nextEn as jest.Mock).mock.calls[0][0];
+    expect(enError.errors).toEqual(['Date of birth is required']);
   });
 });
