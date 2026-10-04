@@ -3,11 +3,12 @@
  * @see https://github.com/datvt243
  */
 
-import puppeteer from 'puppeteer';
+import puppeteer, { Browser } from 'puppeteer';
 
 import path from 'path';
 import fs from 'fs';
 import { Response } from 'express';
+import { logger } from '@/logger';
 import {
   informationPersonal,
   Skill,
@@ -38,6 +39,7 @@ import {
 const PDF_OUTPUT_DIR = path.join(__dirname, '..', 'public', 'pdf');
 
 export const createCV = async (data: AggregatedCandidateData, res: Response) => {
+  let browser: Browser | undefined;
   try {
     if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
     const URL = `${PDF_OUTPUT_DIR}${path.sep}`;
@@ -53,7 +55,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     };
-    const browser = await puppeteer.launch(otp);
+    browser = await puppeteer.launch(otp);
     const page = await browser.newPage();
 
     const { email, html: contentHTML } = pageRender(data);
@@ -74,16 +76,19 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
       },
     });
 
-    await browser.close();
-
     res.contentType('application/pdf');
     res.send(pdfBuffer);
   } catch (error) {
+    // issue #225: an Error serializes to `{}` — log the real cause
+    // server-side instead of echoing an empty object to the client
+    logger.error('[createCV] PDF generation failed', { error: (error as Error).message, stack: (error as Error).stack });
     res.status(500).send({
       status: false,
       message: 'Xảy ra lỗi, không thể đọc browser',
-      error: error,
     });
+  } finally {
+    // issue #225: also close on failure, or each failed export leaks a Chromium process
+    await browser?.close().catch(() => undefined);
   }
 };
 
@@ -101,14 +106,18 @@ export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Bu
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
-  const page = await browser.newPage();
-  const { html: contentHTML } = pageRender(data);
-  await page.setContent(contentHTML, { waitUntil: 'domcontentloaded' });
+  // issue #225: close in `finally`, or each failed render leaks a Chromium process
+  try {
+    const page = await browser.newPage();
+    const { html: contentHTML } = pageRender(data);
+    await page.setContent(contentHTML, { waitUntil: 'domcontentloaded' });
 
-  const mm = '5mm';
-  const pdfBuffer = await page.pdf({ format: 'A4', margin: { top: mm, right: mm, bottom: mm, left: mm } });
-  await browser.close();
-  return Buffer.from(pdfBuffer);
+    const mm = '5mm';
+    const pdfBuffer = await page.pdf({ format: 'A4', margin: { top: mm, right: mm, bottom: mm, left: mm } });
+    return Buffer.from(pdfBuffer);
+  } finally {
+    await browser.close().catch(() => undefined);
+  }
 };
 
 export const pageRender = (RECORD: AggregatedCandidateData) => {
