@@ -34,9 +34,9 @@ export const handlerRegister = async (item: Auth, lang: string = DEFAULT_LANG) =
    */
 
   const bcryptPwd = await bcryptGenerateSalt(password);
-  // Vanity slug (issue #120) — auto-generated here since no name is
-  // collected at register time, only email/password; base comes from the
-  // email's local-part.
+  // Vanity slug auto-generated here since no name is collected at
+  // register time, only email/password; base comes from the email's
+  // local-part.
   const slug = await generateUniqueCandidateSlug(email.split('@')[0] ?? email);
   await CandidateModel.create({
     _id: null,
@@ -46,8 +46,8 @@ export const handlerRegister = async (item: Auth, lang: string = DEFAULT_LANG) =
   });
 
   /**
-   * STUB (issue #71, same gap as #70): no email-sending infra exists yet
-   * — log the verification link instead of emailing it. Does NOT block
+   * STUB: no email-sending infra exists yet — log the verification link
+   * instead of emailing it. Does NOT block
    * registration or login (product decision, operator-confirmed via
    * AskUserQuestion): `emailVerified` stays false until this link is
    * visited, but the account is usable immediately either way.
@@ -107,8 +107,8 @@ export const handlerLogin = async (data: Auth, lang: string = DEFAULT_LANG) => {
         email: _user.email,
         first_name: _user.firstName || '',
         last_name: _user.lastName || '',
-        // Issue #71 — not blocking, just exposed so the frontend can
-        // decide what to do (e.g. a "verify your email" banner).
+        // Not blocking, just exposed so the frontend can decide what to
+        // do (e.g. a "verify your email" banner).
         email_verified: _user.emailVerified || false,
       },
       token: token,
@@ -124,9 +124,8 @@ export const handlerLogin = async (data: Auth, lang: string = DEFAULT_LANG) => {
  * Luôn trả về message chung chung dù email có tồn tại hay không, để
  * tránh lộ thông tin email nào đã đăng ký (user enumeration).
  *
- * STUB (issue #70): chưa có hạ tầng gửi email trong project — log link
- * reset thay vì gửi email thật. Thay bằng mailer thật khi chọn được
- * provider.
+ * STUB: chưa có hạ tầng gửi email trong project — log link reset thay vì
+ * gửi email thật. Thay bằng mailer thật khi chọn được provider.
  */
 export const handlerForgotPassword = async (email: string, lang: string = DEFAULT_LANG) => {
   const user = await CandidateModel.findOne({ email });

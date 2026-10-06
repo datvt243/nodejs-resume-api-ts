@@ -1,8 +1,8 @@
 /**
- * Multer config for the LinkedIn "Data export" ZIP upload
- *   (issue #141 — parse-and-return endpoint, nothing is persisted to
- *   disk or DB). Kept in memory only, unlike uploadCV.middleware.ts's
- *   disk storage -- there is no per-candidate file to keep around here.
+ * Multer config for the LinkedIn "Data export" ZIP upload — a
+ * parse-and-return endpoint, nothing is persisted to disk or DB. Kept
+ * in memory only, unlike uploadCV.middleware.ts's disk storage: there's
+ * no per-candidate file to keep around here.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243

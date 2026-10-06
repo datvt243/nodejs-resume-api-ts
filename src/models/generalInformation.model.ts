@@ -31,7 +31,7 @@ const schema = new Schema(
       default: [],
       required: [false, 'Vui lòng nhập ngoại ngữ'],
     },
-    // soft-delete (issue #121) — null nghĩa là chưa xoá
+    // soft-delete — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

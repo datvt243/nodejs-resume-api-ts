@@ -33,10 +33,10 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
   const { email } = req.params;
   const lang = req.query['lang'] === 'en' ? 'en' : 'vi';
   /**
-   * Optional CV profile filter (issue #133) — a named subset of the
-   * candidate's own Education/Experience/Project/Certificate/Award/
-   * Reference entries. Omitted -> unchanged behavior (everything), so
-   * existing share-links keep working.
+   * Optional CV profile filter — a named subset of the candidate's own
+   * Education/Experience/Project/Certificate/Award/Reference entries.
+   * Omitted -> unchanged behavior (everything), so existing share-links
+   * keep working.
    */
   const profileId = typeof req.query['profile'] === 'string' ? req.query['profile'] : undefined;
   if (!email) {
@@ -47,8 +47,8 @@ export const fnGetAboutMe = async (req: Request, res: Response, next: NextFuncti
   try {
     const _me = await handlerGetAboutMe({ identifier: email, lang, profileId });
     /**
-     * Private profile (issue #75) — same response shape as "email not
-     * found" so a private profile isn't distinguishable from a
+     * Private profile — same response shape as "email not found" so a
+     * private profile isn't distinguishable from a
      * non-existent one. Only gates this public route; the authenticated
      * self-export path (fnExportPDF) calls handlerGetAboutMe directly
      * and is unaffected — a candidate can always see/export their own
@@ -91,12 +91,12 @@ export const handlerGetAboutMe = async ({
 
   const { candidateQuerySafe } = await import('@/utils/querySafe');
   /**
-   * Slug-first (issue #120) — a slug is a non-PII, shareable identifier;
-   * email lookup stays as a fallback so existing shared links keep working.
-   * QuerySafe silently DROPS a rejected value (e.g. containing "$") instead
-   * of throwing — checking the key survived sanitization keeps a rejected
+   * Slug-first — a slug is a non-PII, shareable identifier; email lookup
+   * stays as a fallback so existing shared links keep working. QuerySafe
+   * silently DROPS a rejected value (e.g. containing "$") instead of
+   * throwing — checking the key survived sanitization keeps a rejected
    * identifier from collapsing the query to {} and matching an arbitrary
-   * candidate (issue #135).
+   * candidate.
    */
   const safeSlugQuery = candidateQuerySafe.safeQuery({}, { slug: identifier });
   let document = 'slug' in safeSlugQuery ? await MODEL.Candidate.findOne(safeSlugQuery, { ...removeFields }).exec() : null;
@@ -109,9 +109,9 @@ export const handlerGetAboutMe = async ({
   const { _id } = document;
 
   /**
-   * Resolve the optional profile filter (issue #133) — must belong to this
-   * same candidate; an invalid/foreign/deleted profile id is treated the
-   * same as "no profile given" (falls back to unfiltered) rather than
+   * Resolve the optional profile filter — must belong to this same
+   * candidate; an invalid/foreign/deleted profile id is treated the same
+   * as "no profile given" (falls back to unfiltered) rather than
    * erroring, since this is a public, unauthenticated route.
    */
   let profileDoc: Awaited<ReturnType<typeof MODEL.Profile.findOne>> = null;
@@ -125,14 +125,13 @@ export const handlerGetAboutMe = async ({
   }
 
   /**
-   * `Model<SectionDocument>` instead of `any` — same justified, narrow cast
-   * pattern as `BaseController.ts`'s `modelObject` (`type-crud-core`/#181):
-   * Mongoose's `Model<T>` is invariant enough that none of these 7
-   * differently-shaped concrete models can be assigned directly to a fixed
-   * `Model<SectionDocument>`-typed slot without a cast (confirmed the same
-   * way #181 did). Self-contained here rather than importing #181's
-   * `CrudDocument` since that node's export doesn't exist on this branch
-   * yet (both branch independently off `staging`).
+   * `Model<SectionDocument>` instead of `any` — same justified, narrow
+   * cast pattern as `BaseController.ts`'s `modelObject`: Mongoose's
+   * `Model<T>` is invariant enough that none of these 7 differently-
+   * shaped concrete models can be assigned directly to a fixed
+   * `Model<SectionDocument>`-typed slot without a cast. Self-contained
+   * here rather than importing `CrudDocument` to avoid a cross-module
+   * dependency for one local type.
    */
   interface SectionDocument {
     candidateId?: unknown;
@@ -162,7 +161,7 @@ export const handlerGetAboutMe = async ({
      * section data unfiltered.
      */
     const safeCandidateQuery = idQuerySafe.safeQuery({}, { candidateId: _id?.toString() || '' });
-    // Profile filter (issue #133): the id list comes from the already ownership-checked `profileDoc` above (server-derived), so it's safe to merge in directly rather than through QuerySafe.
+    // Profile filter: the id list comes from the already ownership-checked `profileDoc` above (server-derived), so it's safe to merge in directly rather than through QuerySafe.
     const profileIdsField = PROFILE_ID_FIELDS[collection];
     /**
      * Dynamic per-collection field lookup (`experienceIds`/`educationIds`/...)
@@ -243,8 +242,8 @@ export const fnRecordVisit = async (req: Request, res: Response, next: NextFunct
 
 export const handlerRecordVisit = async (email: string, req: Request) => {
   const { candidateQuerySafe } = await import('@/utils/querySafe');
-  // Same fail-closed check as handlerGetAboutMe above (issue #135) — a
-  // rejected email must not fall through to an unfiltered findOne({}).
+  // Same fail-closed check as handlerGetAboutMe above — a rejected
+  // email must not fall through to an unfiltered findOne({}).
   const safeEmailQuery = candidateQuerySafe.safeQuery({}, { email });
   const candidate = 'email' in safeEmailQuery ? await MODEL.Candidate.findOne(safeEmailQuery).select('_id').exec() : null;
   /**
@@ -300,23 +299,23 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
     }
 
     // ?format=json reuses the same aggregated data already assembled for
-    // the PDF path — no new dependency, no new data-fetch (issue #76).
+    // the PDF path — no new dependency, no new data-fetch.
     if (req.query['format'] === 'json') {
       formatReturn(res, { success, message, data });
       return;
     }
 
-    // ?format=docx (issue #76, remainder) — same aggregated data, packed
-    // as a .docx instead of rendered to PDF.
+    // ?format=docx — same aggregated data, packed as a .docx instead of
+    // rendered to PDF.
     if (req.query['format'] === 'docx') {
       await createCVDocx(data, res);
       return;
     }
 
     /**
-     * ?template=ats (issue #211) — ATS-optimized template, same
-     * aggregated data. `template=classic` (the default, unchanged) keeps
-     * every existing client on the pre-existing visual template.
+     * ?template=ats — ATS-optimized template, same aggregated data.
+     * `template=classic` (the default, unchanged) keeps every existing
+     * client on the pre-existing visual template.
      */
     if (req.query['template'] === 'ats') {
       await createCVAts({ data, res, options: { lang } });

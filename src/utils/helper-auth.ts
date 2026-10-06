@@ -9,8 +9,8 @@ export type TokenSource = 'header' | 'body' | 'query' | 'cookie' | null;
 
 /**
  * Same lookup as `extractTokenFromRequest`, but also reports WHERE the
- * token came from (issue #134) — a request authenticated purely off the
- * cookie (nothing in the Authorization header/body/query) is exactly the
+ * token came from — a request authenticated purely off the cookie
+ * (nothing in the Authorization header/body/query) is exactly the
  * shape a cross-site CSRF submission produces, since a header or an
  * explicit body/query value can't be forged onto the browser's behalf the
  * way an auto-attached cookie can.

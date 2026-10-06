@@ -77,7 +77,7 @@ export const startDate = Joi.number().required();
 export const endDate = Joi.number().greater(Joi.ref('startDate'));
 
 /**
- * Vanity slug for the public profile (issue #120) — lowercased before the
+ * Vanity slug for the public profile — lowercased before the
  * pattern check runs so a caller sending mixed case isn't rejected (the
  * Mongoose model also lowercases on save, this just keeps validation
  * consistent with the stored value).

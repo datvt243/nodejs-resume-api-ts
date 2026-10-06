@@ -1,9 +1,9 @@
 /**
- * Double-submit CSRF token helpers (issue #134), paired with
- * the httpOnly auth cookies (issue #119). Moving those cookies' `sameSite`
- * from 'strict' to 'none' (required for the real cross-site GitHub Pages ->
- * Render deployment) removes the incidental CSRF protection 'strict' gave
- * for free — this replaces it with a real check.
+ * Double-submit CSRF token helpers, paired with the httpOnly auth
+ * cookies. Those cookies' `sameSite: 'none'` (required for the real
+ * cross-site GitHub Pages -> Render deployment) removes the incidental
+ * CSRF protection 'strict' gave for free — this replaces it with a real
+ * check.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243

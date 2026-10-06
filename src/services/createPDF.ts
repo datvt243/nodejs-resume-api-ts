@@ -79,7 +79,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
     res.contentType('application/pdf');
     res.send(pdfBuffer);
   } catch (error) {
-    // issue #225: an Error serializes to `{}` — log the real cause
+    // An Error serializes to `{}` — log the real cause
     // server-side instead of echoing an empty object to the client
     logger.error('[createCV] PDF generation failed', { error: (error as Error).message, stack: (error as Error).stack });
     res.status(500).send({
@@ -87,7 +87,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
       message: 'Xảy ra lỗi, không thể đọc browser',
     });
   } finally {
-    // issue #225: also close on failure, or each failed export leaks a Chromium process
+    // Also close on failure, or each failed export leaks a Chromium process
     await browser?.close().catch(() => undefined);
   }
 };
@@ -106,7 +106,7 @@ export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Bu
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
-  // issue #225: close in `finally`, or each failed render leaks a Chromium process
+  // Close in `finally`, or each failed render leaks a Chromium process
   try {
     const page = await browser.newPage();
     const { html: contentHTML } = pageRender(data);
@@ -211,16 +211,9 @@ const _helper = () => {
       return `${_start} - ${_end}`;
     })({ startDate, endDate, isCurrent });
 
-    /**
-     * BUG FIX (found removing an unused-variable warning, issue #188): this
-     * IIFE was called with no arguments, so its own `skills = []` default
-     * always shadowed the real `skills` destructured from `props` above —
-     * the skills list was never actually read. The condition was also
-     * inverted (`!skills.length` rendered the div, i.e. exactly when
-     * there were NO skills) — combined, the rendered PDF never showed an
-     * item's skills, regardless of whether it had any. Fixed both: pass
-     * the real value in, and render only when it's non-empty.
-     */
+    // Must pass `skills` in and render only when non-empty — an unbound
+    // IIFE here previously shadowed it with its own `[]` default and
+    // inverted the condition, so an item's skills never actually rendered.
     const getSkills = ((skillsList: string[]) => {
       return skillsList.length ? `<div class="skills">${skillsList.join(', ')}</div>` : '';
     })(skills);

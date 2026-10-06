@@ -40,20 +40,20 @@ export interface CrudDocument {
 interface baseProp<T extends CrudDocument> {
   model: Model<T>;
   /**
-   * `candidateId?: string | undefined` (issue #189): several callers (e.g.
+   * `candidateId?: string | undefined`: several callers (e.g.
    * generalInformation.service.ts) narrow `document?.candidateId` with a
    * `typeof x === 'string' ? x : undefined` guard before passing it here —
-   * a real, intentional "not a string" state, not an accidental omission.
+   * a real "not a string" state, not an accidental omission.
    */
   fields: { _id?: string; candidateId?: string | undefined };
   findOne?: boolean;
   /**
-   * `| undefined` added explicitly (issue #189, `exactOptionalPropertyTypes`):
+   * `| undefined` added explicitly (`exactOptionalPropertyTypes`):
    * `BaseController.ts`'s `baseGetAll` passes each of these as
-   * `cond ? value : undefined` — a real, intentional "no value given"
-   * state, not an accidental omission — so a plain `?:` (which now means
-   * "may be omitted, but if present must be the real type, never
-   * `undefined` itself") no longer accepts it.
+   * `cond ? value : undefined`, a real "no value given" state — a plain
+   * `?:` (which under this flag means "may be omitted, but if present
+   * must be the real type, never `undefined` itself") no longer accepts
+   * that.
    */
   lang?: string | undefined;
   page?: number | undefined;
@@ -61,7 +61,7 @@ interface baseProp<T extends CrudDocument> {
   sort?: string | undefined;
 }
 
-// Pagination (issue #73) hard cap — a caller cannot request more than this many documents per page regardless of what `limit` it passes.
+// Pagination hard cap — a caller cannot request more than this many documents per page regardless of what `limit` it passes.
 const MAX_PAGE_LIMIT = 100;
 
 const formatReturn = (props: BaseReturn) => {
@@ -93,7 +93,7 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
 
   const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
   /**
-   * Soft-delete (issue #121): exclude documents that have been soft-deleted
+   * Soft-delete: exclude documents that have been soft-deleted
    * by default. `fields` can never override this key (safeQuery only ever
    * merges keys from its own allow-list into the base query), so every
    * existing caller keeps working unchanged — they just stop seeing
@@ -110,7 +110,7 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
   if (sort) query = query.sort(sort);
 
   /**
-   * Pagination (issue #73) is opt-in: it only kicks in when the caller
+   * Pagination is opt-in: it only kicks in when the caller
    * passes a valid positive `limit`. No `limit` -> exactly the old
    * behavior (`data` is the full, unpaginated array), so every existing
    * caller of baseGetAll keeps working unchanged.
@@ -143,7 +143,7 @@ export const baseFindDocument = async <T extends CrudDocument>(props: baseProp<T
   });
 };
 
-// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`): BaseController.ts passes `req.lang`, itself `string | undefined`.
+// `lang?: string | undefined` (`exactOptionalPropertyTypes`): BaseController.ts passes `req.lang`, itself `string | undefined`.
 export const baseDeleteDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
@@ -155,7 +155,7 @@ export const baseDeleteDocument = async <T extends CrudDocument>(props: { model:
   if (candidateId.toString() !== userID) return formatReturnFailed(t('common.deleteNotYours', lang));
 
   /**
-   * Soft-delete (issue #121): mark deletedAt instead of removing the
+   * Soft-delete: mark deletedAt instead of removing the
    * document, so it can be recovered via baseRestoreDocument. Same
    * ownership check and same return shape as the old hard delete.
    */
@@ -177,7 +177,7 @@ export const baseDeleteDocument = async <T extends CrudDocument>(props: { model:
   });
 };
 
-// `lang?: string | undefined` (issue #189, `exactOptionalPropertyTypes`): BaseController.ts passes `req.lang`, itself `string | undefined`.
+// `lang?: string | undefined` (`exactOptionalPropertyTypes`): BaseController.ts passes `req.lang`, itself `string | undefined`.
 export const baseRestoreDocument = async <T extends CrudDocument>(props: { model: Model<T>; _id: string; name: string; userID: string; lang?: string | undefined }) => {
   const { model: MODEL, _id: __id, userID, lang = DEFAULT_LANG } = props;
 
@@ -211,7 +211,7 @@ export const baseUpdateDocument = async <T extends CrudDocument>(props: {
   document: Record<string, unknown> & { _id?: string };
   model: Model<T>;
   /**
-   * `| undefined` (issue #189, `exactOptionalPropertyTypes`): `BaseService.ts`'s
+   * `| undefined` (`exactOptionalPropertyTypes`): `BaseService.ts`'s
    * `handlerUpdate(item, userID?, lang)` forwards its own optional
    * `userID` param straight through — when the caller omits it, that's a
    * real, intentional `undefined`, not an accidental one.
@@ -225,7 +225,7 @@ export const baseUpdateDocument = async <T extends CrudDocument>(props: {
   const _valueUpdate = { ...document };
   const { _id } = _valueUpdate;
 
-  // Exclude soft-deleted documents — don't allow updating an already-deleted record (issue #136).
+  // Exclude soft-deleted documents — don't allow updating an already-deleted record.
   const { isExist, message: _mess, document: _existing } = await _baseHelper().baseCheckDocumentById({
     MODEL,
     _id,
@@ -326,7 +326,7 @@ export const basePatchDocument = async <T extends CrudDocument>(props: {
 
   const { _id } = document;
 
-  // Exclude soft-deleted documents — don't allow patching an already-deleted record (issue #136).
+  // Exclude soft-deleted documents — don't allow patching an already-deleted record.
   const { isExist, message: _mess } = await _baseHelper().baseCheckDocumentById({
     MODEL,
     _id,
@@ -416,7 +416,7 @@ const _baseHelper = () => {
 
       const idQuerySafe = (await import('@/utils/querySafe')).idQuerySafe;
       /**
-       * Soft-delete (issue #121) excludes deletedAt-set docs from reads by
+       * Soft-delete excludes deletedAt-set docs from reads by
        * default (baseFindDocument), but this shared existence check was
        * never updated — update/patch could still find and mutate a
        * soft-deleted document. `excludeDeleted` is opt-in per caller:

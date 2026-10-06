@@ -1,18 +1,13 @@
 /**
- * "Log out of all devices" (issue #74) — revoke every token
- *   previously issued to a candidate at once, without enumerating or
- *   blacklisting them individually.
- *
- *   Design note: the issue proposal suggested a `tokenVersion` field on
- *   the Candidate model, checked via an extra Mongo lookup per request —
- *   but flagged that cost as worth avoiding if possible. This reuses the
- *   exact same Redis-with-in-memory-fallback shape as
- *   `tokenBlacklist.ts` instead: store a per-candidate
- *   "invalidated before" timestamp, and compare it against the JWT's
- *   standard `iat` claim in verifyToken.middleware.ts / authRefreshToken.
- *   No schema change, no new DB round trip — just one more Redis/mem
- *   lookup alongside the blacklist check that already runs on every
- *   authenticated request.
+ * "Log out of all devices" — revoke every token previously issued to a
+ * candidate at once, without enumerating or blacklisting them
+ * individually. Avoids a `tokenVersion` field + extra Mongo lookup per
+ * request: reuses the same Redis-with-in-memory-fallback shape as
+ * `tokenBlacklist.ts` instead — store a per-candidate "invalidated
+ * before" timestamp, compared against the JWT's `iat` claim in
+ * verifyToken.middleware.ts / authRefreshToken. No schema change, no
+ * new DB round trip, just one more lookup alongside the existing
+ * blacklist check.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243

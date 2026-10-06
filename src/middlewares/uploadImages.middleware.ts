@@ -1,12 +1,11 @@
 /**
- * Multer config for project/certificate/award image
- *   uploads (issue #72). Stores to disk under
- *   `src/public/uploads/images/` — same public/static pattern already
- *   used for PDF export and CV upload. Unlike the CV upload (private,
- *   served only through an authenticated route), these images belong to
- *   a candidate's public portfolio (shown on `GET /api/me/:email`) — a
- *   plain static URL is the correct, intentional design here, not the
- *   same trust-boundary gap recorded as a Trap for `/uploads/cv/*`.
+ * Multer config for project/certificate/award image uploads. Stores to
+ * disk under `src/public/uploads/images/` — same public/static pattern
+ * already used for PDF export and CV upload. Unlike the CV upload
+ * (private, served only through an authenticated route), these images
+ * belong to a candidate's public portfolio (shown on `GET /api/me/:email`)
+ * — a plain static URL is intentional here, not the same trust-boundary
+ * gap recorded as a Trap for `/uploads/cv/*`.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243

@@ -34,23 +34,19 @@ export const verifyToken = async (req: Request, _res: Response, next: NextFuncti
       return next(new InvalidTokenError('Invalid token payload.'));
     }
 
-    /**
-     * "Log out of all devices" (issue #74): reject any token issued before
-     * the candidate's last logout-all, even if it hasn't blacklisted-out or
-     * expired on its own yet.
-     */
+    // "Log out of all devices": reject any token issued before the
+    // candidate's last logout-all, even if not yet blacklisted or expired.
     const invalidatedAt = await getSessionsInvalidatedAt(_id);
     if (isSessionRevoked(iat, invalidatedAt)) {
       return next(new TokenRevokedError('Token has been revoked.'));
     }
 
     /**
-     * CSRF (issue #134): once the auth cookies use SameSite=None, a
-     * state-changing request that authenticated purely off the cookie
-     * (no Authorization header) must also prove intent via the matching
-     * double-submit CSRF token — a request instead carrying a Bearer
-     * token is immune to classic CSRF (a third-party page can't set that
-     * header on the victim's behalf).
+     * With auth cookies on SameSite=None, a state-changing request that
+     * authenticated purely off the cookie (no Authorization header) must
+     * also prove intent via the matching double-submit CSRF token — a
+     * request carrying a Bearer token instead is immune to classic CSRF
+     * (a third-party page can't set that header on the victim's behalf).
      */
     if (requiresCsrfCheck(req, source) && !isCsrfTokenValid(req)) {
       return next(new AuthorizationError('Invalid or missing CSRF token.', ErrorCode.CSRF_TOKEN_INVALID));

@@ -1,10 +1,10 @@
 /**
- * Best-effort LinkedIn "Data export" (ZIP of CSVs) parser
- *   (issue #141) — pulls Education.csv/Positions.csv into this API's own
- *   Education/Experience shapes. Pure, no I/O beyond the already-uploaded
- *   buffer, never touches the DB: this is a stateless parse-and-return
- *   helper, the frontend maps the result into its existing create forms
- *   for the user to review/edit before saving.
+ * Best-effort LinkedIn "Data export" (ZIP of CSVs) parser — pulls
+ * Education.csv/Positions.csv into this API's own Education/Experience
+ * shapes. Pure, no I/O beyond the already-uploaded buffer, never
+ * touches the DB: a stateless parse-and-return helper, the frontend
+ * maps the result into its existing create forms for the user to
+ * review/edit before saving.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243
@@ -36,7 +36,7 @@ const POSITIONS_FILENAME = 'positions.csv';
 
 // LinkedIn's export headers are matched case-insensitively, trimmed --
 // the export tool has shifted casing/spacing slightly across versions,
-// and this is best-effort by design (issue #141's own accuracy caveat).
+// and this is best-effort by design.
 const pickField = (row: Record<string, string>, candidates: string[]): string => {
   const keys = Object.keys(row);
   for (const candidate of candidates) {

@@ -25,7 +25,7 @@ export interface Item {
   endDate: number | null;
   isCurrent: boolean;
   description: string;
-  // `| undefined` (issue #189, `exactOptionalPropertyTypes`): createPDF.ts's
+  // `| undefined` (`exactOptionalPropertyTypes`): createPDF.ts's
   // renderExperience/renderProject destructure ExperienceData.skills /
   // ProjectData.technology (both legitimately optional) straight through.
   skills?: string[] | undefined;
@@ -111,13 +111,12 @@ export interface GeneralInformationData {
  * The aggregated public-profile record both export services (PDF,
  * `createPDF.ts`, and DOCX, `createDocx.ts`) consume — the same shape
  * `candidate_me/index.ts`'s `handlerGetAboutMe` assembles. That function's
- * own return type isn't formally declared yet (its `dataResult` is built
- * via `JSON.parse(JSON.stringify(document))`, which TypeScript always
- * infers as `any` — see `type-candidate-modules`/#183's evidence note,
- * which explicitly flagged this as a separate, larger follow-up). Declaring
+ * own return type isn't formally declared yet — its `dataResult` is
+ * built via `JSON.parse(JSON.stringify(document))`, which TypeScript
+ * always infers as `any` (a known, deliberately deferred gap). Declaring
  * the shape HERE still gives both export services real internal type
  * checking on every field they read, even though the upstream caller
- * boundary stays loose until that follow-up happens.
+ * boundary stays loose until that's addressed.
  */
 export interface AggregatedCandidateData {
   firstName?: string;

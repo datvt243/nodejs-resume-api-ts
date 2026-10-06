@@ -16,8 +16,7 @@ export interface BaseReturn {
    * they're not structurally assignable to `Record<string, unknown>`),
    * plain objects, arrays of either, or `null` — genuinely heterogeneous
    * across every BaseReturn producer in the codebase. Consumers must
-   * narrow before use, same discipline as `type-candidate-modules`/#183's
-   * documented `dataResult` boundary.
+   * narrow before use.
    */
   data?: unknown;
 }
