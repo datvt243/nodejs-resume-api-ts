@@ -56,7 +56,9 @@ export const createCV = async (data: AggregatedCandidateData, res: Response, opt
     const otp = {
       ...(executablePath ? { executablePath } : {}),
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      // --disable-dev-shm-usage: avoids a Chromium crash on hosts with a
+      // small /dev/shm (e.g. Render's free tier) by using /tmp instead.
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     };
     browser = await puppeteer.launch(otp);
     const page = await browser.newPage();
@@ -107,7 +109,7 @@ export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Bu
   const browser = await puppeteer.launch({
     ...(executablePath ? { executablePath } : {}),
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
   // Close in `finally`, or each failed render leaks a Chromium process
   try {

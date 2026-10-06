@@ -203,6 +203,30 @@ describe('createCV executablePath resolution (issue #154)', () => {
   });
 });
 
+describe('Puppeteer launch args (issue #225 — Render free-tier /dev/shm crash)', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('createCV passes --disable-dev-shm-usage alongside the existing sandbox flags', async () => {
+    (puppeteer.launch as jest.Mock).mockResolvedValue(createFakeBrowser());
+
+    await createCV({ email: 'a@b.com' }, createFakeRes() as any);
+
+    expect(puppeteer.launch).toHaveBeenCalledWith(
+      expect.objectContaining({ args: expect.arrayContaining(['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']) }),
+    );
+  });
+
+  it('renderPdfBuffer passes --disable-dev-shm-usage alongside the existing sandbox flags', async () => {
+    (puppeteer.launch as jest.Mock).mockResolvedValue(createFakeBrowser());
+
+    await renderPdfBuffer({ email: 'a@b.com' });
+
+    expect(puppeteer.launch).toHaveBeenCalledWith(
+      expect.objectContaining({ args: expect.arrayContaining(['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']) }),
+    );
+  });
+});
+
 describe('createCV failure handling (issue #225)', () => {
   afterEach(() => jest.clearAllMocks());
 

@@ -403,7 +403,7 @@ export const renderAtsPdfBuffer = async (data: AggregatedCandidateData, options:
   const browser = await puppeteer.launch({
     ...(executablePath ? { executablePath } : {}),
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
   let buffer: Buffer;
   // Close in `finally`, or each failed render leaks a Chromium process

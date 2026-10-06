@@ -223,5 +223,22 @@ describe('ATS PDF failure handling (issue #225)', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith(expect.not.objectContaining({ error: expect.anything() }));
   });
+
+  it('renderAtsPdfBuffer passes --disable-dev-shm-usage alongside the existing sandbox flags (Render free-tier /dev/shm crash)', async () => {
+    // Only the launch-args contract is under test here — not a full
+    // success-path render (that needs a real pdf-lib-parseable buffer for
+    // applyPdfMetadata, covered by the real-Puppeteer integration test
+    // instead). `puppeteer.launch` is called unconditionally before any
+    // later step, so a downstream failure is safe to swallow.
+    const page = { setContent: jest.fn(), evaluate: jest.fn().mockResolvedValue(undefined), pdf: jest.fn().mockResolvedValue(Buffer.from('')) };
+    const browser = { newPage: jest.fn().mockResolvedValue(page), close: jest.fn().mockResolvedValue(undefined) };
+    (puppeteer.launch as jest.Mock).mockResolvedValue(browser);
+
+    await renderAtsPdfBuffer(fixture).catch(() => undefined);
+
+    expect(puppeteer.launch).toHaveBeenCalledWith(
+      expect.objectContaining({ args: expect.arrayContaining(['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']) }),
+    );
+  });
 });
 
