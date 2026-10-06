@@ -305,24 +305,28 @@ export const fnExportPDF = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
+    /**
+     * `template=modern` (issue #162) is a visual-style choice, not an
+     * ATS-compatibility one — applies to both the `pdf` (default) and
+     * `docx` formats. `template=classic` (the default, unchanged) keeps
+     * every existing client on the pre-existing visual template/style.
+     */
+    const theme = req.query['template'] === 'modern' ? 'modern' : 'classic';
+
     // ?format=docx — same aggregated data, packed as a .docx instead of
     // rendered to PDF.
     if (req.query['format'] === 'docx') {
-      await createCVDocx(data, res);
+      await createCVDocx(data, res, theme);
       return;
     }
 
-    /**
-     * ?template=ats — ATS-optimized template, same aggregated data.
-     * `template=classic` (the default, unchanged) keeps every existing
-     * client on the pre-existing visual template.
-     */
+    // ?template=ats — ATS-optimized template, same aggregated data.
     if (req.query['template'] === 'ats') {
       await createCVAts({ data, res, options: { lang } });
       return;
     }
 
-    await createCV(data, res);
+    await createCV(data, res, { theme });
   } catch (err) {
     handleError({ err, next, lang: req.lang });
   }

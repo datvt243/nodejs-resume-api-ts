@@ -90,9 +90,16 @@ router.use('/cv', verifyToken, routeCv);
  *         required: false
  *         schema:
  *           type: string
- *           enum: [classic, ats]
+ *           enum: [classic, modern, ats]
  *           default: classic
- *         description: PDF template. `classic` is the pre-existing visual template (unchanged). `ats` is a single-column, no-letter-spacing template optimized for ATS text extraction (see doctrine/standards/pdf-export-standard.md). Ignored when `format` is `json`/`docx`.
+ *         description: >
+ *           Export template/theme. `classic` is the pre-existing visual
+ *           template (unchanged). `modern` is an additional visual
+ *           theme — same content, accent-colored styling. `ats` is a
+ *           single-column, no-letter-spacing template optimized for ATS
+ *           text extraction (see doctrine/standards/pdf-export-standard.md).
+ *           `classic`/`modern` both apply to `format=docx` too; `ats` is
+ *           PDF-only. Ignored when `format=json`.
  *     responses:
  *       200:
  *         description: PDF file stream, the candidate's aggregated data as JSON when `format=json`, or a .docx file when `format=docx`

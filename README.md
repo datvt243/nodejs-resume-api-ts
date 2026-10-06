@@ -203,7 +203,7 @@ best-effort bulk create (up to 100 items per request).
 | GET    | `/health`                  | None | Health check                                                 |
 | GET    | `/api/me/:email`           | None | Public profile by vanity slug or email, optional `?profile=` filter |
 | POST   | `/api/me/:email/visit`     | None | Record a visit (count/timestamp/IP/geo)                      |
-| GET    | `/api/v1/download-pdf`     | Token via query | Export own CV as `pdf` (default), `json`, or `docx`; `?template=classic\|ats` picks the visual (default) or ATS-optimized template |
+| GET    | `/api/v1/download-pdf`     | Token via query | Export own CV as `pdf` (default), `json`, or `docx`; `?template=classic\|modern\|ats` picks the visual template/theme (`classic`/`modern` apply to `pdf` and `docx`; `ats` is PDF-only) |
 | POST   | `/api/v1/cv/ats-check`     | Bearer/cookie | Render own CV in memory, extract its text, score 10 ATS-safety checks + optional JD keyword match |
 | GET    | `/api-docs`                | None | Swagger UI (OpenAPI docs)                                    |
 | GET    | `/api-docs.json`           | None | Raw OpenAPI spec (JSON)                                      |
