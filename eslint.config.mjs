@@ -29,7 +29,12 @@ export default defineConfig(
       '@typescript-eslint/no-unsafe-return': 'error',
       '@typescript-eslint/no-unsafe-argument': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
+      // Express handler types don't care about a return value; an async
+      // handler returns Promise<void>, which this rule otherwise flags as
+      // misuse whether passed as an argument (every route file) or returned
+      // from a factory (rateLimit.middleware.ts). Other checksVoidReturn
+      // categories stay at their default (no current hits to silence).
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { arguments: false, returns: false } }],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
