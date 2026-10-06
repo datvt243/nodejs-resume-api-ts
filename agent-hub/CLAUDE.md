@@ -39,6 +39,14 @@ each phase's own narrower `tsc`/test/build check to stand in for the
 initiative's own stated goal. See `doctrine/standards/initiative-scoping.md`
 (the #177→#204 case study that made this a rule).
 
+**Every diff** also: (1) any comment it adds/changes follows
+`doctrine/standards/code-comments.md` (WHY not WHAT, `//` vs `/** */`,
+no `(#N)` refs, plus whatever project opt-ins that file enables);
+(2) if the project has TypeScript, runs the `Typecheck` command from
+`doctrine/MEMORY.md` and cites its output — a clean build/test that
+doesn't type-check is not a typecheck. Missing either in the evidence
+note = `EDIT_UNVERIFIED`.
+
 **Touching PDF/DOCX export** (`src/services/createPDF*.ts`,
 `createDocx.ts`, or any new export format) is a special case of the
 default loop: the diff must hold the 10 invariants in

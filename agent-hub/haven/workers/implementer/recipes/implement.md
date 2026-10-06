@@ -13,10 +13,14 @@
    idiom in `src/` (e.g. controller/service/validate split per section
    like `src/candidate_profile/*`).
 3. Smallest diff — only change what the acceptance criteria require.
+   Any comment added/changed follows `doctrine/standards/code-comments.md`
+   (incl. its enabled opt-ins).
 4. SEAL GATE before any outward-facing action — stop, show the diff, wait
    for approval.
 5. Run the EXACT test command from `doctrine/MEMORY.md` (`npm test` from
-   repo root) — copy it verbatim.
+   repo root) — copy it verbatim. [added 2026-10-07] Plus `npm run build`
+   — the `Typecheck` row: `tsc` runs inside it; `npm test` alone does not
+   type-check all of `src/`.
 6. READ THE OUTPUT BACK verbatim — an uncited claim = `EDIT_UNVERIFIED`.
 7. Only report `sealed_pending_verifier` once ALL criteria pass with
    evidence.
@@ -42,6 +46,7 @@
 |---|---|
 | No test command in `doctrine/MEMORY.md` | `blocked`, suggest filling in `<<FILL>>` |
 | Setup error (env, deps, Mongo/Redis not running) | Report the REAL error, don't route around it |
+| Typecheck reports errors the diff didn't introduce | Don't fix them in this diff (`SmallestDiff`) — prove they pre-exist (same count on the base branch), list under `## Noticed, not done` |
 
 ## Runtime
 `/worker implementer "<task>"`.
