@@ -246,3 +246,37 @@ describe('renderPdfBuffer failure handling (issue #225)', () => {
   });
 });
 
+describe('modern theme (issue #162)', () => {
+  const sampleData = {
+    email: 'test@example.com',
+    firstName: 'Jane',
+    lastName: 'Doe',
+    generalInformation: {
+      career: 'Backend Developer',
+      personalSkills: [],
+      professionalSkills: [],
+    },
+    experiences: [
+      { company: 'Acme', position: 'Engineer', startDate: new Date(2024, 8, 1).getTime(), endDate: null, isCurrent: true, description: 'Built APIs', skills: ['Node.js'] },
+    ],
+  };
+
+  it('defaults to the classic theme when no theme is passed (backward compatible)', () => {
+    const { html: defaultHtml } = pageRender(sampleData);
+    const { html: classicHtml } = pageRender(sampleData, 'classic');
+    expect(defaultHtml).toBe(classicHtml);
+  });
+
+  it('renders the same content under the modern theme', () => {
+    const { html } = pageRender(sampleData, 'modern');
+    expect(html).toContain('Backend Developer');
+    expect(html).toContain('Acme');
+    expect(html).toContain('09/2024');
+  });
+
+  it('has zero letter-spacing anywhere in the generated CSS (pdf-export-standard.md rule 1)', () => {
+    const { html } = pageRender(sampleData, 'modern');
+    expect(html).not.toMatch(/letter-spacing/);
+  });
+});
+

@@ -14,7 +14,7 @@
  * @see https://github.com/datvt243
  */
 import { Response } from 'express';
-import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
+import { Document, Packer, Paragraph, HeadingLevel, TextRun, BorderStyle } from 'docx';
 import { AggregatedCandidateData, GeneralInformationData, Skill, EducationData, ExperienceData, ProjectData, Award, Certificate, Reference, Language } from '@/types/candidate.type';
 
 export interface DocxSection {
@@ -185,17 +185,37 @@ export const buildDocxContent = (RECORD: AggregatedCandidateData = {}): DocxCont
   };
 };
 
+/** `classic` is the pre-existing style; `modern` applies an accent color + bottom-border headings (issue #162). */
+export type DocxTheme = 'classic' | 'modern';
+
+const MODERN_ACCENT_COLOR = '2563EB';
+
 /** Turns the plain content model into an actual `docx` `Document`. */
-export const renderDocxDocument = (content: DocxContent): Document => {
+export const renderDocxDocument = (content: DocxContent, theme: DocxTheme = 'classic'): Document => {
+  const isModern = theme === 'modern';
   const children: Paragraph[] = [];
 
-  children.push(new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: content.fullName.toUpperCase(), bold: true })] }));
+  children.push(
+    new Paragraph({
+      heading: HeadingLevel.TITLE,
+      children: [new TextRun({ text: content.fullName.toUpperCase(), bold: true, ...(isModern ? { color: MODERN_ACCENT_COLOR } : {}) })],
+    }),
+  );
   if (content.contactLine) children.push(new Paragraph({ text: content.contactLine }));
   if (content.introduction) children.push(new Paragraph({ text: content.introduction, spacing: { after: 200 } }));
 
   for (const section of content.sections) {
     if (section.heading) {
-      children.push(new Paragraph({ heading: HeadingLevel.HEADING_2, text: section.heading.toUpperCase(), spacing: { before: 200 } }));
+      children.push(
+        new Paragraph({
+          heading: HeadingLevel.HEADING_2,
+          children: [new TextRun({ text: section.heading.toUpperCase(), ...(isModern ? { color: MODERN_ACCENT_COLOR } : {}) })],
+          spacing: { before: 200 },
+          // `exactOptionalPropertyTypes`: omit `border` entirely for
+          // classic instead of passing `border: undefined`.
+          ...(isModern ? { border: { bottom: { style: BorderStyle.SINGLE, color: MODERN_ACCENT_COLOR, size: 6, space: 2 } } } : {}),
+        }),
+      );
     }
     for (const line of section.lines) {
       // `exactOptionalPropertyTypes`: `docx`'s own
@@ -210,10 +230,10 @@ export const renderDocxDocument = (content: DocxContent): Document => {
 };
 
 /** I/O wrapper: builds the content model, renders it, packs to a buffer, sends it. */
-export const createCVDocx = async (data: AggregatedCandidateData, res: Response) => {
+export const createCVDocx = async (data: AggregatedCandidateData, res: Response, theme: DocxTheme = 'classic') => {
   try {
     const content = buildDocxContent(data);
-    const doc = renderDocxDocument(content);
+    const doc = renderDocxDocument(content, theme);
     const buffer = await Packer.toBuffer(doc);
 
     res.setHeader('Content-Disposition', `attachment; filename="${content.email}.docx"`);
