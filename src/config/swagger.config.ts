@@ -51,8 +51,8 @@ const options: swaggerJsdoc.Options = {
       },
       parameters: {
         /**
-         * Pagination (issue #73) — shared by every CV-section `GET /` list
-         * endpoint via BaseController.baseGetAll. All three are optional;
+         * Pagination — shared by every CV-section `GET /` list endpoint
+         * via BaseController.baseGetAll. All three are optional;
          * omitting `limit` returns the full, unpaginated array exactly as
          * before (see ApiResponse vs ApiResponsePaginated).
          */
@@ -90,8 +90,8 @@ const options: swaggerJsdoc.Options = {
         },
         /**
          * Shape of `data` when a `GET /` list endpoint is called with
-         * `?limit=` (issue #73) — otherwise `data` stays a plain array,
-         * as documented on ApiResponse.
+         * `?limit=` — otherwise `data` stays a plain array, as
+         * documented on ApiResponse.
          */
         Pagination: {
           type: 'object',

@@ -1,10 +1,8 @@
 /**
- * Multer config for the candidate CV file upload
- *   (GitHub issue #76 follow-up — "frontend added a CV upload UI,
- *   backend needs an endpoint to save it"). Stores to disk under
- *   `src/public/uploads/cv/`, one file per candidate — the destination
- *   filename is always `<candidateId>-cv.pdf`, so a re-upload simply
- *   overwrites the previous file with no separate cleanup step needed.
+ * Multer config for the candidate CV file upload. Stores to disk under
+ * `src/public/uploads/cv/`, one file per candidate — the destination
+ * filename is always `<candidateId>-cv.pdf`, so a re-upload simply
+ * overwrites the previous file with no separate cleanup step needed.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243

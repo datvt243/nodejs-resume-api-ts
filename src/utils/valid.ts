@@ -15,9 +15,9 @@ export const validateSchema = ({
 }: {
   schema: Schema;
   item: Partial<Record<string, unknown>>;
-  // `| undefined` (issue #189, `exactOptionalPropertyTypes`): callers pass
-  // `req.lang`, which is itself `string | undefined` — a real, intentional
-  // "not resolved yet" state, not an accidental omission.
+  // `| undefined` (`exactOptionalPropertyTypes`): callers pass `req.lang`,
+  // itself `string | undefined` — a real "not resolved yet" state, not an
+  // accidental omission.
   lang?: string | undefined;
 }) => {
   const validationOptions = { abortEarly: false };

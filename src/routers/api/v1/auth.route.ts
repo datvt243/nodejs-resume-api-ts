@@ -159,7 +159,7 @@ router.post('/refresh', verifyCsrf('refreshToken'), authRefreshToken);
  * /api/v1/auth/forgot-password:
  *   post:
  *     tags: [Auth]
- *     summary: Request a password reset (stub — no email is actually sent yet, see issue #70)
+ *     summary: Request a password reset (stub — no email is actually sent yet)
  *     requestBody:
  *       required: true
  *       content:

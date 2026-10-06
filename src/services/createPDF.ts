@@ -38,7 +38,10 @@ import {
  */
 const PDF_OUTPUT_DIR = path.join(__dirname, '..', 'public', 'pdf');
 
-export const createCV = async (data: AggregatedCandidateData, res: Response) => {
+/** `classic` is the pre-existing visual template; `modern` is an additional visual theme (same content, different styling) — see `getHTMLLayout`'s `getStyles`. */
+export type PdfTheme = 'classic' | 'modern';
+
+export const createCV = async (data: AggregatedCandidateData, res: Response, options: { theme?: PdfTheme } = {}) => {
   let browser: Browser | undefined;
   try {
     if (!fs.existsSync(PDF_OUTPUT_DIR)) fs.mkdirSync(PDF_OUTPUT_DIR, { recursive: true });
@@ -58,7 +61,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
     browser = await puppeteer.launch(otp);
     const page = await browser.newPage();
 
-    const { email, html: contentHTML } = pageRender(data);
+    const { email, html: contentHTML } = pageRender(data, options.theme ?? 'classic');
 
     await page.setContent(contentHTML, {
       waitUntil: 'domcontentloaded',
@@ -79,7 +82,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
     res.contentType('application/pdf');
     res.send(pdfBuffer);
   } catch (error) {
-    // issue #225: an Error serializes to `{}` — log the real cause
+    // An Error serializes to `{}` — log the real cause
     // server-side instead of echoing an empty object to the client
     logger.error('[createCV] PDF generation failed', { error: (error as Error).message, stack: (error as Error).stack });
     res.status(500).send({
@@ -87,7 +90,7 @@ export const createCV = async (data: AggregatedCandidateData, res: Response) => 
       message: 'Xảy ra lỗi, không thể đọc browser',
     });
   } finally {
-    // issue #225: also close on failure, or each failed export leaks a Chromium process
+    // Also close on failure, or each failed export leaks a Chromium process
     await browser?.close().catch(() => undefined);
   }
 };
@@ -106,7 +109,7 @@ export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Bu
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
-  // issue #225: close in `finally`, or each failed render leaks a Chromium process
+  // Close in `finally`, or each failed render leaks a Chromium process
   try {
     const page = await browser.newPage();
     const { html: contentHTML } = pageRender(data);
@@ -120,7 +123,7 @@ export const renderPdfBuffer = async (data: AggregatedCandidateData): Promise<Bu
   }
 };
 
-export const pageRender = (RECORD: AggregatedCandidateData) => {
+export const pageRender = (RECORD: AggregatedCandidateData, theme: PdfTheme = 'classic') => {
   const {
     candidate,
     generalInformation,
@@ -146,7 +149,7 @@ export const pageRender = (RECORD: AggregatedCandidateData) => {
   _content += _.renderForeignLanguages(generalInformation?.foreignLanguages || []);
   _content += _.renderReferences(references);
 
-  const html = getHTMLLayout(_content);
+  const html = getHTMLLayout(_content, theme);
   return {
     email: candidate?.email || 'resume',
     html,
@@ -211,16 +214,9 @@ const _helper = () => {
       return `${_start} - ${_end}`;
     })({ startDate, endDate, isCurrent });
 
-    /**
-     * BUG FIX (found removing an unused-variable warning, issue #188): this
-     * IIFE was called with no arguments, so its own `skills = []` default
-     * always shadowed the real `skills` destructured from `props` above —
-     * the skills list was never actually read. The condition was also
-     * inverted (`!skills.length` rendered the div, i.e. exactly when
-     * there were NO skills) — combined, the rendered PDF never showed an
-     * item's skills, regardless of whether it had any. Fixed both: pass
-     * the real value in, and render only when it's non-empty.
-     */
+    // Must pass `skills` in and render only when non-empty — an unbound
+    // IIFE here previously shadowed it with its own `[]` default and
+    // inverted the condition, so an item's skills never actually rendered.
     const getSkills = ((skillsList: string[]) => {
       return skillsList.length ? `<div class="skills">${skillsList.join(', ')}</div>` : '';
     })(skills);
@@ -482,7 +478,7 @@ const _helper = () => {
   };
 };
 
-const getHTMLLayout = (content = '') => {
+const getHTMLLayout = (content = '', theme: PdfTheme = 'classic') => {
   const htmlContent = `
         <!DOCTYPE html>
         <html lang="en">
@@ -498,7 +494,7 @@ const getHTMLLayout = (content = '') => {
                 <link rel="preconnect" href="https://fonts.googleapis.com"/>
                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
                 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-                ${getStyles()}
+                ${getStyles(theme)}
             </head>
             <body>
                 <div class="container" style="padding: 5px">
@@ -507,7 +503,11 @@ const getHTMLLayout = (content = '') => {
             </body>
         </html>
     `;
-  function getStyles() {
+  function getStyles(theme: PdfTheme) {
+    if (theme === 'modern') return getModernStyles();
+    return getClassicStyles();
+  }
+  function getClassicStyles() {
     return `
             <style>
                 html { font-size: 9px; font-family: 'Barlow' }
@@ -516,7 +516,7 @@ const getHTMLLayout = (content = '') => {
                     line-height: 1.25;
                     margin: 0 0 .5rem 0;
                     padding: 0
-                    
+
                 }
                 p {  margin-bottom: .5rem }
                 .full-name {
@@ -542,7 +542,7 @@ const getHTMLLayout = (content = '') => {
                 .d-flex > .col-6 { flex-basis: 50% }
 
                 .bg-gray { background-color: #f5f5f5; }
-                
+
                 .item:not(:last-child) { margin-bottom: 1rem }
                 .item .bg-gray { padding: 0 }
                 .item .bg-gray > * { margin-bottom: 0 }
@@ -579,7 +579,91 @@ const getHTMLLayout = (content = '') => {
                 }
                 ul { list-style: disc; }
                 ol { list-style: circle; }
-                
+
+                .col-6 { flex-basic: 50% }
+            </style>
+        `;
+  }
+  /**
+   * Alternate visual theme (issue #162) — same content/markup as the
+   * classic template, different look: accent-colored left-border
+   * headings instead of letter-spaced all-caps, no letter-spacing
+   * anywhere (doctrine/standards/pdf-export-standard.md rule 1 — unlike
+   * classic, this is new CSS so it must hold the rule from the start).
+   */
+  function getModernStyles() {
+    const accent = '#2563eb';
+    return `
+            <style>
+                html { font-size: 9px; font-family: 'Barlow', Arial, sans-serif }
+                body { font-size: 1.4rem; color: #1f2937 }
+                * {
+                    line-height: 1.3;
+                    margin: 0 0 .5rem 0;
+                    padding: 0
+                }
+                p { margin-bottom: .5rem }
+                .full-name {
+                    font-size: 2.6rem;
+                    font-weight: 700;
+                    color: ${accent};
+                }
+                .text-center { text-align: center }
+
+                .box { margin-bottom: 1.4rem }
+
+                .heading {
+                    font-size: 1.6rem;
+                    text-transform: uppercase;
+                    font-weight: 700;
+                    color: ${accent};
+                    border-left: .3rem solid ${accent};
+                    padding-left: .6rem;
+                    margin-bottom: 1rem
+                }
+                .d-flex { display: flex; }
+                .d-flex.between { justify-content: space-between; }
+                .d-flex > .col-6 { flex-basis: 50% }
+
+                .bg-gray { background-color: #f8fafc; }
+
+                .item:not(:last-child) { margin-bottom: 1.1rem }
+                .item .bg-gray { padding: .3rem .6rem; border-radius: .3rem }
+                .item .bg-gray > * { margin-bottom: 0 }
+
+                .item .header {
+                    margin-bottom: .25rem
+                }
+                .item .header > * {
+                    margin-bottom: 0
+                }
+                .item .body {
+                    padding-left: 1rem
+                }
+                .item .title {
+                    font-weight: 700;
+                    font-size: 1.4rem;
+                    color: #111827;
+                }
+                .item .time {
+                    font-size: .8em;
+                    color: #6b7280;
+                }
+                .item .sub-title {
+                    font-style: italic;
+                    color: #374151;
+                }
+                .mb-0 { margin-bottom: 0 !important }
+
+                ul, ol {
+                    padding-left: 1.2em;
+                }
+                ul > li, ol > li {
+                    margin: 0 0 5px 0;
+                }
+                ul { list-style: disc; }
+                ol { list-style: circle; }
+
                 .col-6 { flex-basic: 50% }
             </style>
         `;

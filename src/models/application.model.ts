@@ -19,7 +19,7 @@ const schema = new Schema(
     note: { type: String, default: '' },
     jobLink: { type: String, default: '' },
     candidateId: { type: ObjectId, required: [true, 'Vui lòng nhập ID ứng viên'], ref: 'candidate', index: true },
-    // soft-delete (issue #121) — null nghĩa là chưa xoá
+    // soft-delete — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

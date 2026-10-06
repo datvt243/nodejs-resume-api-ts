@@ -22,7 +22,7 @@ import { uploadImagesMiddleware } from '@/middlewares/uploadImages.middleware';
  */
 const SORT_FIELD_REGEX = /^-?[a-zA-Z0-9_.]+$/;
 
-// Bulk-create (issue #161) hard cap — a single request cannot create more
+// Bulk-create hard cap — a single request cannot create more
 // than this many entries regardless of what the client sends.
 const MAX_BULK_ITEMS = 100;
 
@@ -65,7 +65,7 @@ export const baseGetAll = async (req: Request, res: Response, next: NextFunction
     return formatReturn(res, { statusCode: StatusCodes.NOT_FOUND, data: null, message: t('common.notFoundData', req.lang) });
 
   /**
-   * Optional pagination/sort (issue #73). Omitting page/limit keeps the
+   * Optional pagination/sort. Omitting page/limit keeps the
    * pre-existing "return everything" behavior (`data` stays a plain
    * array) — this is purely additive, no existing caller is affected.
    */
@@ -116,7 +116,7 @@ export const baseRestore = async (req: Request, res: Response, next: NextFunctio
     return formatReturn(res, { success: false, message: t('common.cannotRestore', req.lang) });
 
   /**
-   * restore (issue #121) — same ownership pattern as baseDelete: userID
+   * restore — same ownership pattern as baseDelete: userID
    * always comes from req.body.candidateId, which verifyToken.middleware.ts
    * already forces to the authenticated req.user._id.
    */
@@ -234,9 +234,9 @@ export const createCrudController = (props: {
   };
 
   /**
-   * Bulk-create (issue #161): one request, many entries, best-effort per
-   * item (a bad entry doesn't block the rest) — pairs with the stateless
-   * LinkedIn-export-parse flow (#141): parse -> review client-side -> bulk-save.
+   * Bulk-create: one request, many entries, best-effort per item (a bad
+   * entry doesn't block the rest) — pairs with the stateless
+   * LinkedIn-export-parse flow: parse -> review client-side -> bulk-save.
    */
   const fnBulkCreate = async (req: Request, res: Response, next: NextFunction) => {
     const lang = req.lang;

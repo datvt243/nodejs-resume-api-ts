@@ -19,11 +19,10 @@ const MODEL = MODELS.Candidate;
 /**
  * CV section models keyed by candidateId — deleted alongside the
  * candidate document itself so a self-delete doesn't leave orphaned data.
- * `Model<CrudDocument>` + a narrow per-entry cast, same justified pattern
- * `type-crud-core`/#181 established for `BaseController.ts`'s
- * `modelObject` — Mongoose's `Model<T>` is invariant, so no concrete
- * model can be assigned to a fixed, differently-parameterized
- * `Model<CrudDocument>` slot without one.
+ * `Model<CrudDocument>` + a narrow per-entry cast, same pattern as
+ * `BaseController.ts`'s `modelObject` — Mongoose's `Model<T>` is
+ * invariant, so no concrete model can be assigned to a fixed,
+ * differently-parameterized `Model<CrudDocument>` slot without one.
  */
 const CV_SECTION_MODELS: Model<CrudDocument>[] = [
   MODELS.generalInformation as unknown as Model<CrudDocument>,
@@ -38,8 +37,8 @@ const CV_SECTION_MODELS: Model<CrudDocument>[] = [
 ];
 
 /**
- * Only these 3 have an images[] field (issue #72) — same on-disk-file
- * cleanup concern as CV_UPLOAD_DIR below, just spread across N documents
+ * Only these 3 have an images[] field — same on-disk-file cleanup
+ * concern as CV_UPLOAD_DIR below, just spread across N documents
  * instead of one deterministic filename.
  */
 const IMAGE_SECTION_MODELS: Model<CrudDocument>[] = [

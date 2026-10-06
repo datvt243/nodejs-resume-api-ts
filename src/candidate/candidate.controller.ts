@@ -111,8 +111,8 @@ export const fnParseLinkedInExport = async (req: Request, res: Response, next: N
    * `uploadLinkedInExportMiddleware` (candidate.route.ts) already
    * validated the file (.zip only, <= 20 MB) and kept it in memory --
    * nothing is written to disk or persisted to the DB here. Stateless
-   * parse-and-return (issue #141): the frontend maps the result into its
-   * existing create forms for the user to review/edit before saving.
+   * parse-and-return: the frontend maps the result into its existing
+   * create forms for the user to review/edit before saving.
    */
   const file = req.file;
   if (!file) {

@@ -17,12 +17,24 @@
 | Test | `npm test` | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
 | Test one file | `npx jest <path/to/file.test.ts>` | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
 | Build | `npm run build` | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
-| Lint/typecheck | `n/a` — no `lint` script in `package.json` (checked 2026-09-18, still true as of 2026-08-20); typecheck happens implicitly inside `npm run build` (`tsc && npm run copy`) | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
+| Lint | `npm run lint` (= `eslint .`) | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
+| Typecheck | `n/a` as a standalone script — happens implicitly inside `npm run build` (`tsc && npm run copy`) | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
 | Run locally | `npm run dev` | `/Users/_david/Workspace/Project/resume/resume-nodejs-api` |
 
-`npm test` = `jest --passWithNoTests` (see `package.json`). No `lint`
-script in `package.json` despite `.eslintrc.cjs` existing — don't assume
-`npm run lint` is real, it isn't (re-checked 2026-09-18).
+`npm test` = `jest --passWithNoTests` (see `package.json`).
+
+[corrected 2026-10-06, found while implementing `add-cv-export-themes`/#162]
+The row above previously said `n/a` — no `lint` script in `package.json`,
+"re-checked 2026-09-18". That's stale: `package.json` has a real `"lint":
+"eslint ."` script (confirmed present, root `CLAUDE.md`'s own Commands
+table already lists it — the staleness was only in this file). Current
+baseline on `staging`: 360 ESLint problems, all pre-existing (tracked by
+`fix-remaining-any-unsafe-missed-files`/#204 and the still-open
+`chore(lint): fix no-misused-promises false positives`/#205) — running
+`npm run lint` is real, fast, and worth doing on any diff touching
+`src/` to confirm a change adds zero NEW problems on top of that
+baseline (compare before/after counts with `git stash`, don't just read
+the raw number), same discipline as `npm test`/`npm run build`.
 
 **`npx tsc --noEmit` does NOT cover everything `npm test` type-checks.**
 [added 2026-10-02, `enable-no-property-access-index-signature`/#187] `tsc`
