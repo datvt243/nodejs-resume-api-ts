@@ -69,9 +69,9 @@ export const authLogin = async (req: Request, res: Response, next: NextFunction)
   try {
     const _result = await handlerLogin({ email: value.email, password: value.password }, req.lang);
 
-    // issue #119: also set httpOnly cookies so the frontend can migrate off
+    // Also set httpOnly cookies so the frontend can migrate off
     // localStorage — kept alongside the existing response-body tokens
-    // during the transition (frontend issue resume-vuejs-website#8).
+    // during the transition.
     if (_result?.success && _result?.data) {
       setAuthCookies(res, { token: _result.data.token, tokenRefresh: _result.data.tokenRefresh });
     }
@@ -120,8 +120,8 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
         message: t('auth.invalidRefreshPayload', req.lang),
       });
 
-    // "Log out of all devices" (issue #74): a refresh token issued before
-    // the candidate's last logout-all must not be usable to mint new pairs.
+    // "Log out of all devices": a refresh token issued before the
+    // candidate's last logout-all must not be usable to mint new pairs.
     const invalidatedAt = await getSessionsInvalidatedAt(_id);
     if (isSessionRevoked(iat, invalidatedAt)) {
       return formatReturn(res, {
@@ -137,7 +137,7 @@ export const authRefreshToken = async (req: Request, res: Response, next: NextFu
     const newAccess = jwtSign({ data: { _id }, secretKey: TOKEN_SECRET, props: { expiresIn: TOKEN_EXP_IN || '1h' } });
     const newRefresh = jwtSign({ data: { _id }, secretKey: TOKEN_REFRESH, props: { expiresIn: TOKEN_REFRESH_EXP_IN } });
 
-    // issue #119: rotate the httpOnly cookies to match the rotated tokens
+    // Rotate the httpOnly cookies to match the rotated tokens
     setAuthCookies(res, { token: newAccess, tokenRefresh: newRefresh });
 
     return formatReturn(res, {
@@ -160,7 +160,7 @@ export const authCreateRefreshToken = async (_req: Request, _res: Response) => {
 
 /**
  * Chức năng Xác thực email: xác thực verification token (single-use) rồi
- * đánh dấu emailVerified = true. Không chặn login (issue #71).
+ * đánh dấu emailVerified = true. Không chặn login.
  */
 export const authVerifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   const token = typeof req.query['token'] === 'string' ? req.query['token'] : '';
@@ -257,7 +257,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
 
     await addToBlacklist(token);
 
-    // issue #119: clear the httpOnly auth cookies on logout
+    // Clear the httpOnly auth cookies on logout
     clearAuthCookies(res);
 
     return formatReturn(res, {
@@ -271,7 +271,7 @@ export const authLogout = async (req: Request, res: Response, next: NextFunction
 };
 
 /**
- * Chức năng "Log out of all devices" (issue #74): thu hồi mọi token đã
+ * Chức năng "Log out of all devices": thu hồi mọi token đã
  * phát cho candidate này tính đến thời điểm hiện tại — không chỉ token
  * hiện tại như /logout. Yêu cầu route được gắn `verifyToken` trước, nên
  * `req.user._id` luôn tồn tại khi tới đây.
@@ -290,7 +290,7 @@ export const authLogoutAll = async (req: Request, res: Response, next: NextFunct
 
     await invalidateAllSessions(candidateId);
 
-    // issue #119: also clear the caller's own httpOnly auth cookies
+    // Also clear the caller's own httpOnly auth cookies
     clearAuthCookies(res);
 
     return formatReturn(res, {

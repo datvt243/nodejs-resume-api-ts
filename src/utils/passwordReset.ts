@@ -2,9 +2,9 @@
  * Single-use, short-lived password reset tokens. Same
  * Redis-with-in-memory-fallback TTL pattern as utils/tokenBlacklist.ts.
  *
- * NOTE (issue #70): no email-sending infra exists in this project yet.
- * The reset link is logged instead of emailed — a stand-in until a mail
- * provider is chosen. See auth.service.ts's handlerForgotPassword.
+ * NOTE: no email-sending infra exists in this project yet. The reset
+ * link is logged instead of emailed — a stand-in until a mail provider
+ * is chosen. See auth.service.ts's handlerForgotPassword.
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243

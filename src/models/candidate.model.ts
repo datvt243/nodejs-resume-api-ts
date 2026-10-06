@@ -46,7 +46,7 @@ const schema = new Schema(
     },
     // hiển thị public tại GET /api/me/:email hay không, default true để giữ nguyên hành vi cũ
     isPublic: { type: Boolean, default: true, required: false },
-    // vanity slug cho public profile (issue #120) — không phải PII như email, an toàn hơn để share
+    // vanity slug cho public profile — không phải PII như email, an toàn hơn để share
     slug: {
       type: String,
       default: '',
@@ -57,9 +57,9 @@ const schema = new Schema(
       sparse: true,
       index: true,
     },
-    // đã xác thực email chưa (issue #71) — không chặn login, chỉ để frontend tự quyết định hiển thị
+    // đã xác thực email chưa — không chặn login, chỉ để frontend tự quyết định hiển thị
     emailVerified: { type: Boolean, default: false, required: false },
-    // soft-delete (issue #121) — null nghĩa là chưa xoá
+    // soft-delete — null nghĩa là chưa xoá
     deletedAt: { type: Number, default: null },
   },
   { timestamps: true },

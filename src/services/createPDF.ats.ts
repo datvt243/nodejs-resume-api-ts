@@ -97,7 +97,7 @@ export interface AtsContent {
 }
 
 export interface AtsContentOptions {
-  /** Include personalSkills (soft skills) alongside professional skills. Off by default (pdf-export-standard.md / issue #211 spec). */
+  /** Include personalSkills (soft skills) alongside professional skills. Off by default (pdf-export-standard.md spec). */
   includePersonalSkills?: boolean;
 }
 
@@ -406,7 +406,7 @@ export const renderAtsPdfBuffer = async (data: AggregatedCandidateData, options:
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
   let buffer: Buffer;
-  // issue #225: close in `finally`, or each failed render leaks a Chromium process
+  // Close in `finally`, or each failed render leaks a Chromium process
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
@@ -470,7 +470,7 @@ export const createCVAts = async ({
     res.contentType('application/pdf');
     res.send(buffer);
   } catch (error) {
-    // issue #225: an Error serializes to `{}` — log the real cause
+    // An Error serializes to `{}` — log the real cause
     // server-side instead of echoing an empty object to the client
     logger.error('[createCVAts] PDF generation failed', { error: (error as Error).message, stack: (error as Error).stack });
     res.status(500).send({

@@ -1,9 +1,8 @@
 /**
- * One-off migration for the multi-language resume content feature
- * (GitHub issue #79). Wraps existing plain-string values on the fields
- * below into the new { vi, en } shape, assuming existing content is
- * Vietnamese (matches the codebase's dominant language in validation
- * messages/seed data).
+ * One-off migration for the multi-language resume content feature.
+ * Wraps existing plain-string values on the fields below into the new
+ * { vi, en } shape, assuming existing content is Vietnamese (matches
+ * the codebase's dominant language in validation messages/seed data).
  *
  * Idempotent: each update only matches documents where the field is
  * CURRENTLY a string (MongoDB $type check), so re-running this script
@@ -27,15 +26,14 @@ import * as MODELS from '@/models';
 import { CrudDocument } from '@/services';
 
 /**
- * { model, field } pairs — matches the scope decided for issue #79:
- * only free-text description/introduction-style fields, never
- * proper-noun/label fields (school, company, position title, etc).
- * `Model<CrudDocument>` + a narrow, justified cast per entry — same
- * Mongoose `Model<T>` invariance pattern `type-crud-core`/#181
- * established. `CrudDocument`'s own fields are irrelevant here (this
- * script only ever calls `.updateMany()` with raw field-name strings,
- * never typed field access), it's just the minimal real `Model<T>`
- * shape available to reuse instead of a one-off local interface.
+ * { model, field } pairs — only free-text description/introduction-style
+ * fields, never proper-noun/label fields (school, company, position
+ * title, etc). `Model<CrudDocument>` + a narrow, justified cast per
+ * entry — same Mongoose `Model<T>` invariance pattern as elsewhere.
+ * `CrudDocument`'s own fields are irrelevant here (this script only
+ * ever calls `.updateMany()` with raw field-name strings, never typed
+ * field access), it's just the minimal real `Model<T>` shape available
+ * to reuse instead of a one-off local interface.
  */
 const TARGETS: { name: string; model: Model<CrudDocument>; field: string }[] = [
   { name: 'Candidate.introduction', model: MODELS.Candidate as unknown as Model<CrudDocument>, field: 'introduction' },

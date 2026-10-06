@@ -15,7 +15,7 @@ export const { handlerGet, handlerCreate, handlerUpdate, handlerDelete } = creat
 });
 
 /**
- * Default profile, no data loss (issue #133): a candidate with zero rows in
+ * Default profile, no data loss: a candidate with zero rows in
  * `profiles` (brand new, or never created a custom one) gets a "Tổng hợp"
  * (All) profile synthesized on first read, containing every existing
  * section item's _id — so GET /api/me/:value's ?profile= filter always has
@@ -27,9 +27,9 @@ export const ensureDefaultProfile = async (candidateId: string) => {
 
   /**
    * `Model<CrudDocument>` + a narrow, justified cast per caller — same
-   * Mongoose `Model<T>` invariance pattern `type-crud-core`/#181
-   * established (no concrete model can be assigned to a fixed, different
-   * `Model<CrudDocument>` slot without one).
+   * Mongoose `Model<T>` invariance pattern as elsewhere (no concrete
+   * model can be assigned to a fixed, different `Model<CrudDocument>`
+   * slot without one).
    */
   const idsOf = async (model: Model<CrudDocument>) => (await model.find({ candidateId, deletedAt: null }, '_id').exec()).map((doc) => doc._id);
 
@@ -43,8 +43,8 @@ export const ensureDefaultProfile = async (candidateId: string) => {
   ]);
 
   /**
-   * Explicit `_id` (issue #224): profile.model.ts redeclares `_id: ObjectId`,
-   * which replaces Mongoose's auto-generated `_id` — `create()` without one
+   * Explicit `_id`: profile.model.ts redeclares `_id: ObjectId`, which
+   * replaces Mongoose's auto-generated `_id` — `create()` without one
    * throws "document must have an _id before saving" (see visit.model.ts).
    */
   await ProfileModel.create({

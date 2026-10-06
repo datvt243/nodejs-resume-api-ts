@@ -60,15 +60,9 @@ export const createRateLimiter = (opts: RateLimitOptions = {}): RequestHandler =
     }
 
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    /**
-     * BUG FIX (found removing the `any` cast here, issue #179): this read
-     * `.user?.id`, but `Express.Request.user` is declared `{ _id: string }`
-     * everywhere else in the codebase — `.id` never existed, so `userId`
-     * silently fell back to 'anon' for every authenticated request, and
-     * per-user rate limiting was never actually applying (bucket key was
-     * effectively IP-only). Fixed to the real property.
-     */
-    const userId = req.user?._id || 'anon'; // From verifyToken middleware
+    // Must be `._id`, not `.id` — `Express.Request.user` only ever carries `_id`;
+    // the wrong key would silently fall back to 'anon' and make rate limiting IP-only.
+    const userId = req.user?._id || 'anon';
     const now = Date.now();
 
     if (isRedisAvailable()) {

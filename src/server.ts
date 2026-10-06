@@ -29,7 +29,7 @@ const runServer = async ({ portNumber }: { portNumber: number }) => {
 
   app.use(requestLogger);
 
-  // parse cookies (issue #119: httpOnly JWT cookies) → req.cookies
+  // parse cookies (httpOnly JWT cookies) → req.cookies
   app.use(cookieParser());
 
   // resolve request language (Accept-Language) → req.lang / req.t(key)

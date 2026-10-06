@@ -7,8 +7,8 @@ import Joi from 'joi';
 import { _id, candidateId } from '@/config/joi.config';
 
 // Ids reference existing CV-section documents by _id — plain Mongo
-// ObjectId hex strings, not free-text (no data duplication, matches
-// issue #133's "chọn lọc một tập con... từ cùng một nguồn dữ liệu gốc").
+// ObjectId hex strings, not free-text (no data duplication; a profile
+// selects a subset from the same underlying section data).
 const objectIdArray = Joi.array().items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/)).default([]);
 
 export const schemaProfile = Joi.object({

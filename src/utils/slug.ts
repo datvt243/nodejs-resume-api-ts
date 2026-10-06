@@ -1,5 +1,5 @@
 /**
- * Vanity slug generation for public profiles (issue #120)
+ * Vanity slug generation for public profiles
  *
  * @author Đạt Võ <votan.it@gmail.com>
  * @see https://github.com/datvt243
