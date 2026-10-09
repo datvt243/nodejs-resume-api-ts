@@ -68,6 +68,14 @@ export default {
     parseSuccess: 'LinkedIn data parsed successfully',
     parseFailed: 'Failed to parse LinkedIn data',
   },
+  cvPdfImport: {
+    noFileUploaded: 'No file was uploaded',
+    invalidFileType: 'Only PDF files are accepted',
+    fileTooLarge: 'File exceeds the allowed size (5 MB)',
+    invalidPdf: 'The PDF file is invalid or unreadable',
+    parseSuccess: 'CV PDF parsed successfully',
+    parseFailed: 'Failed to parse the CV PDF',
+  },
   generalInformation: {
     alreadyExists: 'Candidate already has information, cannot save',
   },

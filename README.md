@@ -14,6 +14,7 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 - 🗂️ **CV Profiles** (multi-version): named subsets of CV sections for tailoring what a public link shows
 - 📋 **Job Application Tracker**: applied/interview/offer/rejected pipeline per candidate
 - 📎 **LinkedIn Import**: parse a LinkedIn "Data export" ZIP into Education/Experience entries for review
+- 📄 **PDF CV Import**: parse an existing PDF CV into the same Education/Experience entries for review (best-effort)
 - 📤 **CV File Upload/Download**: store and retrieve a candidate's own PDF résumé
 - 📊 **Public Profile Visits**: per-visit analytics (IP + geo) on public profile views
 - 🗑️ **Soft Delete + Restore**: recoverable deletes across all CV sections
@@ -80,7 +81,7 @@ backend/
 │   ├── middlewares/ (rateLimit/logger/verifyToken/csrf/language/uploads)
 │   ├── models/     (schemas incl. application/profile/visit)
 │   ├── routers/api/v1/ (CRUD routes) + api/v2/ (auth WIP)
-│   ├── candidate/  (profile + upload-cv + LinkedIn import)
+│   ├── candidate/  (profile + upload-cv + LinkedIn/PDF CV import)
 │   ├── candidate_profile/ (controllers/services per section, incl. application/profile)
 │   ├── candidate_me/ (public profile, visits, PDF/JSON/DOCX export, ATS self-check)
 │   ├── services/   (PDF classic + ATS/Redis/base DB ops)
@@ -175,6 +176,7 @@ in-memory store when `REDIS_URL` is unset.
 | POST   | `/upload-cv`              | Upload a PDF résumé (max 5MB)              |
 | GET    | `/cv-file`                | Download the uploaded résumé               |
 | POST   | `/parse-linkedin-export`  | Parse a LinkedIn export ZIP (stateless, not persisted) |
+| POST   | `/parse-cv-pdf`           | Parse a PDF CV, max 5MB (stateless, not persisted) |
 | GET    | `/visits`                 | Own public-profile visit count + list      |
 
 ### CRUD Pattern (CV sections + Application + Profile)
@@ -229,7 +231,7 @@ best-effort bulk create (up to 100 items per request).
 - `npm run test` - Jest
 - `npm run lint` - ESLint (type-aware)
 
-**Tests (35 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
+**Tests (37 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import/PDF-CV-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language/PDF-CV upload), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
 
 ---
 
