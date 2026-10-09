@@ -80,11 +80,15 @@ asks for — this section pins the boundary.
    under `agent-hub/`; reading it again here duplicates that content. Read
    it directly only if it's actually missing from context after step 2.
 4. Check the command in the note matches `doctrine/MEMORY.md` (`npm test`
-   from repo root — not an invented command).
+   from repo root — not an invented command) — plus `npm run build` for
+   the `Typecheck` row [added 2026-10-07]; no build output in the note →
+   REOPEN, `EDIT_UNVERIFIED`.
 5. Check output isn't truncated/redacted (`...`, "truncated") → REOPEN if
    so.
 6. Walk acceptance criteria ONE AT A TIME — missing evidence for any one =
-   REOPEN, name it in "missing".
+   REOPEN, name it in "missing". Always includes the "comments per
+   code-comments.md" row (see that standard's Enforcement), even if the
+   node's own criteria don't list it.
 7. Scan all 5 forbidden states.
 8. Check SEAL GATE — approval recorded in the note if the diff was
    outward-facing.

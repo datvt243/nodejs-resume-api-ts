@@ -12,6 +12,7 @@
 | `standards/edit-verification.md` | Rule: never claim what you haven't observed | Before reporting "done" |
 | `standards/recipes.md` | What a recipe is, when to write one | When repeating a procedure a second time |
 | `standards/initiative-scoping.md` | Rule: measure exhaustively by rule+file before/after a multi-phase count-based initiative | Before carving up any "clean up X across the codebase" effort into phases |
+| `standards/code-comments.md` | What a source comment may say + its style, plus project opt-ins (file header, object params) | Before writing/changing any comment or function signature |
 | `standards/pdf-export-standard.md` | Rule: 10 invariants binding on any PDF/DOCX export fix or feature | Before touching `createPDF*.ts`/`createDocx.ts` or adding a new export format |
 
 ## The three kinds of knowledge here

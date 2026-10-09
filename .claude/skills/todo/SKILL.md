@@ -1,7 +1,7 @@
 ---
 name: todo
 description: "Resolve/tạo GitHub issue + checkout branch riêng của issue đó, rồi gộp /worker implementer và /worker verifier thành 1 lệnh gõ cho một task — vẫn chạy 2 lượt tách biệt bên trong, tự lặp lại khi REOPEN. Dùng: /todo \"<task>\"|#<số-issue> [--ship]"
-argument-hint: "<task>"|#<số-issue> [--ship]
+argument-hint: "<task>|#<số-issue> [--ship]"
 ---
 
 # /todo "<task>"|#<số-issue> [--ship]
@@ -21,7 +21,9 @@ argument-hint: "<task>"|#<số-issue> [--ship]
      remote) → dừng, báo lỗi, KHÔNG tự chạy tiếp không có issue.
    - Từ đây `<task>` cho phần còn lại của lượt `/todo` này là title + body
      của issue đã resolve, không chỉ đúng chuỗi CLI gốc.
-2. **Tính tên branch**: `<số>-<slug>`, `<slug>` = 3 từ đầu của issue title,
+2. **Tính tên branch**: [sync 2026-10-07] check `doctrine/domains/PROJECT.md`
+   first for a documented branch-naming convention — use it exactly if
+   present. Otherwise `<số>-<slug>`, `<slug>` = 3 từ đầu của issue title,
    viết thường, ký tự không phải chữ/số gộp thành `-`.
 3. **Base branch**: `staging` (theo `doctrine/domains/PROJECT.md` — mô hình
    2 tầng `staging` → `main`, mọi branch fix/feature branch ra từ
