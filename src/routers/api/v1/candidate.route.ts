@@ -14,10 +14,13 @@ import {
   fnUploadCV,
   fnDownloadCV,
   fnGetVisits,
+  fnGetVisitStats,
   fnParseLinkedInExport,
+  fnParseCvPdf,
 } from '@/candidate/candidate.controller';
 import { uploadCVMiddleware } from '@/middlewares/uploadCV.middleware';
 import { uploadLinkedInExportMiddleware } from '@/middlewares/uploadLinkedInExport.middleware';
+import { uploadCvPdfParseMiddleware } from '@/middlewares/uploadCvPdfParse.middleware';
 
 /**
  * @swagger
@@ -111,6 +114,69 @@ router.post('/parse-linkedin-export', uploadLinkedInExportMiddleware, fnParseLin
 
 /**
  * @swagger
+ * /api/v1/candidate/parse-cv-pdf:
+ *   post:
+ *     tags: [Candidate]
+ *     summary: Parse an existing PDF CV into Education/Experience entries for the frontend to review before saving
+ *     description: Stateless parse-and-return endpoint -- the PDF is read in memory and never stored, nothing is persisted. Best-effort heuristic over the PDF's text layer (vi + en section headings, date ranges such as MM/YYYY - MM/YYYY or YYYY - Present/Hiện tại); single-column CVs parse best, multi-column/designed CVs poorly, scanned/image-only PDFs yield no text (no OCR). Same data shape as parse-linkedin-export plus extractedText, so the frontend can reuse its review-before-save flow and show the raw text when little is recognized.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The CV as a PDF (max 5MB)
+ *     responses:
+ *       200:
+ *         description: Parsed Education/Experience entries (never persisted); empty arrays when the PDF is readable but no sections are recognized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         educations:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               school: { type: string }
+ *                               major: { type: string }
+ *                               startDate: { type: number, nullable: true }
+ *                               endDate: { type: number, nullable: true }
+ *                               isCurrent: { type: boolean }
+ *                               description: { type: string }
+ *                         experiences:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               company: { type: string }
+ *                               position: { type: string }
+ *                               startDate: { type: number, nullable: true }
+ *                               endDate: { type: number, nullable: true }
+ *                               isCurrent: { type: boolean }
+ *                               description: { type: string }
+ *                         extractedText:
+ *                           type: string
+ *                           description: The raw text extracted from the PDF
+ *       400:
+ *         description: Missing file, wrong type (non-PDF), too large (> 5MB), or the PDF itself is corrupt/unreadable
+ */
+router.post('/parse-cv-pdf', uploadCvPdfParseMiddleware, fnParseCvPdf);
+
+/**
+ * @swagger
  * /api/v1/candidate/cv-file:
  *   get:
  *     tags: [Candidate]
@@ -158,6 +224,68 @@ router.get('/cv-file', fnDownloadCV);
  *                             $ref: '#/components/schemas/Visit'
  */
 router.get('/visits', fnGetVisits);
+
+/**
+ * @swagger
+ * /api/v1/candidate/visits/stats:
+ *   get:
+ *     tags: [Candidate]
+ *     summary: Aggregated stats for the authenticated candidate's own profile visits — zero-filled time series + country breakdown
+ *     description: Buckets follow the given IANA time zone (default Asia/Ho_Chi_Minh); from/to are inclusive local dates and default to the last 30 days. Week buckets are ISO weeks (YYYY-Www, Monday start). Country is taken from the recorded geo location; visits without one are grouped under country null. At most 400 buckets per request.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: interval
+ *         schema: { type: string, enum: [day, week, month], default: day }
+ *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date, example: '2026-09-11' }
+ *         description: Inclusive start date (YYYY-MM-DD, local to tz). Default — 29 days before `to`.
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date, example: '2026-10-10' }
+ *         description: Inclusive end date (YYYY-MM-DD, local to tz). Default — today in tz.
+ *       - in: query
+ *         name: tz
+ *         schema: { type: string, default: Asia/Ho_Chi_Minh }
+ *         description: IANA time zone used for bucket boundaries
+ *     responses:
+ *       200:
+ *         description: Visit stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         interval: { type: string, enum: [day, week, month] }
+ *                         tz: { type: string }
+ *                         from: { type: string, format: date }
+ *                         to: { type: string, format: date }
+ *                         total: { type: number }
+ *                         series:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               bucket: { type: string, example: '2026-10-10' }
+ *                               count: { type: number }
+ *                         countries:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               country: { type: string, nullable: true, example: VN }
+ *                               count: { type: number }
+ *       400:
+ *         description: Invalid interval, date, time zone, from after to, or more than 400 buckets
+ */
+router.get('/visits/stats', fnGetVisitStats);
 
 /**
  * @swagger

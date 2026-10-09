@@ -20,6 +20,8 @@ import {
 } from '@/candidate/candidate.service';
 import { CV_UPLOAD_DIR } from '@/middlewares/uploadCV.middleware';
 import { parseLinkedInExportZip } from '@/candidate/parseLinkedInExport.service';
+import { parseCvPdf } from '@/candidate/parseCvPdf.service';
+import { handlerGetVisitStats, resolveVisitStatsQuery } from '@/candidate/visitStats.service';
 import { t } from '@/utils/i18n';
 
 export const fnGetInformationById = async (req: Request, res: Response) => {
@@ -138,6 +140,38 @@ export const fnParseLinkedInExport = async (req: Request, res: Response, next: N
   }
 };
 
+export const fnParseCvPdf = async (req: Request, res: Response, next: NextFunction) => {
+  /**
+   * `uploadCvPdfParseMiddleware` (candidate.route.ts) already validated
+   * the file (.pdf only, <= 5 MB) and kept it in memory -- same
+   * stateless parse-and-return contract as fnParseLinkedInExport.
+   * Readable but unrecognized content is a 200 with empty arrays, not an
+   * error: `extractedText` still lets the user copy from it by hand.
+   */
+  const file = req.file;
+  if (!file) {
+    return formatReturn(res, {
+      statusCode: StatusCodes.BAD_REQUEST,
+      success: false,
+      message: t('cvPdfImport.noFileUploaded', req.lang),
+    });
+  }
+
+  try {
+    const data = await parseCvPdf(file.buffer);
+    return formatReturn(res, { success: true, message: t('cvPdfImport.parseSuccess', req.lang), data });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'INVALID_PDF') {
+      return formatReturn(res, {
+        statusCode: StatusCodes.BAD_REQUEST,
+        success: false,
+        message: t('cvPdfImport.invalidPdf', req.lang),
+      });
+    }
+    handleError({ err, next, lang: req.lang });
+  }
+};
+
 export const fnGetVisits = async (req: Request, res: Response, next: NextFunction) => {
   /**
    * Self only — always the authenticated user's own id (same IDOR-safe
@@ -148,6 +182,25 @@ export const fnGetVisits = async (req: Request, res: Response, next: NextFunctio
     if (!req.user?._id) throw new AuthenticationError();
     const _result = await handlerGetVisits(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
+  } catch (err) {
+    handleError({ err, next, lang: req.lang });
+  }
+};
+
+export const fnGetVisitStats = async (req: Request, res: Response, next: NextFunction) => {
+  // Self only, same as fnGetVisits: the id comes from the verified JWT, never from the request.
+  try {
+    if (!req.user?._id) throw new AuthenticationError();
+    const query = resolveVisitStatsQuery({ interval: req.query['interval'], from: req.query['from'], to: req.query['to'], tz: req.query['tz'] });
+    if (!query) {
+      return formatReturn(res, {
+        statusCode: StatusCodes.BAD_REQUEST,
+        success: false,
+        message: t('candidate.visitStatsInvalidQuery', req.lang),
+      });
+    }
+    const data = await handlerGetVisitStats(req.user._id, query);
+    return formatReturn(res, { success: true, message: t('candidate.getVisitStatsSuccess', req.lang), data });
   } catch (err) {
     handleError({ err, next, lang: req.lang });
   }

@@ -98,7 +98,8 @@ src/
 │   ├── requestLogger.middleware.ts # Logs method, URL, status, duration via Winston
 │   ├── uploadCV.middleware.ts      # Multer: candidate's own PDF résumé (max 5MB)
 │   ├── uploadImages.middleware.ts  # Multer: CV-section image attachments
-│   └── uploadLinkedInExport.middleware.ts # Multer: LinkedIn export ZIP (max 20MB)
+│   ├── uploadLinkedInExport.middleware.ts # Multer: LinkedIn export ZIP (max 20MB)
+│   └── uploadCvPdfParse.middleware.ts # Multer: PDF CV for import parsing (max 5MB, memory only)
 ├── models/
 │   ├── candidate.model.ts
 │   ├── generalInformation.model.ts
@@ -122,7 +123,9 @@ src/
 │   ├── candidate.controller.ts
 │   ├── candidate.service.ts
 │   ├── candidate.validate.ts
-│   └── parseLinkedInExport.service.ts # Parses LinkedIn "Data export" ZIP → Education/Experience (stateless)
+│   ├── parseLinkedInExport.service.ts # Parses LinkedIn "Data export" ZIP → Education/Experience (stateless)
+│   ├── visitStats.service.ts  # Visit stats aggregation: tz-aware zero-filled day/week/month series + country breakdown
+│   └── parseCvPdf.service.ts  # Parses an uploaded PDF CV's text → Education/Experience (heuristic, stateless)
 ├── candidate_profile/         # One controller+service+validate per CV section
 │   ├── experience/
 │   ├── education/
@@ -138,6 +141,7 @@ src/
 ├── candidate_me/
 │   ├── index.ts               # Public profile aggregation (slug/email, i18n, ?profile= filter),
 │   │                           # visit recording, PDF/JSON/DOCX export
+│   ├── search.ts              # GET /api/me/search: keyword search over public, slugged profiles
 │   └── ats-check.ts           # POST /cv/ats-check: renders either PDF template in memory,
 │                               # extracts text, scores the 10 ATS checks + optional JD keyword match
 ├── services/
@@ -235,7 +239,9 @@ state-changing requests must also pass the double-submit CSRF check (see Securit
 | POST | `/upload-cv` | Upload own PDF résumé (multer, max 5MB) |
 | GET | `/cv-file` | Download own uploaded résumé |
 | POST | `/parse-linkedin-export` | Parse a LinkedIn "Data export" ZIP → Education/Experience entries; stateless, nothing persisted |
+| POST | `/parse-cv-pdf` | Parse an existing PDF CV (max 5MB, memory only) → same Education/Experience shape + `extractedText`; best-effort heading/date-range heuristic (vi + en), stateless, nothing persisted |
 | GET | `/visits` | Own public-profile visit count + list |
+| GET | `/visits/stats` | Own visit stats: `?interval=day\|week\|month` (default `day`), inclusive local `from`/`to` (`YYYY-MM-DD`, default last 30 days), `?tz=` IANA zone (default `Asia/Ho_Chi_Minh`); zero-filled `series` (ISO weeks `YYYY-Www`) + `countries` from the recorded geo location; ≤ 400 buckets |
 
 ### CV Sections + Application + Profile (all follow same CRUD pattern)
 
@@ -262,6 +268,7 @@ best-effort — each item validated/created independently via the same
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/health` | None | Health check |
+| GET | `/api/me/search` | None | Keyword search (`?q=` 2–100 chars, `page`/`limit` ≤ 100) over public profiles that have a slug — escaped case-insensitive substring on GeneralInformation `positionDesired`/`professionalSkills.name`, Experience `company`/`position`/`skills`, Education `school`/`major`; returns `{ items: [{ slug, firstName, lastName, positionDesired }], pagination }`, never email. Registered before `/api/me/:email` (a slug literally `search` is shadowed) |
 | GET | `/api/me/:email` | None | Public profile by vanity slug (checked first) or email; `?lang=vi\|en` and `?profile=<id>` (filters sections to that CV profile) |
 | POST | `/api/me/:email/visit` | None | Record a visit (count, timestamp, IP, geo via `geoip-lite`) |
 | GET | `/api/v1/download-pdf` | Token via query | Export own CV; `?format=pdf\|json\|docx` (default `pdf`), `?lang=vi\|en`, `?template=classic\|modern\|ats` (default `classic`; `modern` is an additional visual theme, applies to `pdf` and `docx`; `ats` is the ATS-optimized single-column template, PDF-only; `template` ignored for `format=json`) |
@@ -379,7 +386,10 @@ npm test                         # run all tests
 | candidate/candidate.controller.test.ts | candidate controller (upload/download CV, visits, etc.) |
 | candidate/candidate.service.test.ts | password field exclusion + `handlerDelete` cascade/file cleanup |
 | candidate/parseLinkedInExport.service.test.ts | LinkedIn export ZIP/CSV parsing |
+| candidate/visitStats.service.test.ts | visit stats: query validation/defaults, tz + DST bucket boundaries, ISO-week/month labels, zero-fill, own-id-only |
+| candidate/parseCvPdf.service.test.ts | PDF CV parsing heuristics (vi + en fixture text) + unreadable-PDF rejection |
 | candidate_me/index.test.ts | public profile aggregation, visit recording, export |
+| candidate_me/search.test.ts | public search: only public + slugged candidates, field whitelist, regex escaping, pagination, `q` validation |
 | candidate_profile/BaseController.test.ts | shared getAll/delete/restore/upload-images controller |
 | candidate_profile/BaseService.test.ts | `createCrudService().handlerCreate` real CV-section create flow |
 | candidate_profile/profile.service.test.ts | CV profile CRUD + default-profile synthesis |
@@ -388,6 +398,7 @@ npm test                         # run all tests
 | middlewares/csrf.test.ts | CSRF middleware |
 | middlewares/rateLimit.test.ts | rate limiting logic |
 | middlewares/requestLogger.test.ts | request logging |
+| middlewares/uploadCvPdfParse.test.ts | PDF-only / 5MB limit / memory storage over a real multipart request |
 | middlewares/language.test.ts | `Accept-Language` → `req.lang`/`req.t()` resolution |
 | services/baseCreateDocument.test.ts | `hookAfterSave` propagation on create |
 | services/baseFindDocument.test.ts | query/pagination/sort |
@@ -398,7 +409,7 @@ npm test                         # run all tests
 | services/createPDF.ats.test.ts | ATS template HTML — no letter-spacing/images/flex-grid, localized headings, sanitized description |
 | services/atsChecks.test.ts | Each of the 10 ATS check functions, passing + failing fixtures |
 | services/keywordMatcher.test.ts | JD keyword matcher — alias handling, case-insensitivity, Vietnamese diacritics |
-| services/atsPdfIntegration.test.ts | Real Puppeteer + `pdf-parse` end-to-end: renders a fixture CV, extracts text, asserts the full ATS check suite passes (skipped via `CI_NO_CHROME`) |
+| services/atsPdfIntegration.test.ts | Real Puppeteer + `pdf-parse` end-to-end: renders a fixture CV, extracts text, asserts the full ATS check suite passes, and round-trips it (vi + en) through the PDF CV import parser (skipped via `CI_NO_CHROME`) |
 | utils/authCookies.test.ts | httpOnly cookie set/clear |
 | utils/csrf.test.ts | double-submit CSRF token validation |
 | utils/bcrypt.test.ts | hash + compare |

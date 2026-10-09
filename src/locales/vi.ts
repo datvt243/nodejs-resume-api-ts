@@ -59,6 +59,8 @@ export default {
     cvUploadFailed: 'Tải CV lên thất bại',
     cvFileNotFound: 'Chưa có CV nào được tải lên',
     getVisitsSuccess: 'Lấy danh sách lượt ghé thăm thành công',
+    getVisitStatsSuccess: 'Lấy thống kê lượt ghé thăm thành công',
+    visitStatsInvalidQuery: 'Tham số thống kê không hợp lệ: interval là day, week hoặc month; ngày dạng YYYY-MM-DD với from <= to; tz là múi giờ IANA hợp lệ; tối đa 400 mốc',
   },
   linkedinImport: {
     noFileUploaded: 'Không có file nào được tải lên',
@@ -67,6 +69,17 @@ export default {
     invalidZip: 'File ZIP không hợp lệ hoặc bị hỏng',
     parseSuccess: 'Đọc dữ liệu LinkedIn thành công',
     parseFailed: 'Đọc dữ liệu LinkedIn thất bại',
+  },
+  cvPdfImport: {
+    noFileUploaded: 'Không có file nào được tải lên',
+    invalidFileType: 'Chỉ chấp nhận file PDF',
+    fileTooLarge: 'File vượt quá dung lượng cho phép (5 MB)',
+    invalidPdf: 'File PDF không hợp lệ hoặc không đọc được',
+    parseSuccess: 'Đọc CV PDF thành công',
+    parseFailed: 'Đọc CV PDF thất bại',
+  },
+  publicSearch: {
+    invalidQuery: 'Từ khoá tìm kiếm phải dài từ 2 đến 100 ký tự',
   },
   generalInformation: {
     alreadyExists: 'Candidate đã có thông tin, không thể lưu thêm',

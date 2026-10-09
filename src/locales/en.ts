@@ -59,6 +59,8 @@ export default {
     cvUploadFailed: 'CV upload failed',
     cvFileNotFound: 'No CV has been uploaded yet',
     getVisitsSuccess: 'Visits fetched successfully',
+    getVisitStatsSuccess: 'Visit stats fetched successfully',
+    visitStatsInvalidQuery: 'Invalid stats query: interval must be day, week or month; dates YYYY-MM-DD with from <= to; tz a valid IANA time zone; at most 400 buckets',
   },
   linkedinImport: {
     noFileUploaded: 'No file was uploaded',
@@ -67,6 +69,17 @@ export default {
     invalidZip: 'The ZIP file is invalid or corrupted',
     parseSuccess: 'LinkedIn data parsed successfully',
     parseFailed: 'Failed to parse LinkedIn data',
+  },
+  cvPdfImport: {
+    noFileUploaded: 'No file was uploaded',
+    invalidFileType: 'Only PDF files are accepted',
+    fileTooLarge: 'File exceeds the allowed size (5 MB)',
+    invalidPdf: 'The PDF file is invalid or unreadable',
+    parseSuccess: 'CV PDF parsed successfully',
+    parseFailed: 'Failed to parse the CV PDF',
+  },
+  publicSearch: {
+    invalidQuery: 'Search query must be between 2 and 100 characters',
   },
   generalInformation: {
     alreadyExists: 'Candidate already has information, cannot save',

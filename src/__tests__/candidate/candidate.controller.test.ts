@@ -7,11 +7,16 @@
  */
 
 import { StatusCodes } from 'http-status-codes';
-import { fnParseLinkedInExport } from '@/candidate/candidate.controller';
+import { fnParseLinkedInExport, fnParseCvPdf } from '@/candidate/candidate.controller';
 import * as parseService from '@/candidate/parseLinkedInExport.service';
+import * as parseCvPdfService from '@/candidate/parseCvPdf.service';
 
 jest.mock('@/candidate/parseLinkedInExport.service', () => ({
   parseLinkedInExportZip: jest.fn(),
+}));
+
+jest.mock('@/candidate/parseCvPdf.service', () => ({
+  parseCvPdf: jest.fn(),
 }));
 
 const mockRes = () => {
@@ -90,5 +95,65 @@ describe('fnParseLinkedInExport (issue #141)', () => {
     expect(forwarded).toBeInstanceOf(Error);
     expect(forwarded.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(forwarded.message).toBe('disk on fire');
+  });
+});
+
+describe('fnParseCvPdf', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns 400 when no file was uploaded', async () => {
+    const req: any = { lang: 'en' };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await fnParseCvPdf(req, res, next);
+
+    expect(parseCvPdfService.parseCvPdf).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, message: 'No file was uploaded' }));
+  });
+
+  it('returns the parsed educations/experiences plus extractedText on success', async () => {
+    const parsed = { educations: [], experiences: [{ company: 'Acme' }], extractedText: 'EXPERIENCE ...' };
+    (parseCvPdfService.parseCvPdf as jest.Mock).mockResolvedValue(parsed);
+
+    const req: any = { file: { buffer: Buffer.from('%PDF-1.4') }, lang: 'en' };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await fnParseCvPdf(req, res, next);
+
+    expect(parseCvPdfService.parseCvPdf).toHaveBeenCalledWith(req.file.buffer);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, data: parsed }));
+  });
+
+  it('returns 400 invalidPdf when the service rejects an unreadable PDF', async () => {
+    (parseCvPdfService.parseCvPdf as jest.Mock).mockRejectedValue(new Error('INVALID_PDF'));
+
+    const req: any = { file: { buffer: Buffer.from('not a pdf') }, lang: 'vi' };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await fnParseCvPdf(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, message: 'File PDF không hợp lệ hoặc không đọc được' }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('forwards an unexpected error to the global error handler instead of swallowing it', async () => {
+    (parseCvPdfService.parseCvPdf as jest.Mock).mockRejectedValue(new Error('disk on fire'));
+
+    const req: any = { file: { buffer: Buffer.from('%PDF-1.4') }, lang: 'en' };
+    const res = mockRes();
+    const next = jest.fn();
+
+    await fnParseCvPdf(req, res, next);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(next.mock.calls[0][0].statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR);
   });
 });
