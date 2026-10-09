@@ -179,6 +179,7 @@ in-memory store when `REDIS_URL` is unset.
 | POST   | `/parse-linkedin-export`  | Parse a LinkedIn export ZIP (stateless, not persisted) |
 | POST   | `/parse-cv-pdf`           | Parse a PDF CV, max 5MB (stateless, not persisted) |
 | GET    | `/visits`                 | Own public-profile visit count + list      |
+| GET    | `/visits/stats`           | Own visit stats: day/week/month series + countries (`tz`-aware) |
 
 ### CRUD Pattern (CV sections + Application + Profile)
 
@@ -233,7 +234,7 @@ best-effort bulk create (up to 100 items per request).
 - `npm run test` - Jest
 - `npm run lint` - ESLint (type-aware)
 
-**Tests (38 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import/PDF-CV-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language/PDF-CV upload), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
+**Tests (39 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import/PDF-CV-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language/PDF-CV upload), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
 
 ---
 

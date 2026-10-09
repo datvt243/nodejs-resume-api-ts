@@ -124,6 +124,7 @@ src/
 │   ├── candidate.service.ts
 │   ├── candidate.validate.ts
 │   ├── parseLinkedInExport.service.ts # Parses LinkedIn "Data export" ZIP → Education/Experience (stateless)
+│   ├── visitStats.service.ts  # Visit stats aggregation: tz-aware zero-filled day/week/month series + country breakdown
 │   └── parseCvPdf.service.ts  # Parses an uploaded PDF CV's text → Education/Experience (heuristic, stateless)
 ├── candidate_profile/         # One controller+service+validate per CV section
 │   ├── experience/
@@ -240,6 +241,7 @@ state-changing requests must also pass the double-submit CSRF check (see Securit
 | POST | `/parse-linkedin-export` | Parse a LinkedIn "Data export" ZIP → Education/Experience entries; stateless, nothing persisted |
 | POST | `/parse-cv-pdf` | Parse an existing PDF CV (max 5MB, memory only) → same Education/Experience shape + `extractedText`; best-effort heading/date-range heuristic (vi + en), stateless, nothing persisted |
 | GET | `/visits` | Own public-profile visit count + list |
+| GET | `/visits/stats` | Own visit stats: `?interval=day\|week\|month` (default `day`), inclusive local `from`/`to` (`YYYY-MM-DD`, default last 30 days), `?tz=` IANA zone (default `Asia/Ho_Chi_Minh`); zero-filled `series` (ISO weeks `YYYY-Www`) + `countries` from the recorded geo location; ≤ 400 buckets |
 
 ### CV Sections + Application + Profile (all follow same CRUD pattern)
 
@@ -384,6 +386,7 @@ npm test                         # run all tests
 | candidate/candidate.controller.test.ts | candidate controller (upload/download CV, visits, etc.) |
 | candidate/candidate.service.test.ts | password field exclusion + `handlerDelete` cascade/file cleanup |
 | candidate/parseLinkedInExport.service.test.ts | LinkedIn export ZIP/CSV parsing |
+| candidate/visitStats.service.test.ts | visit stats: query validation/defaults, tz + DST bucket boundaries, ISO-week/month labels, zero-fill, own-id-only |
 | candidate/parseCvPdf.service.test.ts | PDF CV parsing heuristics (vi + en fixture text) + unreadable-PDF rejection |
 | candidate_me/index.test.ts | public profile aggregation, visit recording, export |
 | candidate_me/search.test.ts | public search: only public + slugged candidates, field whitelist, regex escaping, pagination, `q` validation |
