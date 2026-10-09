@@ -8,11 +8,76 @@ import express, { Request, Response } from 'express';
 const router = express.Router();
 
 import { fnGetAboutMe, fnRecordVisit } from '@/candidate_me';
+import { fnSearchPublicProfiles } from '@/candidate_me/search';
 import routerAPI from './api/v1/index';
 import routerAPIV2 from './api/v2/index';
 
 router.use('/api/v1', routerAPI);
 router.use('/api/v2', routerAPIV2);
+
+/**
+ * @swagger
+ * /api/me/search:
+ *   get:
+ *     tags: [CandidateMe]
+ *     summary: Search public candidate profiles by keyword (skill, position, company, school, major), no auth required
+ *     description: Case-insensitive substring match over GeneralInformation positionDesired/professionalSkills, Experience company/position/skills and Education school/major. Only candidates whose profile is public and who have a vanity slug are returned; each result carries only public fields and links to /api/me/{slug}. Must stay registered before /api/me/{email} — a slug literally "search" is shadowed by this route.
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *           maxLength: 100
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Matching public profiles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         items:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               slug: { type: string }
+ *                               firstName: { type: string }
+ *                               lastName: { type: string }
+ *                               positionDesired: { type: string }
+ *                         pagination:
+ *                           type: object
+ *                           properties:
+ *                             page: { type: integer }
+ *                             limit: { type: integer }
+ *                             total: { type: integer }
+ *                             totalPages: { type: integer }
+ *       400:
+ *         description: Missing, too short (< 2) or too long (> 100) query
+ */
+router.get('/api/me/search', fnSearchPublicProfiles);
 
 /**
  * @swagger
