@@ -21,6 +21,7 @@ import {
 import { CV_UPLOAD_DIR } from '@/middlewares/uploadCV.middleware';
 import { parseLinkedInExportZip } from '@/candidate/parseLinkedInExport.service';
 import { parseCvPdf } from '@/candidate/parseCvPdf.service';
+import { handlerGetVisitStats, resolveVisitStatsQuery } from '@/candidate/visitStats.service';
 import { t } from '@/utils/i18n';
 
 export const fnGetInformationById = async (req: Request, res: Response) => {
@@ -181,6 +182,25 @@ export const fnGetVisits = async (req: Request, res: Response, next: NextFunctio
     if (!req.user?._id) throw new AuthenticationError();
     const _result = await handlerGetVisits(req.user._id, req.lang);
     return formatReturn(res, { ..._result });
+  } catch (err) {
+    handleError({ err, next, lang: req.lang });
+  }
+};
+
+export const fnGetVisitStats = async (req: Request, res: Response, next: NextFunction) => {
+  // Self only, same as fnGetVisits: the id comes from the verified JWT, never from the request.
+  try {
+    if (!req.user?._id) throw new AuthenticationError();
+    const query = resolveVisitStatsQuery({ interval: req.query['interval'], from: req.query['from'], to: req.query['to'], tz: req.query['tz'] });
+    if (!query) {
+      return formatReturn(res, {
+        statusCode: StatusCodes.BAD_REQUEST,
+        success: false,
+        message: t('candidate.visitStatsInvalidQuery', req.lang),
+      });
+    }
+    const data = await handlerGetVisitStats(req.user._id, query);
+    return formatReturn(res, { success: true, message: t('candidate.getVisitStatsSuccess', req.lang), data });
   } catch (err) {
     handleError({ err, next, lang: req.lang });
   }

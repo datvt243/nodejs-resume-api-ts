@@ -14,6 +14,7 @@ import {
   fnUploadCV,
   fnDownloadCV,
   fnGetVisits,
+  fnGetVisitStats,
   fnParseLinkedInExport,
   fnParseCvPdf,
 } from '@/candidate/candidate.controller';
@@ -223,6 +224,68 @@ router.get('/cv-file', fnDownloadCV);
  *                             $ref: '#/components/schemas/Visit'
  */
 router.get('/visits', fnGetVisits);
+
+/**
+ * @swagger
+ * /api/v1/candidate/visits/stats:
+ *   get:
+ *     tags: [Candidate]
+ *     summary: Aggregated stats for the authenticated candidate's own profile visits — zero-filled time series + country breakdown
+ *     description: Buckets follow the given IANA time zone (default Asia/Ho_Chi_Minh); from/to are inclusive local dates and default to the last 30 days. Week buckets are ISO weeks (YYYY-Www, Monday start). Country is taken from the recorded geo location; visits without one are grouped under country null. At most 400 buckets per request.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: interval
+ *         schema: { type: string, enum: [day, week, month], default: day }
+ *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date, example: '2026-09-11' }
+ *         description: Inclusive start date (YYYY-MM-DD, local to tz). Default — 29 days before `to`.
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date, example: '2026-10-10' }
+ *         description: Inclusive end date (YYYY-MM-DD, local to tz). Default — today in tz.
+ *       - in: query
+ *         name: tz
+ *         schema: { type: string, default: Asia/Ho_Chi_Minh }
+ *         description: IANA time zone used for bucket boundaries
+ *     responses:
+ *       200:
+ *         description: Visit stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         interval: { type: string, enum: [day, week, month] }
+ *                         tz: { type: string }
+ *                         from: { type: string, format: date }
+ *                         to: { type: string, format: date }
+ *                         total: { type: number }
+ *                         series:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               bucket: { type: string, example: '2026-10-10' }
+ *                               count: { type: number }
+ *                         countries:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               country: { type: string, nullable: true, example: VN }
+ *                               count: { type: number }
+ *       400:
+ *         description: Invalid interval, date, time zone, from after to, or more than 400 buckets
+ */
+router.get('/visits/stats', fnGetVisitStats);
 
 /**
  * @swagger
