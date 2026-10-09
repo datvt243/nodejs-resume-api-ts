@@ -10,7 +10,7 @@ during this step — read and report only.
 
 ## Steps (exact order, don't skip any)
 1. Read `agent-hub/NORTHSTAR.md`.
-2. Recall the 5/6 forbidden states and the seal gate from `agent-hub/CLAUDE.md`
+2. Recall the 5 forbidden states and the seal gate from `agent-hub/CLAUDE.md`
    — [GUARD, added 2026-08-30] don't explicitly `cat`/`Read` it yourself:
    the harness auto-injects this file's full content as a nested-CLAUDE.md
    `<system-reminder>` the moment step 1 touches anything under
@@ -37,7 +37,11 @@ during this step — read and report only.
 7. Read at most the 5 most recent evidence notes (newest file by date) in
    `agent-hub/evidence/implementer/` and `agent-hub/evidence/verifier/`. If
    a directory is empty, note "no evidence notes yet". To list them, use
-   `find <dir> -maxdepth 1 -type f -name "*.md" -exec ls -t {} + | head -5`
+   `find <dir> -mindepth 2 -maxdepth 2 -type f -name "*.md" -exec ls -t {} + | head -5`
+   — note `-mindepth 2`: real evidence notes live one level deeper than
+   `<dir>` itself, under a per-date subfolder (`evidence/implementer/
+   <date>/*.md`), not directly inside it; `-maxdepth 1` here always
+   returns zero results.
    — [GUARD, added 2026-08-30] NOT `ls -lat <dir>` directly: observed
    returning the wrong directory's listing (e.g. the repo root instead of
    the target `evidence/` subfolder) in a real sandboxed session — a

@@ -17,11 +17,12 @@ Date as `YYYY-mm-dd`, slug kebab-case from the task name.
   `pick_next` step 7, before the diff starts — the verifier reads this
   back when writing `worker-runs.log`, don't skip it
 - `## Diff` — files | file | why |
-- `## Command` — exact command from `doctrine/MEMORY.md`
+- `## Command` — exact command(s) from `doctrine/MEMORY.md`: test +
+  `npm run build` (typecheck)
 - `## Output` — verbatim, no paraphrasing
 - `## Acceptance` — table | Criterion | Evidence | (evidence points to a
   specific output line — not "tests pass," but "Tests: 42 passed, 42
-  total")
+  total"); always has a "comments per code-comments.md" row
 - `## Noticed, not done` — out-of-scope findings, not fixed
 - `## Seal gate` — record approval if an outward-facing action happened,
   or "none"
