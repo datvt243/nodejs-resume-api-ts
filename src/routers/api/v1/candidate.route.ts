@@ -15,9 +15,11 @@ import {
   fnDownloadCV,
   fnGetVisits,
   fnParseLinkedInExport,
+  fnParseCvPdf,
 } from '@/candidate/candidate.controller';
 import { uploadCVMiddleware } from '@/middlewares/uploadCV.middleware';
 import { uploadLinkedInExportMiddleware } from '@/middlewares/uploadLinkedInExport.middleware';
+import { uploadCvPdfParseMiddleware } from '@/middlewares/uploadCvPdfParse.middleware';
 
 /**
  * @swagger
@@ -108,6 +110,69 @@ router.post('/upload-cv', uploadCVMiddleware, fnUploadCV);
  *         description: Missing file, wrong type (non-ZIP), too large (> 20MB), or the ZIP itself is corrupt/unreadable
  */
 router.post('/parse-linkedin-export', uploadLinkedInExportMiddleware, fnParseLinkedInExport);
+
+/**
+ * @swagger
+ * /api/v1/candidate/parse-cv-pdf:
+ *   post:
+ *     tags: [Candidate]
+ *     summary: Parse an existing PDF CV into Education/Experience entries for the frontend to review before saving
+ *     description: Stateless parse-and-return endpoint -- the PDF is read in memory and never stored, nothing is persisted. Best-effort heuristic over the PDF's text layer (vi + en section headings, date ranges such as MM/YYYY - MM/YYYY or YYYY - Present/Hiện tại); single-column CVs parse best, multi-column/designed CVs poorly, scanned/image-only PDFs yield no text (no OCR). Same data shape as parse-linkedin-export plus extractedText, so the frontend can reuse its review-before-save flow and show the raw text when little is recognized.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: The CV as a PDF (max 5MB)
+ *     responses:
+ *       200:
+ *         description: Parsed Education/Experience entries (never persisted); empty arrays when the PDF is readable but no sections are recognized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         educations:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               school: { type: string }
+ *                               major: { type: string }
+ *                               startDate: { type: number, nullable: true }
+ *                               endDate: { type: number, nullable: true }
+ *                               isCurrent: { type: boolean }
+ *                               description: { type: string }
+ *                         experiences:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               company: { type: string }
+ *                               position: { type: string }
+ *                               startDate: { type: number, nullable: true }
+ *                               endDate: { type: number, nullable: true }
+ *                               isCurrent: { type: boolean }
+ *                               description: { type: string }
+ *                         extractedText:
+ *                           type: string
+ *                           description: The raw text extracted from the PDF
+ *       400:
+ *         description: Missing file, wrong type (non-PDF), too large (> 5MB), or the PDF itself is corrupt/unreadable
+ */
+router.post('/parse-cv-pdf', uploadCvPdfParseMiddleware, fnParseCvPdf);
 
 /**
  * @swagger

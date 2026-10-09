@@ -1,7 +1,9 @@
 /**
  * End-to-end ATS integration test: renders a real PDF via Puppeteer
  * (no mocking), extracts its text with `pdf-parse`, and asserts the full
- * ATS check suite passes for a realistic fixture candidate. Skipped when
+ * ATS check suite passes for a realistic fixture candidate, and that the
+ * PDF CV import parser (`parseCvPdf`) recovers the fixture's
+ * educations/experiences from it. Skipped when
  * `CI_NO_CHROME` is set (no Chrome/Chromium available in that
  * environment) — every other test file for this feature mocks Puppeteer
  * out; this is the one place that doesn't, by design.
@@ -10,6 +12,7 @@ import { renderAtsPdfBuffer } from '@/services/createPDF.ats';
 import { extractPdfText } from '@/services/atsExtract';
 import { runAtsChecks, scoreChecks, type AtsCheckInput } from '@/services/atsChecks';
 import { matchKeywords } from '@/services/keywordMatcher';
+import { parseCvPdf } from '@/candidate/parseCvPdf.service';
 import type { AggregatedCandidateData } from '@/types/candidate.type';
 
 const fixture: AggregatedCandidateData = {
@@ -122,5 +125,20 @@ describeOrSkip('ATS PDF integration (real Puppeteer + pdf-parse)', () => {
 
     expect(result.matched).toEqual(expect.arrayContaining(['typescript', 'docker']));
     expect(result.missing).toContain('vitest');
+  });
+
+  it.each(['en', 'vi'] as const)('round-trips the %s ATS PDF through the PDF CV import parser', async (lang) => {
+    const { buffer } = await renderAtsPdfBuffer(fixture, { lang });
+    const result = await parseCvPdf(buffer);
+
+    expect(result.extractedText).toContain('State University');
+    expect(result.experiences.map(({ company, position, startDate, endDate, isCurrent }) => ({ company, position, startDate, endDate, isCurrent }))).toEqual([
+      { company: 'New Co', position: 'Senior Backend Engineer', startDate: new Date(2021, 8, 1).getTime(), endDate: null, isCurrent: true },
+      { company: 'Old Co', position: 'Backend Developer', startDate: new Date(2019, 0, 1).getTime(), endDate: new Date(2021, 5, 1).getTime(), isCurrent: false },
+    ]);
+    expect(result.experiences[1]?.description).toContain('Built REST APIs serving 1M+ requests/day.');
+    expect(result.educations).toEqual([
+      { school: 'State University', major: 'Computer Science', startDate: new Date(2015, 0, 1).getTime(), endDate: new Date(2019, 0, 1).getTime(), isCurrent: false, description: '' },
+    ]);
   });
 });

@@ -98,7 +98,8 @@ src/
 │   ├── requestLogger.middleware.ts # Logs method, URL, status, duration via Winston
 │   ├── uploadCV.middleware.ts      # Multer: candidate's own PDF résumé (max 5MB)
 │   ├── uploadImages.middleware.ts  # Multer: CV-section image attachments
-│   └── uploadLinkedInExport.middleware.ts # Multer: LinkedIn export ZIP (max 20MB)
+│   ├── uploadLinkedInExport.middleware.ts # Multer: LinkedIn export ZIP (max 20MB)
+│   └── uploadCvPdfParse.middleware.ts # Multer: PDF CV for import parsing (max 5MB, memory only)
 ├── models/
 │   ├── candidate.model.ts
 │   ├── generalInformation.model.ts
@@ -122,7 +123,8 @@ src/
 │   ├── candidate.controller.ts
 │   ├── candidate.service.ts
 │   ├── candidate.validate.ts
-│   └── parseLinkedInExport.service.ts # Parses LinkedIn "Data export" ZIP → Education/Experience (stateless)
+│   ├── parseLinkedInExport.service.ts # Parses LinkedIn "Data export" ZIP → Education/Experience (stateless)
+│   └── parseCvPdf.service.ts  # Parses an uploaded PDF CV's text → Education/Experience (heuristic, stateless)
 ├── candidate_profile/         # One controller+service+validate per CV section
 │   ├── experience/
 │   ├── education/
@@ -235,6 +237,7 @@ state-changing requests must also pass the double-submit CSRF check (see Securit
 | POST | `/upload-cv` | Upload own PDF résumé (multer, max 5MB) |
 | GET | `/cv-file` | Download own uploaded résumé |
 | POST | `/parse-linkedin-export` | Parse a LinkedIn "Data export" ZIP → Education/Experience entries; stateless, nothing persisted |
+| POST | `/parse-cv-pdf` | Parse an existing PDF CV (max 5MB, memory only) → same Education/Experience shape + `extractedText`; best-effort heading/date-range heuristic (vi + en), stateless, nothing persisted |
 | GET | `/visits` | Own public-profile visit count + list |
 
 ### CV Sections + Application + Profile (all follow same CRUD pattern)
@@ -379,6 +382,7 @@ npm test                         # run all tests
 | candidate/candidate.controller.test.ts | candidate controller (upload/download CV, visits, etc.) |
 | candidate/candidate.service.test.ts | password field exclusion + `handlerDelete` cascade/file cleanup |
 | candidate/parseLinkedInExport.service.test.ts | LinkedIn export ZIP/CSV parsing |
+| candidate/parseCvPdf.service.test.ts | PDF CV parsing heuristics (vi + en fixture text) + unreadable-PDF rejection |
 | candidate_me/index.test.ts | public profile aggregation, visit recording, export |
 | candidate_profile/BaseController.test.ts | shared getAll/delete/restore/upload-images controller |
 | candidate_profile/BaseService.test.ts | `createCrudService().handlerCreate` real CV-section create flow |
@@ -388,6 +392,7 @@ npm test                         # run all tests
 | middlewares/csrf.test.ts | CSRF middleware |
 | middlewares/rateLimit.test.ts | rate limiting logic |
 | middlewares/requestLogger.test.ts | request logging |
+| middlewares/uploadCvPdfParse.test.ts | PDF-only / 5MB limit / memory storage over a real multipart request |
 | middlewares/language.test.ts | `Accept-Language` → `req.lang`/`req.t()` resolution |
 | services/baseCreateDocument.test.ts | `hookAfterSave` propagation on create |
 | services/baseFindDocument.test.ts | query/pagination/sort |
@@ -398,7 +403,7 @@ npm test                         # run all tests
 | services/createPDF.ats.test.ts | ATS template HTML — no letter-spacing/images/flex-grid, localized headings, sanitized description |
 | services/atsChecks.test.ts | Each of the 10 ATS check functions, passing + failing fixtures |
 | services/keywordMatcher.test.ts | JD keyword matcher — alias handling, case-insensitivity, Vietnamese diacritics |
-| services/atsPdfIntegration.test.ts | Real Puppeteer + `pdf-parse` end-to-end: renders a fixture CV, extracts text, asserts the full ATS check suite passes (skipped via `CI_NO_CHROME`) |
+| services/atsPdfIntegration.test.ts | Real Puppeteer + `pdf-parse` end-to-end: renders a fixture CV, extracts text, asserts the full ATS check suite passes, and round-trips it (vi + en) through the PDF CV import parser (skipped via `CI_NO_CHROME`) |
 | utils/authCookies.test.ts | httpOnly cookie set/clear |
 | utils/csrf.test.ts | double-submit CSRF token validation |
 | utils/bcrypt.test.ts | hash + compare |

@@ -68,6 +68,14 @@ export default {
     parseSuccess: 'Đọc dữ liệu LinkedIn thành công',
     parseFailed: 'Đọc dữ liệu LinkedIn thất bại',
   },
+  cvPdfImport: {
+    noFileUploaded: 'Không có file nào được tải lên',
+    invalidFileType: 'Chỉ chấp nhận file PDF',
+    fileTooLarge: 'File vượt quá dung lượng cho phép (5 MB)',
+    invalidPdf: 'File PDF không hợp lệ hoặc không đọc được',
+    parseSuccess: 'Đọc CV PDF thành công',
+    parseFailed: 'Đọc CV PDF thất bại',
+  },
   generalInformation: {
     alreadyExists: 'Candidate đã có thông tin, không thể lưu thêm',
   },

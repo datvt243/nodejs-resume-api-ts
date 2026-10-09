@@ -20,6 +20,7 @@ import {
 } from '@/candidate/candidate.service';
 import { CV_UPLOAD_DIR } from '@/middlewares/uploadCV.middleware';
 import { parseLinkedInExportZip } from '@/candidate/parseLinkedInExport.service';
+import { parseCvPdf } from '@/candidate/parseCvPdf.service';
 import { t } from '@/utils/i18n';
 
 export const fnGetInformationById = async (req: Request, res: Response) => {
@@ -132,6 +133,38 @@ export const fnParseLinkedInExport = async (req: Request, res: Response, next: N
         statusCode: StatusCodes.BAD_REQUEST,
         success: false,
         message: t('linkedinImport.invalidZip', req.lang),
+      });
+    }
+    handleError({ err, next, lang: req.lang });
+  }
+};
+
+export const fnParseCvPdf = async (req: Request, res: Response, next: NextFunction) => {
+  /**
+   * `uploadCvPdfParseMiddleware` (candidate.route.ts) already validated
+   * the file (.pdf only, <= 5 MB) and kept it in memory -- same
+   * stateless parse-and-return contract as fnParseLinkedInExport.
+   * Readable but unrecognized content is a 200 with empty arrays, not an
+   * error: `extractedText` still lets the user copy from it by hand.
+   */
+  const file = req.file;
+  if (!file) {
+    return formatReturn(res, {
+      statusCode: StatusCodes.BAD_REQUEST,
+      success: false,
+      message: t('cvPdfImport.noFileUploaded', req.lang),
+    });
+  }
+
+  try {
+    const data = await parseCvPdf(file.buffer);
+    return formatReturn(res, { success: true, message: t('cvPdfImport.parseSuccess', req.lang), data });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'INVALID_PDF') {
+      return formatReturn(res, {
+        statusCode: StatusCodes.BAD_REQUEST,
+        success: false,
+        message: t('cvPdfImport.invalidPdf', req.lang),
       });
     }
     handleError({ err, next, lang: req.lang });
