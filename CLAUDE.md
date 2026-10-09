@@ -140,6 +140,7 @@ src/
 ├── candidate_me/
 │   ├── index.ts               # Public profile aggregation (slug/email, i18n, ?profile= filter),
 │   │                           # visit recording, PDF/JSON/DOCX export
+│   ├── search.ts              # GET /api/me/search: keyword search over public, slugged profiles
 │   └── ats-check.ts           # POST /cv/ats-check: renders either PDF template in memory,
 │                               # extracts text, scores the 10 ATS checks + optional JD keyword match
 ├── services/
@@ -265,6 +266,7 @@ best-effort — each item validated/created independently via the same
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | GET | `/health` | None | Health check |
+| GET | `/api/me/search` | None | Keyword search (`?q=` 2–100 chars, `page`/`limit` ≤ 100) over public profiles that have a slug — escaped case-insensitive substring on GeneralInformation `positionDesired`/`professionalSkills.name`, Experience `company`/`position`/`skills`, Education `school`/`major`; returns `{ items: [{ slug, firstName, lastName, positionDesired }], pagination }`, never email. Registered before `/api/me/:email` (a slug literally `search` is shadowed) |
 | GET | `/api/me/:email` | None | Public profile by vanity slug (checked first) or email; `?lang=vi\|en` and `?profile=<id>` (filters sections to that CV profile) |
 | POST | `/api/me/:email/visit` | None | Record a visit (count, timestamp, IP, geo via `geoip-lite`) |
 | GET | `/api/v1/download-pdf` | Token via query | Export own CV; `?format=pdf\|json\|docx` (default `pdf`), `?lang=vi\|en`, `?template=classic\|modern\|ats` (default `classic`; `modern` is an additional visual theme, applies to `pdf` and `docx`; `ats` is the ATS-optimized single-column template, PDF-only; `template` ignored for `format=json`) |
@@ -384,6 +386,7 @@ npm test                         # run all tests
 | candidate/parseLinkedInExport.service.test.ts | LinkedIn export ZIP/CSV parsing |
 | candidate/parseCvPdf.service.test.ts | PDF CV parsing heuristics (vi + en fixture text) + unreadable-PDF rejection |
 | candidate_me/index.test.ts | public profile aggregation, visit recording, export |
+| candidate_me/search.test.ts | public search: only public + slugged candidates, field whitelist, regex escaping, pagination, `q` validation |
 | candidate_profile/BaseController.test.ts | shared getAll/delete/restore/upload-images controller |
 | candidate_profile/BaseService.test.ts | `createCrudService().handlerCreate` real CV-section create flow |
 | candidate_profile/profile.service.test.ts | CV profile CRUD + default-profile synthesis |

@@ -14,6 +14,7 @@ Một ứng dụng API backend **hoàn chỉnh** để **quản lý hồ sơ ứ
 - 🗂️ **CV Profiles** (multi-version): named subsets of CV sections for tailoring what a public link shows
 - 📋 **Job Application Tracker**: applied/interview/offer/rejected pipeline per candidate
 - 📎 **LinkedIn Import**: parse a LinkedIn "Data export" ZIP into Education/Experience entries for review
+- 🔍 **Public Profile Search**: keyword search over public candidate profiles (skills, position, company, school)
 - 📄 **PDF CV Import**: parse an existing PDF CV into the same Education/Experience entries for review (best-effort)
 - 📤 **CV File Upload/Download**: store and retrieve a candidate's own PDF résumé
 - 📊 **Public Profile Visits**: per-visit analytics (IP + geo) on public profile views
@@ -83,7 +84,7 @@ backend/
 │   ├── routers/api/v1/ (CRUD routes) + api/v2/ (auth WIP)
 │   ├── candidate/  (profile + upload-cv + LinkedIn/PDF CV import)
 │   ├── candidate_profile/ (controllers/services per section, incl. application/profile)
-│   ├── candidate_me/ (public profile, visits, PDF/JSON/DOCX export, ATS self-check)
+│   ├── candidate_me/ (public profile, search, visits, PDF/JSON/DOCX export, ATS self-check)
 │   ├── services/   (PDF classic + ATS/Redis/base DB ops)
 │   ├── utils/      (JWT/bcrypt/blacklist/i18n/csrf)
 │   ├── views/      (Pug)
@@ -203,6 +204,7 @@ best-effort bulk create (up to 100 items per request).
 | Method | Path                       | Auth | Desc                                                        |
 | ------ | -------------------------- | ---- | ------------------------------------------------------------ |
 | GET    | `/health`                  | None | Health check                                                 |
+| GET    | `/api/me/search`           | None | Keyword search over public profiles with a slug (`?q=`, `page`/`limit`) |
 | GET    | `/api/me/:email`           | None | Public profile by vanity slug or email, optional `?profile=` filter |
 | POST   | `/api/me/:email/visit`     | None | Record a visit (count/timestamp/IP/geo)                      |
 | GET    | `/api/v1/download-pdf`     | Token via query | Export own CV as `pdf` (default), `json`, or `docx`; `?template=classic\|modern\|ats` picks the visual template/theme (`classic`/`modern` apply to `pdf` and `docx`; `ats` is PDF-only) |
@@ -231,7 +233,7 @@ best-effort bulk create (up to 100 items per request).
 - `npm run test` - Jest
 - `npm run lint` - ESLint (type-aware)
 
-**Tests (37 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import/PDF-CV-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language/PDF-CV upload), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
+**Tests (38 files)**: auth.service/controller/v2/token-expiry, candidate (controller/service/LinkedIn-import/PDF-CV-import), CV-section CRUD core, middlewares (rateLimit/logger/verify/csrf/language/PDF-CV upload), utils (bcrypt/valid/i18n/csrf), PDF export (classic + ATS template, ATS checks, keyword matcher, real-Puppeteer ATS integration), database/mongo
 
 ---
 

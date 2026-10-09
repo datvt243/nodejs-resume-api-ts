@@ -76,6 +76,9 @@ export default {
     parseSuccess: 'Đọc CV PDF thành công',
     parseFailed: 'Đọc CV PDF thất bại',
   },
+  publicSearch: {
+    invalidQuery: 'Từ khoá tìm kiếm phải dài từ 2 đến 100 ký tự',
+  },
   generalInformation: {
     alreadyExists: 'Candidate đã có thông tin, không thể lưu thêm',
   },

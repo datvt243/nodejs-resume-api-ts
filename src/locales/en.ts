@@ -76,6 +76,9 @@ export default {
     parseSuccess: 'CV PDF parsed successfully',
     parseFailed: 'Failed to parse the CV PDF',
   },
+  publicSearch: {
+    invalidQuery: 'Search query must be between 2 and 100 characters',
+  },
   generalInformation: {
     alreadyExists: 'Candidate already has information, cannot save',
   },
