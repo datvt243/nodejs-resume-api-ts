@@ -264,9 +264,33 @@ export const handlerRecordVisit = async (email: string, req: Request) => {
   const geo = ip && ip !== 'unknown' ? geoip.lookup(ip) : null;
   const location = geo ? [geo.city, geo.region, geo.country].filter(Boolean).join(', ') : '';
 
-  await MODEL.Visit.create({ candidateId: candidate._id, ip, location });
+  const referrer = normalizeReferrer((req.body as { referrer?: unknown } | undefined)?.referrer);
+
+  await MODEL.Visit.create({ candidateId: candidate._id, ip, location, referrer });
 
   return { success: true, message: 'Ghi nhận lượt ghé thăm thành công', data: null };
+};
+
+const REFERRER_MAX_LENGTH = 2048;
+
+/**
+ * Reduces the client-forwarded `document.referrer` to a bare hostname
+ * (lowercased, leading `www.`/`m.` stripped), or null for anything
+ * missing, malformed, oversized or not http(s) — a bad value must never
+ * fail the visit. Read from the body, not the `Referer` header: the visit
+ * POST is an XHR from the profile page, so its own header names the CV
+ * site rather than where the visitor came from.
+ */
+export const normalizeReferrer = (raw: unknown): string | null => {
+  if (typeof raw !== 'string' || !raw || raw.length > REFERRER_MAX_LENGTH) return null;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+  return url.hostname.replace(/^(www|m)\./, '') || null;
 };
 
 export const fnExportPDF = async (req: Request, res: Response, next: NextFunction) => {

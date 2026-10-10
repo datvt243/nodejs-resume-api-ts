@@ -1,8 +1,8 @@
 /**
  * Aggregated public-profile visit stats for the authenticated candidate —
  * time-bucketed counts (zero-filled, so a chart needs no gap handling)
- * and a country breakdown, computed with one aggregation over the
- * existing `Visit` collection (no schema change).
+ * plus country and referrer-source breakdowns, computed with one
+ * aggregation over the `Visit` collection.
  *
  * Bucket boundaries follow the caller's IANA time zone (default
  * Asia/Ho_Chi_Minh): a visit at 00:30 local belongs to that local day,
@@ -48,6 +48,7 @@ export interface VisitStats {
   total: number;
   series: { bucket: string; count: number }[];
   countries: { country: string | null; count: number }[];
+  sources: { source: string | null; count: number }[];
 }
 
 const pad = (value: number, length = 2): string => String(value).padStart(length, '0');
@@ -181,6 +182,7 @@ const COUNTRY_EXPRESSION = {
 interface FacetResult {
   series: { _id: string; count: number }[];
   countries: { _id: string | null; count: number }[];
+  sources: { _id: string | null; count: number }[];
 }
 
 /**
@@ -201,6 +203,8 @@ export const handlerGetVisitStats = async (candidateId: string, query: VisitStat
       $facet: {
         series: [{ $group: { _id: { $dateToString: { format: BUCKET_FORMATS[interval], date: '$createdAt', timezone: tz } }, count: { $sum: 1 } } }],
         countries: [{ $group: { _id: COUNTRY_EXPRESSION, count: { $sum: 1 } } }, { $sort: { count: -1, _id: 1 } }],
+        // `$group` buckets a missing field as null, so visits recorded before `referrer` existed land there.
+        sources: [{ $group: { _id: '$referrer', count: { $sum: 1 } } }, { $sort: { count: -1, _id: 1 } }],
       },
     },
   ]).exec();
@@ -216,5 +220,6 @@ export const handlerGetVisitStats = async (candidateId: string, query: VisitStat
     total: series.reduce((sum, row) => sum + row.count, 0),
     series,
     countries: (facets?.countries ?? []).map((row) => ({ country: row._id, count: row.count })),
+    sources: (facets?.sources ?? []).map((row) => ({ source: row._id, count: row.count })),
   };
 };

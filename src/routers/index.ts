@@ -131,6 +131,17 @@ router.get('/api/me/:email', fnGetAboutMe);
  *         schema:
  *           type: string
  *           format: email
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               referrer:
+ *                 type: string
+ *                 description: The visitor's document.referrer; only its hostname is stored (www./m. stripped), invalid values are stored as null
+ *                 example: https://www.linkedin.com/feed/
  *     responses:
  *       200:
  *         description: Visit recorded

@@ -13,7 +13,7 @@
  */
 
 import * as MODEL from '@/models';
-import { handlerGetAboutMe, handlerRecordVisit } from '@/candidate_me';
+import { handlerGetAboutMe, handlerRecordVisit, normalizeReferrer } from '@/candidate_me';
 
 jest.mock('@/models', () => ({
   Candidate: { findOne: jest.fn() },
@@ -58,6 +58,48 @@ describe('candidate_me/index.ts (issue #135)', () => {
       expect(result.success).toBe(false);
       expect(MODEL.Candidate.findOne).not.toHaveBeenCalled();
       expect(MODEL.Visit.create).not.toHaveBeenCalled();
+    });
+
+    it('stores only the normalized referrer hostname from the body, ignoring the Referer header', async () => {
+      (MODEL.Candidate.findOne as jest.Mock).mockReturnValue({ select: () => ({ exec: jest.fn().mockResolvedValue({ _id: 'c1' }) }) });
+      const req = { ip: '', socket: {}, headers: { referer: 'https://datvt243.github.io/' }, body: { referrer: 'https://www.LinkedIn.com/feed/?trk=abc' } };
+
+      const result = await handlerRecordVisit('votan.it@gmail.com', req as any);
+
+      expect(result.success).toBe(true);
+      expect((MODEL.Visit.create as jest.Mock).mock.calls[0][0]).toEqual(expect.objectContaining({ candidateId: 'c1', referrer: 'linkedin.com' }));
+    });
+
+    it('still records the visit with a null referrer when the body has none', async () => {
+      (MODEL.Candidate.findOne as jest.Mock).mockReturnValue({ select: () => ({ exec: jest.fn().mockResolvedValue({ _id: 'c1' }) }) });
+
+      const result = await handlerRecordVisit('votan.it@gmail.com', { ip: '', socket: {} } as any);
+
+      expect(result.success).toBe(true);
+      expect((MODEL.Visit.create as jest.Mock).mock.calls[0][0]).toEqual(expect.objectContaining({ referrer: null }));
+    });
+  });
+
+  describe('normalizeReferrer', () => {
+    it.each([
+      ['https://www.linkedin.com/in/someone?trk=x', 'linkedin.com'],
+      ['https://m.facebook.com/', 'facebook.com'],
+      ['http://L.Facebook.com/l.php?u=x', 'l.facebook.com'],
+      ['https://lnkd.in/abc', 'lnkd.in'],
+      ['https://www.google.com.vn/', 'google.com.vn'],
+    ])('%s -> %s', (raw, expected) => {
+      expect(normalizeReferrer(raw)).toBe(expected);
+    });
+
+    it.each([[undefined], [null], [''], [42], [{ href: 'https://x.com' }], ['not a url'], ['linkedin.com'], ['android-app://com.linkedin.android/'], ['javascript:alert(1)']])(
+      'returns null for %p',
+      (raw) => {
+        expect(normalizeReferrer(raw)).toBeNull();
+      },
+    );
+
+    it('returns null for a value over the 2048-char cap', () => {
+      expect(normalizeReferrer(`https://a.com/${'x'.repeat(2048)}`)).toBeNull();
     });
   });
 
