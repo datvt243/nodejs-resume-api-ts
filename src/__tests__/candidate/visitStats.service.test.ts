@@ -99,7 +99,11 @@ describe('handlerGetVisitStats', () => {
   });
 
   it('zero-fills every day in range and totals the counts', async () => {
-    aggregateResolving({ series: [{ _id: '2026-10-02', count: 3 }], countries: [{ _id: 'VN', count: 2 }, { _id: null, count: 1 }] });
+    aggregateResolving({
+      series: [{ _id: '2026-10-02', count: 3 }],
+      countries: [{ _id: 'VN', count: 2 }, { _id: null, count: 1 }],
+      sources: [{ _id: 'linkedin.com', count: 2 }, { _id: null, count: 1 }],
+    });
 
     const stats = await handlerGetVisitStats(candidateId, resolved({ from: '2026-10-01', to: '2026-10-03' }));
 
@@ -117,6 +121,10 @@ describe('handlerGetVisitStats', () => {
       countries: [
         { country: 'VN', count: 2 },
         { country: null, count: 1 },
+      ],
+      sources: [
+        { source: 'linkedin.com', count: 2 },
+        { source: null, count: 1 },
       ],
     });
   });
@@ -149,6 +157,15 @@ describe('handlerGetVisitStats', () => {
     const countryGroup = mockAggregate.mock.calls[0][0][1].$facet.countries;
     expect(countryGroup[0].$group._id.$let.vars.last.$trim.input).toEqual({ $arrayElemAt: [{ $split: [{ $ifNull: ['$location', ''] }, ','] }, -1] });
     expect(countryGroup[1]).toEqual({ $sort: { count: -1, _id: 1 } });
+  });
+
+  it('groups sources on the stored referrer hostname, missing as null', async () => {
+    aggregateResolving({ series: [], countries: [] });
+
+    const stats = await handlerGetVisitStats(candidateId, resolved({}));
+
+    expect(mockAggregate.mock.calls[0][0][1].$facet.sources).toEqual([{ $group: { _id: '$referrer', count: { $sum: 1 } } }, { $sort: { count: -1, _id: 1 } }]);
+    expect(stats.sources).toEqual([]);
   });
 });
 

@@ -28,6 +28,8 @@ const schema = new Schema(
     candidateId: { type: ObjectId, required: true, ref: 'candidate', index: true },
     ip: { type: String, default: '' },
     location: { type: String, default: '' },
+    // Hostname only (never path/query, which can carry personal data); null = direct/unknown.
+    referrer: { type: String, default: null },
   },
   { timestamps: true },
 );
